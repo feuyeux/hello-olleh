@@ -5,10 +5,14 @@
 
 ## 分析对象
 
-- [claude-code](claude-code) `2.1.87`
-- [codex](https://github.com/openai/codex.git) / upstream: `openai/codex` `rust-v0.118.0`
-- [gemini-cli](https://github.com/google-gemini/gemini-cli.git) / upstream: `google-gemini/gemini-cli` `v0.36.0`
-- [opencode](https://github.com/anomalyco/opencode.git) / upstream: `anomalyco/opencode` `v1.3.2`
+| 工程 | 版本 | 语言/框架 | 架构特点 |
+|:-----|:-----|:----------|:---------|
+| [claude-code](claude-code) | v2.1.87（反编译） | TypeScript / React | src/ 目录，React TUI，REPL 交互，Hooks 生命周期 |
+| [codex](https://github.com/openai/codex.git) | rust-v0.118.0 | **Rust**（86 crate）+ TypeScript SDK | Rust workspace 为运行时中心，TS 只做分发/封装 |
+| [gemini-cli](https://github.com/google-gemini/gemini-cli.git) | v0.36.0 | TypeScript monorepo | packages/core 内核 + packages/cli（TUI/Ink）+ SDK + A2A server |
+| [opencode](https://github.com/anomalyco/opencode.git) | v1.3.2 | **Bun** + Effect-ts | Hono Server + SQLite Durable State，A/B/C 三层文档结构 |
+
+![](hello-harness.png)
 
 ## 目录说明
 
@@ -18,7 +22,7 @@
 - `sync_repos.sh`: 同步上游仓库的脚本；仓库不存在时 clone，存在时强制同步到远端默认分支。
 - `AGENTS.md`: 贡献约定与仓库工作方式说明。
 
-## prompt
+## 附录
 
 - `Claude Code` + `claude-opus-4.6[1m]`
 - `OpenAI Codex` + `gpt-5.4` `xhigh` `fast`
@@ -27,7 +31,7 @@
 
 提示词按角色和目标拆分为独立文件，存放于 `prompts/` 目录。
 
-### generator
+### generator prompt
 
 | 文件 | 目标仓库 |
 |:------|:----------|
@@ -37,7 +41,7 @@
 
 每条 prompt 包含：强制输出文件清单（9 个主题独立文件）、技术栈特化分析要求、现有文档读取与合并策略。
 
-### evaluator
+### evaluator prompt
 
 | 文件 | 评估目标 |
 |:------|:----------|
