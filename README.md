@@ -16,11 +16,11 @@
 
 ## 目录说明
 
-- `claude-code/`, `codex/`, `gemini-cli/`, `opencode/`: 上游源码目录，用作分析输入。
-- `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/`: 分析输出目录，按主题拆分为 Markdown 文档。
-- `hello.txt`: 通用分析提示词，定义输出内容与章节要求。
-- `sync_repos.sh`: 同步上游仓库的脚本；仓库不存在时 clone，存在时强制同步到远端默认分支。
-- `AGENTS.md`: 贡献约定与仓库工作方式说明。
+| 路径 | 用途 |
+|:-----|:-----|
+| `claude-code/`, `codex/`, `gemini-cli/`, `opencode/` | 上游源码目录，分析输入 |
+| `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/` | 分析输出目录，按主题拆分为 Markdown 文档 |
+| `hello-harness/` | Harness Engineering 框架分析 |
 
 ## 附录
 
