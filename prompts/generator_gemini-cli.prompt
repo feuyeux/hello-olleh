@@ -1,0 +1,28 @@
+遵循 `hello.txt` 中的要求，对 `gemini-cli/` 目录下的工程进行深度分析，并将生成物写入 `hello-gemini-cli/` 目录。
+
+【强制输出结构】必须按以下文件清单逐一创建独立文件，每个文件只写对应主题，不得合并：
+
+- `hello-gemini-cli/00-gemini-cli_ko.md` — Kickoff 索引：列出所有子篇超链接 + 最短源码阅读路线
+- `hello-gemini-cli/01-architecture.md` — 架构全景：monorepo 包拓扑、分层模型、核心抽象与接口边界
+- `hello-gemini-cli/02-startup-flow.md` — 启动链路：入口点、CLI 参数解析、初始化顺序、模式分发
+- `hello-gemini-cli/03-agent-loop.md` — 核心执行循环：Agent 决策链、Prompt 构建、LLM 调用、流式响应
+- `hello-gemini-cli/04-tool-system.md` — 工具调用机制：Tool 注册、权限策略（Policy）、执行闭环、结果回传
+- `hello-gemini-cli/05-state-management.md` — 状态管理：会话状态、历史记录、并发控制
+- `hello-gemini-cli/06-extension-mcp.md` — 扩展性：Extensions 加载与隔离、MCP 集成、新增工具的修改点
+- `hello-gemini-cli/07-error-security.md` — 错误处理与安全性：异常捕获、重试策略、敏感文件防泄漏
+- `hello-gemini-cli/08-performance.md` — 性能与代码质量：大文件处理、流式传输、优缺点分析、潜在改进点
+
+【格式铁律】
+- 每个主题必须独立成一个 `.md` 文件，严禁将多个主题合并写入同一个文件
+- 代码引用须标注完整文件路径和行号，关键流程须附 Mermaid 顺序图（neutral 主题，尽量左右布局）
+
+该项目为 TypeScript monorepo，重点分析：
+- `packages/` 各子包之间的依赖拓扑与接口边界
+- Extensions 扩展机制的加载与隔离方式
+- Core 包中的 Tool 注册与权限策略（ToolPolicy）实现
+
+【现有文档处理】开始前必须：
+1. 读取 `hello-gemini-cli/` 目录的全部现有文件（当前有 `00-gemini-cli_ko.md` 至 `08-project-init-analysis.md` 等）
+2. 逐一读取已有文件内容，识别哪些主题已被覆盖、哪些章节仍然缺失
+3. 将 `08-project-init-analysis.md` 中与上述文件清单对应的内容分别提取合并进对应的目标文件
+4. 以 `01-monorepo-shape.md`、`03-core-engine-tools-and-policy.md` 等现有高质量文档的写作风格为基准

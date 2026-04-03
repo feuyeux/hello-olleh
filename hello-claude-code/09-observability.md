@@ -1,0 +1,160 @@
+---
+layout: default
+title: "可观测性：日志、遥测与运行时状态追踪"
+---
+# 可观测性：日志、遥测与运行时状态追踪
+
+本文分析 Claude Code 的可观测性基础设施，包括结构化日志、遥测数据采集、用户隐私控制，以及调试模式下的运行时状态追踪。
+
+## 1. 可观测性在 Claude Code 中的定位
+
+Claude Code 的可观测性服务于两类目标：
+
+| 目标 | 受众 | 实现 |
+|------|------|------|
+| **产品遥测** | Anthropic 团队 | 匿名化使用数据采集 |
+| **开发者调试** | 用户/开发者 | 调试日志、`--debug` 模式 |
+
+## 2. 日志系统
+
+### 2.1 日志级别与输出
+
+Claude Code 通过环境变量控制日志详细程度：
+
+```bash
+# 开启调试日志
+DEBUG=claude-code:* claude
+
+# 特定模块日志
+DEBUG=claude-code:tools,claude-code:api claude
+```
+
+调试日志输出到 `stderr`，不干扰正常的 TUI 渲染。
+
+### 2.2 关键日志点
+
+```typescript
+// 工具调用日志
+log.debug('tool:execute', {
+  tool: toolName,
+  input: toolInput,
+  duration_ms: elapsed,
+  success: !error,
+});
+
+// API 请求日志
+log.debug('api:request', {
+  model,
+  input_tokens: requestTokens,
+  output_tokens: responseTokens,
+  cached_tokens: cacheHitTokens,
+});
+
+// 会话状态变更
+log.debug('session:state', {
+  event: 'turn_complete',
+  turn_id: turnId,
+  tool_calls: toolCallCount,
+});
+```
+
+## 3. 遥测系统
+
+### 3.1 遥测数据类型
+
+Claude Code 采集以下匿名化事件数据（可选退出）：
+
+| 事件类型 | 内容 | 示例 |
+|----------|------|------|
+| `session_start` | 版本、平台信息 | `{version: "2.1.87", os: "darwin"}` |
+| `command_used` | 使用的 Slash 命令 | `{command: "commit"}` |
+| `tool_call` | 工具名称（不含参数） | `{tool: "Edit"}` |
+| `error` | 错误类型（不含内容） | `{type: "api_error", code: 429}` |
+| `session_end` | 会话时长、轮数 | `{duration_s: 120, turns: 8}` |
+
+### 3.2 隐私控制
+
+```bash
+# 禁用遥测
+export CLAUDE_CODE_DISABLE_TELEMETRY=1
+# 或在 settings.json 中设置
+```
+
+```json
+// settings.json
+{
+  "telemetry": {
+    "enabled": false
+  }
+}
+```
+
+### 3.3 遥测发送
+
+遥测数据在**会话结束时**批量发送，使用独立的非阻塞 HTTP 请求，不影响正常操作。
+
+## 4. `--debug` 模式
+
+启用 `--debug` 标志后，Claude Code 提供增强的可观测性：
+
+```bash
+claude --debug
+```
+
+调试模式额外输出：
+- **完整 API 请求体**（含系统提示）
+- **完整 API 响应**（含 token 用量）
+- **工具调用详情**（含输入参数和输出结果）
+- **上下文窗口使用情况**（已用/剩余 tokens）
+- **缓存命中情况**（prompt cache hit/miss）
+
+## 5. 性能追踪
+
+### 5.1 Token 用量追踪
+
+每轮 turn 结束后，Claude Code 在 TUI 中显示 token 用量统计：
+
+```
+✓ Response (8.3s) · 12,450 input tokens (3,200 cached) · 892 output tokens
+```
+
+### 5.2 工具执行计时
+
+每个工具调用的耗时通过调试日志记录，方便识别性能瓶颈：
+
+```
+[debug] tool:execute Edit completed in 42ms
+[debug] tool:execute Bash completed in 3821ms
+[debug] tool:execute Read completed in 8ms
+```
+
+## 6. 运行时状态追踪
+
+### 6.1 会话状态导出
+
+可以通过 Slash 命令查看当前会话状态：
+
+```
+/status   → 显示当前 token 用量、会话 ID、模型版本
+/cost     → 显示本次会话的 API 费用估算
+```
+
+### 6.2 Transcript 作为可观测性记录
+
+Claude Code 将完整会话 Transcript 持久化到本地：
+
+```
+~/.claude/projects/<project-hash>/
+  └── <session-id>.jsonl   # 结构化对话记录
+```
+
+每条记录包含完整的消息内容、工具调用参数和结果，是事后分析的最完整数据源。
+
+## 7. 与其他系统的对比
+
+| 系统 | 日志方式 | 遥测 | 调试模式 | Transcript |
+|------|---------|------|---------|-----------|
+| **Claude Code** | DEBUG env var | 匿名化，可退出 | `--debug` | JSONL 持久化 |
+| **Codex** | `RUST_LOG` | 无公开遥测 | `--verbose` | Thread 持久化 |
+| **Gemini CLI** | `DEBUG` env var | 无公开遥测 | 无专门模式 | Session JSON |
+| **OpenCode** | Effect-ts 日志 | 无公开遥测 | 调试 TUI | SQLite |

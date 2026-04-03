@@ -1,0 +1,14 @@
+title: Hello Olleh
+description: AI Coding CLI 源码分析工作区
+url: "https://feuyeux.github.io"
+baseurl: "/hello-olleh"
+
+permalink: pretty
+
+markdown: kramdown
+kramdown:
+  syntax_highlighter_opts:
+    default_lang: plaintext
+
+# Build settings
+timezone: Asia/Shanghai
