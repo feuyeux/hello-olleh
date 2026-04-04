@@ -261,7 +261,7 @@ code, pre {
 }
 
 .chapter-desc {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-muted);
   line-height: 1.6;
   display: -webkit-box;
@@ -382,9 +382,10 @@ code, pre {
 
 /* ── Markdown Content Override (for rendered pages) ───────── */
 .main-content {
-  max-width: 780px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 3rem 1.5rem;
+  font-size: 1.1rem;
 }
 
 .main-content h1,
@@ -396,10 +397,10 @@ code, pre {
 }
 
 .main-content h1 { font-size: 2rem; border-bottom: 2px solid var(--border); padding-bottom: 0.4em; }
-.main-content h2 { font-size: 1.55rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
-.main-content h3 { font-size: 1.2rem; color: var(--accent-dim); }
+.main-content h2 { font-size: 1.7rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+.main-content h3 { font-size: 1.35rem; color: var(--accent-dim); }
 
-.main-content p { margin-bottom: 1.2em; color: var(--text-secondary); line-height: 1.85; }
+.main-content p { margin-bottom: 1.2em; color: var(--text-secondary); line-height: 1.9; font-size: 1.05rem; }
 .main-content a { color: var(--accent-dim); border-bottom: 1px solid var(--accent); }
 .main-content a:hover { color: var(--accent); }
 
@@ -549,9 +550,9 @@ code, pre {
 }
 
 .content-page .page-content {
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
 }
 
 /* Page header with back link */
@@ -583,9 +584,10 @@ code, pre {
 
 /* ── Consistent Main Content ───────────────────────────────── */
 .main-content {
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 3rem 2rem;
+  padding: 3rem 1.5rem;
+  font-size: 1.1rem;
 }
 
 /* Override for full-width pages */
