@@ -141,7 +141,7 @@ flowchart LR
 
 完整机制说明已经独立到：
 
-- [07-context-management.md](./07-context-management.md)
+- [11-context-management.md](./11-context-management.md)
 
 本篇只保留与 `query()` 主循环直接相关的两条事实：
 

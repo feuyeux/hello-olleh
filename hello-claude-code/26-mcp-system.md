@@ -8,7 +8,7 @@ title: "Claude Code 的 MCP 系统"
 
 本篇讨论 MCP client、transport、tool/resource/prompt 接口，以及它如何接入 Claude Code 的统一工具总线。
 
-扩展总线的高层入口已经在 [09-extension-skills-plugins-mcp.md](./09-extension-skills-plugins-mcp.md) 说明；本篇只保留 MCP 协议与运行时本身。
+扩展总线的高层入口已经在 [06-extension-mcp.md](./06-extension-mcp.md) 说明；本篇只保留 MCP 协议与运行时本身。
 
 ```mermaid
 ---

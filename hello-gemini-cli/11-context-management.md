@@ -1,278 +1,107 @@
-# Gemini CLI 上下文管理：消息预算、工具输出与循环检测
+# Gemini CLI 上下文管理：分层记忆、压缩与循环保护
 
-本文档分析 Gemini CLI 的上下文管理机制。
+这部分在当前仓库里并不是一个单独的 `budget.ts` 或 `truncation.ts` 模块，而是由多条链路共同完成：记忆加载、系统提示词注入、会话历史裁剪、工具输出遮罩，以及循环检测。
 
-## 1. 上下文管理在 Gemini CLI 里的定位
+## 1. 当前源码里的真实结构
 
-### 1.1 基本架构
+Gemini CLI 的上下文主要由四层组成：
 
-Gemini CLI 的上下文管理包含三个核心部分：
+1. **系统提示词中的全局记忆**：由 `Config.getSystemInstructionMemory()` 提供，并在 `GeminiClient.startChat()` / `updateSystemInstruction()` 中传给 `getCoreSystemPrompt()`。
+2. **会话级注入的扩展与项目记忆**：JIT context 打开时，`Config.getSessionMemory()` 会把 extension/project memory 包装成 `<loaded_context>` 片段，放入对话内容，而不是直接塞进 system prompt。
+3. **`GeminiChat` 保存的对话历史**：`GeminiChat` 同时维护完整历史与“curated history”，发送请求时优先使用后者。
+4. **发送前保护层**：`GeminiClient` 在真正调用模型前会尝试压缩历史、遮罩大体积工具输出，并做循环与上下文溢出检查。
 
-1. **消息预算**：控制发送给模型的 token 数量
-2. **工具输出控制**：限制工具返回的内容量
-3. **循环检测**：防止同类型操作的无限循环
+## 2. 分层记忆如何进入上下文
 
-### 1.2 与其他项目的对比
+### 2.1 `ContextManager` 负责三类记忆
 
-| 特性 | Claude Code | Codex | OpenCode | Gemini CLI |
-| --- | --- | --- | --- | --- |
-| 上下文窗口 | 完整 | Thread 协议 | 200K | 32K/128K |
-| 消息预算 | 完整 | 有限 | 完整 | 基础 |
-| 工具输出截断 | 支持 | 支持 | 支持 | 基础 |
-| 循环检测 | doom_loop | 无 | 完整 | 无 |
+`packages/core/src/services/contextManager.ts` 把记忆分成三层：
 
----
+- **global memory**
+- **extension memory**
+- **project memory**
 
-## 2. 消息预算
+这些内容来自 `packages/core/src/utils/memoryDiscovery.ts`，后者会扫描 `GEMINI.md` 及其别名文件，并按来源分类、去重、拼接。
 
-### 2.1 Budget 计算
+### 2.2 JIT context 不是“全量一次性注入”
 
-```typescript
-interface MessageBudget {
-  maxTokens: number
-  usedTokens: number
-  remainingTokens: number
-}
+当 `experimentalJitContext` 打开时，配置层会采用更细的策略：
 
-function calculateBudget(messages: Message[], model: string): MessageBudget {
-  const maxTokens = getModelContextWindow(model)
-  const usedTokens = messages.reduce((sum, m) => sum + countTokens(m), 0)
+- `Config.getSystemInstructionMemory()` 只返回 **global memory**
+- `Config.getSessionMemory()` 返回 **extension + project memory**
+- `ContextManager.discoverContext()` 还能在访问具体路径时，按需加载子目录里的补充记忆
 
-  return {
-    maxTokens,
-    usedTokens,
-    remainingTokens: maxTokens - usedTokens
-  }
-}
-```
+这意味着 Gemini CLI 当前的上下文管理，已经不是“固定窗口里塞完整历史”那种单层模型，而是“系统级 + 会话级 + 按需发现”的分层结构。
 
-### 2.2 预算警告
+## 3. 历史压缩与上下文窗口保护
 
-```typescript
-function checkBudgetWarning(budget: MessageBudget): void {
-  const usageRatio = budget.usedTokens / budget.maxTokens
+### 3.1 当前默认 token 上限
 
-  if (usageRatio > 0.9) {
-    console.warn('⚠️ Context window at 90% capacity')
-  } else if (usageRatio > 0.95) {
-    console.error('🔴 Context window at 95% capacity - truncation imminent')
-  }
-}
-```
+`packages/core/src/core/tokenLimits.ts` 里，对当前默认和预览模型统一返回 `1_048_576` token。旧文档里常见的 `32K / 128K` 说法，已经不符合这里的实现。
 
-### 2.3 预算溢出处理
+### 3.2 自动压缩发生在发送前
 
-| 策略 | 说明 |
-| --- | --- |
-| 截断历史 | 删除最早的 N 条消息 |
-| 摘要压缩 | 用摘要替换长消息 |
-| 拒绝继续 | 告知用户上下文已满 |
+`GeminiClient` 在真正流式发送前，会先调用 `tryCompressChat()`：
 
----
+- 调用方：`packages/core/src/core/client.ts`
+- 压缩实现：`packages/core/src/services/chatCompressionService.ts`
+- 手动入口：`packages/cli/src/ui/commands/compressCommand.ts`
 
-## 3. 工具输出控制
+`ChatCompressionService` 的关键策略是：
 
-### 3.1 输出大小限制
+- 默认在上下文大约达到模型上限的 **50%** 时尝试压缩
+- 尽量保留最近约 **30%** 的历史
+- 对超大的旧工具输出，不直接丢弃，而是先截断并把完整内容落到项目临时目录
 
-```typescript
-interface ToolOutputConfig {
-  maxBytes: number       // 最大输出字节数
-  maxLines: number       // 最大行数
-  truncateSuffix: string  // 截断后缀
-}
+这套实现比“超限后简单删前文”要稳健得多，因为它专门照顾了函数调用返回值过大的场景。
 
-const DEFAULT_TOOL_OUTPUT_CONFIG: ToolOutputConfig = {
-  maxBytes: 10 * 1024,   // 10KB
-  maxLines: 500,
-  truncateSuffix: '\n... (truncated)'
-}
-```
+### 3.3 还有一层工具输出遮罩
 
-### 3.2 截断逻辑
+除了压缩，`GeminiClient` 还会调用 `ToolOutputMaskingService`，把历史中过于臃肿的工具输出进一步瘦身。与此同时，`Config.getTruncateToolOutputThreshold()` 会根据当前剩余上下文动态收紧输出阈值。
 
-```typescript
-function truncateToolOutput(
-  output: string,
-  config: ToolOutputConfig = DEFAULT_TOOL_OUTPUT_CONFIG
-): string {
-  // 检查字节数
-  if (output.length > config.maxBytes) {
-    output = output.slice(0, config.maxBytes) + config.truncateSuffix
-  }
+如果这些措施之后，本次请求仍然可能超出窗口，客户端会发出 `GeminiEventType.ContextWindowWillOverflow` 事件，而不是盲目继续提交。
 
-  // 检查行数
-  const lines = output.split('\n')
-  if (lines.length > config.maxLines) {
-    output = lines.slice(0, config.maxLines).join('\n') + config.truncateSuffix
-  }
+## 4. 循环检测并不缺席
 
-  return output
-}
-```
+旧版分析把 Gemini CLI 记成“没有循环检测”，这已经不准确。当前仓库里有完整的 `LoopDetectionService`：
 
-### 3.3 工具特定限制
+- 文件：`packages/core/src/services/loopDetectionService.ts`
+- 接入点：`packages/core/src/core/client.ts`
 
-| 工具 | maxBytes | maxLines |
-| --- | --- | --- |
-| Read | 50KB | 1000 |
-| Glob | 10KB | 500 |
-| Grep | 20KB | 500 |
-| Bash | 无限制 | 无限制 |
+它至少包含三类检测：
 
----
+- **完全相同的工具调用重复**：对 `tool name + args` 做哈希，连续重复超过阈值会判定为循环
+- **内容 chanting / 重复输出**：检测流式文本片段的重复模式
+- **LLM 辅助检查**：长轮次会话里，定期让模型判断当前是否陷入“无进展循环”
 
-## 4. 循环检测
+当前实现里的几个显式阈值也能从源码直接看到：
 
-### 4.1 检测类型
+- 相同工具调用阈值：`5`
+- 内容重复阈值：`10`
+- LLM 检查默认在单个 prompt 内经过 `30` 个 turn 后启动
 
-| 循环类型 | 检测方式 |
-| --- | --- |
-| 同工具连续调用 | 计数器 + 阈值 |
-| 相同输出重复 | 哈希比较 |
-| 模式重复 | n-gram 分析 |
+并且，这个检测器支持按 session 关闭，而不是写死在主循环里。
 
-### 4.2 同工具检测
+## 5. `GeminiChat` 保存了什么历史
 
-```typescript
-interface LoopDetection {
-  toolCounts: Map<string, number>
-  maxToolCalls: number  // 默认为 3
-}
+`packages/core/src/core/geminiChat.ts` 维护的是完整对话历史，而不是只保留“用户消息 + 最终回答”：
 
-function detectToolLoop(tool: string, detection: LoopDetection): boolean {
-  const count = detection.toolCounts.get(tool) || 0
-  detection.toolCounts.set(tool, count + 1)
+- 模型文本
+- `functionCall`
+- `functionResponse`
+- 思考片段与补充内容
 
-  if (count + 1 > detection.maxToolCalls) {
-    return true  // 检测到循环
-  }
-  return false
-}
-```
+`getHistory(curated = true)` 会过滤掉无效或空的 model turn，减少把脏历史继续传给模型的概率。这也是当前 Gemini CLI 上下文治理里很关键的一步。
 
-### 4.3 处理策略
-
-```typescript
-function handleToolLoop(tool: string): string {
-  return `我注意到你连续多次使用 ${tool}，这可能陷入了循环。
-请确认你的意图，或提供更具体的指导。`
-}
-```
-
----
-
-## 5. 上下文窗口
-
-### 5.1 模型限制
-
-| 模型 | 上下文窗口 | 最大输出 |
-| --- | --- | --- |
-| gemini-2.0-flash | 32,768 | 8,192 |
-| gemini-2.0-flash-lite | 32,768 | 4,096 |
-| gemini-1.5-pro | 128,000 | 8,192 |
-| gemini-1.5-flash | 32,768 | 8,192 |
-
-### 5.2 上下文组装
-
-```typescript
-function assembleContext(
-  prompt: string,
-  history: Message[],
-  tools: Tool[],
-  budget: MessageBudget
-): Context {
-  const context: Context = {
-    system: buildSystemPrompt(tools),
-    history: [],
-    budget
-  }
-
-  // 从最新消息开始，优先保留最近的消息
-  for (let i = history.length - 1; i >= 0; i--) {
-    const msg = history[i]
-    const msgTokens = countTokens(msg)
-
-    if (context.budget.remainingTokens >= msgTokens) {
-      context.history.unshift(msg)
-      context.budget.remainingTokens -= msgTokens
-    } else {
-      break
-    }
-  }
-
-  return context
-}
-```
-
----
-
-## 6. 与 OpenCode 的上下文管理对比
-
-### 6.1 主要差异
-
-| 特性 | OpenCode | Gemini CLI |
-| --- | --- | --- |
-| 上下文窗口 | 200K | 32K-128K |
-| 软溢出 | 支持 | 无 |
-| 硬溢出 | 拒绝继续 | 简单截断 |
-| 循环检测 | doom_loop | 无 |
-| Compaction | 完整 | 无 |
-
-### 6.2 OpenCode 的软/硬溢出
-
-```typescript
-// OpenCode 的溢出处理
-if (contextUsage > softThreshold) {
-  // 软溢出：触发 compaction
-  context = await compactContext(context)
-} else if (contextUsage > hardThreshold) {
-  // 硬溢出：拒绝继续
-  throw new ContextOverflowError()
-}
-```
-
----
-
-## 7. 改进建议
-
-### 7.1 短期增强
-
-1. **软溢出机制**：接近阈值时触发压缩
-2. **循环检测**：实现 doom_loop 检测
-3. **智能截断**：保留关键上下文
-
-### 7.2 长期规划
-
-| 能力 | 实现建议 |
-| --- | --- |
-| Compaction | 实现消息摘要 |
-| 分布式上下文 | 多模型共享上下文 |
-| 智能预算分配 | 根据任务类型动态分配 |
-
----
-
-## 8. 关键源码锚点
+## 6. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Budget | `packages/core/src/context/budget.ts` | 预算计算 |
-| Truncation | `packages/core/src/context/truncation.ts` | 截断逻辑 |
-| Loop | `packages/core/src/context/loop-detection.ts` | 循环检测 |
-| 模型限制 | `packages/core/src/models.ts` | 模型配置 |
-
----
-
-## 9. 总结
-
-Gemini CLI 的上下文管理相比 OpenCode 较为基础：
-
-1. **消息预算**：基于模型窗口的简单计算
-2. **工具输出控制**：固定阈值的截断
-3. **循环检测**：基础的同工具计数
-4. **上下文组装**：从新到旧的贪婪填充
-
-缺少 OpenCode 的软/硬溢出机制、compaction 和 doom_loop 高级检测。对于简单场景，当前架构足以支撑。
-
----
-
-> 关联阅读：[03-agent-loop.md](./03-agent-loop.md) 了解 Agent 循环详情。
+| 分层记忆加载 | `packages/core/src/services/contextManager.ts` | 管 global / extension / project 三层记忆 |
+| 记忆发现 | `packages/core/src/utils/memoryDiscovery.ts` | 扫描、分类、去重 `GEMINI.md` |
+| 系统提示词记忆注入 | `packages/core/src/config/config.ts` | `getSystemInstructionMemory()` / `getSessionMemory()` |
+| 会话历史维护 | `packages/core/src/core/geminiChat.ts` | 保存完整历史并导出 curated history |
+| 自动压缩 | `packages/core/src/services/chatCompressionService.ts` | 压缩历史并处理大工具输出 |
+| 发送前保护 | `packages/core/src/core/client.ts` | 压缩、遮罩、溢出预警 |
+| 循环检测 | `packages/core/src/services/loopDetectionService.ts` | 工具重复、内容重复、LLM 辅助检测 |
+| token 上限 | `packages/core/src/core/tokenLimits.ts` | 当前默认模型窗口上限 |

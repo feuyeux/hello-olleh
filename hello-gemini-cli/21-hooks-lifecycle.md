@@ -4,84 +4,109 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 ---
 # Hooks 与生命周期：Gemini CLI 的事件回调与扩展点
 
-本文分析 Gemini CLI 的生命周期事件体系与扩展点设计。
+这一层在当前仓库里其实分成三套机制：`HookSystem`、`coreEvents`、`MessageBus`。旧版把它们混成一个“内部事件总线”，容易把职责写乱。
 
-## 1. Gemini CLI 生命周期概览
+## 1. 进程主链路上的关键阶段
 
-```
-进程启动
-  → 解析 CLI 参数（parseArgs）
-  → 加载配置（loadConfig）
-  → 初始化 GeminiAgent
-  → 启动 Ink TUI 或非交互模式
-      → 用户输入 → GeminiAgent.run()
-          → buildPrompt()
-          → GeminiClient.sendMessageStream()
-          → 流式接收 → 工具调用
-          → ToolExecutor.execute()
-          → 工具结果回传
-          → 循环直到完成
-  → 会话结束 → 持久化
-```
+按当前代码，更接近真实的主流程是：
 
-## 2. 可扩展的事件点
+1. CLI 入口初始化 `Config`
+2. 初始化 `HookSystem`、`MessageBus`、`GeminiClient`
+3. 启动交互式 TUI 或非交互式 CLI
+4. 用户输入进入 `GeminiClient` 主循环
+5. 主循环在模型调用前后、工具选择前后、压缩前后触发不同 hook
+6. 调度器通过 `MessageBus` 处理确认与策略
+7. UI 和宿主层通过 `coreEvents` 接收用户反馈、日志和状态更新
 
-### 2.1 工具调用生命周期
+这里的关键对象已经不是旧文里写的 `GeminiAgent`，而是 `GeminiClient`、`Scheduler`、`HookSystem` 这几层协作。
 
-```typescript
-// packages/core/src/tools/tool-executor.ts
-export class ToolExecutor {
-  async execute(toolCall: ToolCall): Promise<ToolResult> {
-    // 前置：权限检查
-    const approved = await this.policyEngine.check(toolCall);
-    if (!approved) return { error: 'denied' };
-    
-    // 执行
-    const result = await this.tools[toolCall.name].execute(toolCall.args);
-    
-    // 后置：输出蒸馏（大输出截断）
-    return this.distillationService.process(result);
-  }
-}
-```
+## 2. HookSystem 是显式的生命周期扩展点
 
-### 2.2 MessageBus 事件
+核心实现位于 `packages/core/src/hooks/hookSystem.ts`。
 
-Gemini CLI 的 `MessageBus` 是轻量级事件总线，TUI 组件通过它监听 Agent 状态变化：
+它不是单文件硬编码逻辑，而是由几部分协作：
 
-```typescript
-// packages/core/src/utils/message-bus.ts
-type GeminiEvent =
-  | { type: 'token'; content: string }
-  | { type: 'tool_start'; tool: string }
-  | { type: 'tool_end'; tool: string; duration_ms: number }
-  | { type: 'turn_complete'; usage: TokenUsage }
-  | { type: 'error'; error: Error };
+- `HookRegistry`
+- `HookRunner`
+- `HookAggregator`
+- `HookPlanner`
+- `HookEventHandler`
 
-messageBus.on('tool_start', (e) => updateUI(e));
-messageBus.on('turn_complete', (e) => saveSession(e));
-```
+从 `HookSystem` 暴露的方法看，当前已经有比较完整的 hook 生命周期：
 
-### 2.3 Session 生命周期
+- `fireSessionStartEvent`
+- `fireSessionEndEvent`
+- `firePreCompressEvent`
+- `fireBeforeAgentEvent`
+- `fireAfterAgentEvent`
+- `fireBeforeModelEvent`
+- `fireAfterModelEvent`
+- `fireBeforeToolSelectionEvent`
+- `fireBeforeToolEvent`
+- `fireAfterToolEvent`
+- `fireToolNotificationEvent`
 
-```typescript
-// 会话开始
-SessionManager.create() → 分配 session_id → 加载历史
+这说明 Gemini CLI 并不是“没有 hook，只能靠 MCP 间接扩展”，而是已经有一套正式的 hook 执行框架。
 
-// 每轮结束
-SessionManager.save(turn) → 序列化到磁盘
+## 3. `coreEvents` 负责全局可观察性
 
-// 会话结束
-SessionManager.finalize() → 写入最终状态
-```
+`packages/core/src/utils/events.ts` 里的 `coreEvents` 更像全局事件汇聚点，主要服务于 UI、日志和宿主反馈。
 
-## 3. 与 Claude Code Hooks 的对比
+当前 `CoreEvent` 至少包括：
 
-| 特性 | Gemini CLI | Claude Code |
-|------|------------|-------------|
-| **Hook 配置** | 无用户级 Hook 配置 | settings.json hooks 字段 |
-| **事件总线** | MessageBus（内部）| 无独立事件总线 |
-| **工具前后拦截** | PolicyEngine（内置）| PreToolCall/PostToolCall Hook |
-| **用户可扩展** | 通过 MCP 间接扩展 | ✅ 直接配置 Shell Hook |
+- `UserFeedback`
+- `ModelChanged`
+- `ConsoleLog`
+- `Output`
+- `MemoryChanged`
+- `McpClientUpdate`
+- `HookStart`
+- `HookEnd`
+- `AgentsRefreshed`
+- `RetryAttempt`
+- `ConsentRequest`
+- `McpProgress`
+- `QuotaChanged`
 
-Gemini CLI 目前没有向用户暴露类似 Claude Code `hooks` 的配置接口。事件回调主要服务于内部 TUI 更新和 Session 持久化，扩展能力通过 MCP 工具实现。
+因此，`coreEvents` 的职责重点是“广播状态变化给宿主层”，而不是承担工具确认或策略决策。
+
+## 4. `MessageBus` 负责确认与策略闭环
+
+工具确认和策略检查走的是另一条线：`packages/core/src/confirmation-bus/message-bus.ts`。
+
+`MessageBus` 的特点是：
+
+- 发布工具确认请求
+- 在发布时就调用 `PolicyEngine.check(...)`
+- 根据策略结果直接放行、拒绝或转交 UI 询问用户
+- 支持 request/response 模式
+- 支持 `derive(subagentName)`，为子代理生成作用域化消息总线
+
+所以它更像“工具确认总线”，而不是通用 UI event bus。
+
+## 5. 工具执行生命周期在调度器里闭合
+
+旧文里把 `ToolExecutor` 写在 `tools` 目录下已经不对。当前真实位置是：
+
+- `packages/core/src/scheduler/tool-executor.ts`
+- `packages/core/src/scheduler/scheduler.ts`
+
+调度器负责：
+
+- 工具选择后的实际执行
+- 确认与审批
+- 和 hook system / message bus 的衔接
+- 在需要时更新 UI 状态
+
+因此，“工具前后生命周期”这件事并不是单靠 `ToolExecutor` 一个类完成，而是 `Scheduler + ToolExecutor + HookSystem + MessageBus` 一起闭合。
+
+## 6. 关键源码锚点
+
+| 主题 | 代码锚点 | 说明 |
+| --- | --- | --- |
+| Hook 总入口 | `packages/core/src/hooks/hookSystem.ts` | 统一暴露生命周期 hook |
+| Hook 事件处理 | `packages/core/src/hooks/hookEventHandler.ts` | 各类 hook 的具体分发 |
+| 全局事件总线 | `packages/core/src/utils/events.ts` | UI / 宿主侧状态广播 |
+| 工具确认总线 | `packages/core/src/confirmation-bus/message-bus.ts` | 策略检查、确认请求、子代理作用域 |
+| 调度器 | `packages/core/src/scheduler/scheduler.ts` | 工具执行主编排 |
+| 工具执行器 | `packages/core/src/scheduler/tool-executor.ts` | 单次工具调用执行 |

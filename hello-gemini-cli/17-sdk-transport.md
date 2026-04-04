@@ -1,270 +1,101 @@
-# Gemini CLI SDK 与传输层：GeminiClient、@google/genai 与 Headless 模式
+# Gemini CLI SDK 与传输层：`GeminiClient`、`GeminiChat` 与 CLI 复用层
 
-本文档分析 Gemini CLI 的 SDK 架构与传输层实现。
+这部分最容易被写成“Gemini CLI 直接调 `@google/genai`，没有中间层”。这种说法不完整。当前仓库里确实没有像 Codex app-server 那样的独立宿主协议，但已经形成了清晰的内部复用层。
 
-## 1. SDK 与传输层在 Gemini CLI 里的定位
-
-### 1.1 基本架构
-
-Gemini CLI 采用相对简单的客户端-服务端架构：
-
-```mermaid
-%%{init: {'theme': 'neutral'}}%%
-flowchart LR
-    A[CLI / TUI] --> B["Config + GeminiClient"]
-    B --> C["Gemini API<br/>@google/genai"]
-    C --> D[模型响应]
-    D --> B
-```
-
-### 1.2 与其他项目的对比
+## 1. 真实分层
 
-| 特性 | Claude Code | Codex | OpenCode | Gemini CLI |
-| --- | --- | --- | --- | --- |
-| 多宿主 | CLI/SDK/Bridge | CLI/SDK/app-server | CLI/TUI/Web/Desktop | CLI |
-| 传输协议 | WebSocket/SSE/Hybrid | WebSocket/HTTPS | HTTP/SSE | HTTPS |
-| SDK 抽象 | QueryEngine | TypeScript SDK | HTTP API | @google/genai |
-| 远程模式 | Bridge System | app-server | Web/Desktop | 无 |
+当前主链路可以概括为：
 
----
-
-## 2. GeminiClient
+`interactiveCli.tsx / nonInteractiveCli.ts` -> `@google/gemini-cli-core` -> `GeminiClient` -> `GeminiChat` -> `@google/genai`
 
-### 2.1 接口定义
-
-`packages/core/src/core/gemini-client.ts`：
+这里的关键点有两个：
 
-```typescript
-class GeminiClient {
-  private config: Config
-  private model: string
+- `packages/core` 本身就是 CLI 复用层
+- `GeminiClient` 和 `GeminiChat` 并不只是 SDK 的简单薄包装，它们还负责会话恢复、工具声明、压缩、循环保护、IDE 上下文注入等行为
 
-  async sendMessage(
-    prompt: string,
-    options?: SendMessageOptions
-  ): Promise<GenerateContentResult>
-
-  async sendMessageStream(
-    prompt: string,
-    options?: SendMessageOptions
-  ): Promise<AsyncIterable<GenerateContentResponse>>
-}
+## 2. `GeminiChat` 是模型传输的底层适配器
 
-interface SendMessageOptions {
-  temperature?: number
-  maxTokens?: number
-  topP?: number
-  topK?: number
-}
-```
+`packages/core/src/core/geminiChat.ts` 是最贴近模型 API 的一层。
 
-### 2.2 配置管理
+文件开头已经写明：它基于 `js-genai` 的 chat 逻辑改造过，目的是绕过 function response 校验上的一个已知问题。换句话说，它不是“直接拿 SDK 原样调用”，而是带着兼容性修补的一层适配。
 
-```typescript
-interface GeminiCLIConfig {
-  apiKey: string
-  model: string
-  baseUrl?: string
-  temperature?: number
-  maxTokens?: number
-  timeout?: number
-}
-```
+这层负责：
 
----
+- 持有 `systemInstruction`
+- 持有 `tools`
+- 持有完整对话历史
+- 执行流式请求
+- 处理中途重试
+- 记录会话内容到 `ChatRecordingService`
 
-## 3. @google/genai SDK
+如果只把 Gemini CLI 描述成“CLI + @google/genai”，会漏掉这层非常关键的状态和协议兼容逻辑。
 
-### 3.1 初始化
+## 3. `GeminiClient` 是真正的会话编排器
 
-```typescript
-import { GoogleGenAI } from '@google/genai'
+`packages/core/src/core/client.ts` 中的 `GeminiClient` 负责把“模型聊天”升级成“可执行代理循环”：
 
-const ai = new GoogleGenAI({ apiKey: 'YOUR_API_KEY' })
-```
+- `startChat()`：基于当前工具集、system prompt 和历史启动 `GeminiChat`
+- `resumeChat()`：把恢复出来的历史重新挂回会话
+- `setTools()`：按模型能力重建函数声明
+- `updateSystemInstruction()`：记忆变化后更新 system prompt
+- `tryCompressChat()`：上下文膨胀时压缩历史
 
-### 3.2 非流式调用
+所以，如果要找 Gemini CLI 里最接近“内部 SDK 会话对象”的东西，应该看 `GeminiClient`，而不是想象中的 `gemini-client.ts`。
 
-```typescript
-const response = await ai.models.generateContent({
-  model: 'gemini-2.0-flash',
-  contents: [{ role: 'user', parts: [{ text: prompt }] }],
-  config: {
-    temperature: 0.7,
-    maxOutputTokens: 1000
-  }
-})
-```
+## 4. 交互模式和 headless 模式共用同一套核心层
 
-### 3.3 流式调用
+### 4.1 非交互模式
 
-```typescript
-async *sendMessageStream(
-  prompt: string
-): AsyncIterable<GenerateContentStreamResponse> {
-  const result = await this.client.models.generateContentStream({
-    model: this.model,
-    contents: [{ role: 'user', parts: [{ text: prompt }] }]
-  })
+`packages/cli/src/nonInteractiveCli.ts` 并不是另一套独立实现。它会：
 
-  for await (const chunk of result) {
-    yield chunk
-  }
-}
-```
+- 读取输入和恢复信息
+- 初始化 `GeminiClient`
+- 必要时 `resumeChat()`
+- 使用同一套 `Scheduler`
+- 处理 slash command 与 `@` 文件注入
+- 按文本或 JSON streaming 方式输出结果
 
----
+### 4.2 交互模式
 
-## 4. Headless 模式
+`packages/cli/src/interactiveCli.tsx` 则负责：
 
-### 4.1 Headless CLI
+- 启动 Ink TUI
+- 创建 `AppContainer`
+- 复用同一个 `Config`
+- 把同一套 core 能力接入 UI
 
-`packages/cli/src/non-interactive-cli.ts`：
+因此，Gemini CLI 的“多宿主”并不是 Web / Desktop / Server 那种多端，而是“交互式 TUI 与非交互式 CLI 共享一套 core runtime”。
 
-```typescript
-async function runNonInteractive(
-  prompt: string,
-  options: NonInteractiveOptions
-): Promise<string> {
-  const config = await initializeApp(options)
-  const client = new GeminiClient(config)
+## 5. 传输不只有模型 API 一条线
 
-  const response = await client.sendMessage(prompt, {
-    mode: 'non-interactive'
-  })
+如果只看模型调用，Gemini CLI 主要通过 `@google/genai` 工作。但仓库里其实还存在两类额外 transport：
 
-  return response.text
-}
-```
+- **MCP transport**：`stdio` / `SSE` / `Streamable HTTP`
+- **A2A transport**：远程 agent 调用
 
-### 4.2 使用场景
+不过需要区分：
 
-| 场景 | 使用方式 |
-| --- | --- |
-| CI/CD | `gemini --non-interactive --prompt "..."` |
-| 脚本自动化 | 通过 stdout 获取结果 |
-| 管道集成 | 与其他工具组合使用 |
+- 这些 transport 属于扩展系统与远程 agent 系统
+- 它们不是主模型请求的 transport 替身
 
----
+也就是说，Gemini CLI 当前没有统一的“全宿主总线协议”，但也绝不是只有一条 HTTP 请求链路。
 
-## 5. 与 Claude Code 的 QueryEngine 对比
+## 6. 当前边界
 
-### 5.1 Claude Code 的 QueryEngine
+按当前源码，更准确的结论是：
 
-Claude Code 的 `QueryEngine` 是更复杂的抽象：
+- 有内部复用层：`packages/core`
+- 有模型会话编排层：`GeminiClient`
+- 有底层聊天适配层：`GeminiChat`
+- 有交互与非交互两种 CLI 宿主
+- 没有独立的 app-server / browser / desktop runtime
 
-```typescript
-class QueryEngine {
-  query(request: QueryRequest): Promise<QueryResponse>
-  queryStream(request: QueryRequest): AsyncIterable<QueryEvent>
-  resume(sessionId: string): Promise<void>
-  getState(): AppState
-}
-```
-
-### 5.2 主要差异
-
-| 特性 | Claude Code QueryEngine | Gemini CLI GeminiClient |
-| --- | --- | --- |
-| Session 管理 | 完整 | 无 |
-| Resume | 支持 | 不支持 |
-| Context 管理 | 完整 | 基础 |
-| 流式支持 | HybridTransport | @google/genai 内置 |
-| Hook | 支持 | 不支持 |
-
----
-
-## 6. 传输层对比
-
-### 6.1 各项目传输方式
-
-| 项目 | 宿主传输 | 模型传输 |
-| --- | --- | --- |
-| Claude Code | WebSocket/SSE/HybridTransport | HTTP + SSE |
-| Codex | stdio / WebSocket | Responses WebSocket / HTTPS SSE |
-| OpenCode | HTTP / WebSocket | HTTP / SSE |
-| Gemini CLI | - | HTTPS / HTTP |
-
-### 6.2 Gemini CLI 的传输特点
-
-- **宿主传输**：相对简单，主要本地执行
-- **模型传输**：使用 @google/genai SDK 封装
-
----
-
-## 7. 多端复用
-
-### 7.1 当前状态
-
-Gemini CLI **不支持真正的多端复用**：
-
-- CLI 是唯一宿主
-- 无远程会话
-- 无 Bridge System
-- 无 SDK 抽象层
-
-### 7.2 与 OpenCode 的对比
-
-OpenCode 支持完整的多宿主：
-
-```mermaid
-%%{init: {'theme': 'neutral'}}%%
-flowchart LR
-    A[CLI] --> B[Server HTTP API]
-    B --> C[Runtime]
-    D[TUI] --> B
-    E[Web] --> B
-    F[Desktop] --> B
-    G[ACP] --> B
-```
-
-Gemini CLI 更接近单宿主架构。
-
----
-
-## 8. 改进建议
-
-### 8.1 缺失能力
-
-| 能力 | Claude Code | Codex | OpenCode | Gemini CLI |
-| --- | --- | --- | --- | --- |
-| 多宿主 | CLI/SDK/Bridge | CLI/SDK/app-server | CLI/TUI/Web/Desktop | CLI |
-| 远程会话 | Bridge System | app-server | Web/Desktop | 无 |
-| Session 持久化 | 完整 | 完整 | SQLite | 基础 JSON |
-| SDK 抽象 | QueryEngine | TypeScript SDK | HTTP API | @google/genai |
-| 混合传输 | HybridTransport | WebSocket | HTTP/SSE | HTTPS |
-
-### 8.2 改进建议
-
-1. **增强 Headless SDK**：提供更完整的 SDK 抽象
-2. **Session 持久化**：实现完整的 Session 管理和 Resume
-3. **远程模式**：支持远程会话和桥接
-4. **多端复用**：参考 OpenCode 的 Server 架构
-
----
-
-## 9. 关键源码锚点
+## 7. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| GeminiClient | `packages/core/src/core/gemini-client.ts` | 核心客户端 |
-| Headless | `packages/cli/src/non-interactive-cli.ts` | 非交互执行 |
-| Config | `packages/cli/src/config/config.ts` | 配置管理 |
-| API 调用 | `packages/core/src/core/gemini-chat.ts` | 聊天实现 |
-
----
-
-## 10. 总结
-
-Gemini CLI 的 SDK 和传输层采用相对简洁的方案：
-
-1. **GeminiClient**：基于 @google/genai SDK 的简单封装
-2. **Headless CLI**：支持非交互式远程执行
-3. **配置管理**：通过 Config 类统一管理
-4. **传输**：主要依赖 @google/genai SDK 的内置传输
-
-相比 Claude Code 的 QueryEngine、OpenCode 的多宿主 HTTP Server，Gemini CLI 的方案更简洁但功能有限。对于需要 SDK 抽象、多端复用和远程会话的场景，当前架构可能需要进一步增强。
-
----
-
-> 关联阅读：[03-agent-loop.md](./03-agent-loop.md) 了解 GeminiClient 如何驱动 Agent 循环。
+| 会话编排 | `packages/core/src/core/client.ts` | `GeminiClient`，负责会话、工具、压缩与恢复 |
+| 模型聊天适配 | `packages/core/src/core/geminiChat.ts` | 封装流式模型调用与历史维护 |
+| 非交互宿主 | `packages/cli/src/nonInteractiveCli.ts` | headless / pipeline 执行入口 |
+| 交互宿主 | `packages/cli/src/interactiveCli.tsx` | Ink TUI 启动入口 |
+| 会话恢复数据 | `packages/core/src/services/chatRecordingService.ts` | 持久化与恢复 conversation JSON |

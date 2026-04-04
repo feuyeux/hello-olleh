@@ -170,7 +170,7 @@ client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
 
 ## 9. MCP 为什么不是插件系统的另一套
 
-[28-extension-surface](./28-extension-surface.md) 提到 plugin 和 MCP 都是扩展入口，它们的本质区别在于：
+[23-bridge-system.md](./23-bridge-system.md) 已经提到 plugin 和 MCP 都是扩展入口，它们的本质区别在于：
 
 | 维度 | Plugin | MCP |
 | --- | --- | --- |
@@ -186,4 +186,3 @@ client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
 ## 10. 把 B13 压成一句代码级结论
 
 > OpenCode 的 MCP 实现是一个完整的二级扩展 runtime：它通过五状态状态机管理连接生命周期，用 OAuth 和动态注册处理远程认证，把 tool/prompt/resource 投影成 OpenCode 可调用的 runtime 对象，并通过 `ToolsChanged` 通知实现动态感知。
-

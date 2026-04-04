@@ -84,4 +84,4 @@ flowchart TD
 
 ---
 
-> 关联阅读：[00-gemini-cli_ko.md](./00-gemini-cli_ko.md) 回到分析主索引。
+> 关联阅读：[01-architecture.md](./01-architecture.md) 了解整体结构。

@@ -1,293 +1,112 @@
-# Gemini CLI Memory 系统：UserMemory、项目上下文与 GEMINI.md
+# Gemini CLI Memory 系统：`GEMINI.md` 分层记忆与 `save_memory` 工具
 
-本文档分析 Gemini CLI 的 Memory 持久化机制。
+当前 Gemini CLI 的 memory 机制，核心并不是一个通用的 JSON KV 存储，而是围绕 `GEMINI.md` 体系、层级发现和显式记忆写入工具展开。
 
-## 1. Memory 在 Gemini CLI 里的定位
+## 1. 记忆的主载体是 `GEMINI.md`
 
-### 1.1 基本架构
+从 `packages/core/src/tools/memoryTool.ts` 可以看到，默认上下文文件名是：
 
-Gemini CLI 的 Memory 系统包含两层：
+- `DEFAULT_CONTEXT_FILENAME = 'GEMINI.md'`
 
-1. **UserMemory**：用户级持久化记忆
-2. **GEMINI.md**：项目级上下文定义
+同时这个文件名还能通过 `setGeminiMdFilename()` 被改写，所以源码并不假定永远只有一个固定文件名。
 
-### 1.2 与其他项目的对比
+## 2. 当前 memory 是分层的
 
-| 特性 | Claude Code | Codex | OpenCode | Gemini CLI |
-| --- | --- | --- | --- | --- |
-| 持久记忆 | 支持 | 有限 | 完整 | 基础 |
-| 项目上下文 | CLAUDE.md | 无 | ProjectMemory | GEMINI.md |
-| 全局记忆 | 支持 | 无 | 支持 | 无 |
-| 自动摘要 | 支持 | 无 | 支持 | 无 |
+`packages/core/src/config/memory.ts` 定义了 `HierarchicalMemory`：
 
----
+- `global`
+- `extension`
+- `project`
 
-## 2. UserMemory
+`ContextManager` 会把发现到的记忆内容分别放进这三层，而不是简单拼成一大段字符串后到处传递。
 
-### 2.1 架构
+## 3. 记忆是怎么被发现的
 
-```typescript
-interface UserMemory {
-  // 读取记忆
-  get(key: string): Promise<string | null>
+核心逻辑在 `packages/core/src/utils/memoryDiscovery.ts`。
 
-  // 写入记忆
-  set(key: string, value: string): Promise<void>
+它会负责：
 
-  // 删除记忆
-  delete(key: string): Promise<void>
+- 扫描 `GEMINI.md` 及其别名
+- 区分 global / project 路径来源
+- 读取文件内容
+- 做文件身份去重，避免大小写路径或符号链接导致重复加载
+- 处理 import 场景
 
-  // 搜索记忆
-  search(query: string): Promise<MemoryEntry[]>
+在此基础上，`ContextManager.refresh()` 会把结果整理成：
 
-  // 列出所有记忆
-  list(): Promise<MemoryEntry[]>
-}
+- global memory
+- extension memory
+- project memory
 
-interface MemoryEntry {
-  key: string
-  value: string
-  createdAt: Date
-  updatedAt: Date
-  tags?: string[]
-}
-```
+如果开启 JIT context，`discoverContext()` 还会在访问某个具体路径时，再按需加载该路径向上到项目根目录之间的补充记忆。
 
-### 2.2 存储后端
+## 4. Memory 如何进入对话
 
-```typescript
-class JsonFileMemory implements UserMemory {
-  constructor(private filePath: string) {}
+这部分逻辑在 `packages/core/src/config/config.ts` 里非常明确：
 
-  async get(key: string): Promise<string | null> {
-    const memories = await this.load()
-    return memories[key]?.value || null
-  }
+- `getSystemInstructionMemory()`：提供给 system prompt 的记忆
+- `getSessionMemory()`：提供给首条会话上下文注入的记忆
+- `getUserMemory()`：对外暴露当前完整记忆视图
 
-  async set(key: string, value: string): Promise<void> {
-    const memories = await this.load()
-    memories[key] = {
-      value,
-      createdAt: memories[key]?.createdAt || new Date(),
-      updatedAt: new Date()
-    }
-    await this.save(memories)
-  }
+当 JIT context 打开时：
 
-  private async load(): Promise<Record<string, MemoryEntry>> {
-    if (!await fs.pathExists(this.filePath)) {
-      return {}
-    }
-    const content = await fs.readFile(this.filePath, 'utf-8')
-    return JSON.parse(content)
-  }
-}
-```
+- 只有 **global memory** 进 system prompt
+- **extension + project memory** 会被包进 `<loaded_context>`、`<extension_context>`、`<project_context>` 这类标签中，作为会话内容注入
 
-### 2.3 存储位置
+这点和“所有记忆统一塞到 system prompt”是不同的。
 
-| 位置 | 说明 |
-| --- | --- |
-| `~/.gemini/memory.json` | 用户级记忆 |
+## 5. `save_memory` 不是抽象数据库写入，而是改文件
 
----
+`packages/core/src/tools/memoryTool.ts` 的实现很直接：
 
-## 3. GEMINI.md
+- 读取当前全局 memory 文件
+- 在 `## Gemini Added Memories` 段落下追加条目
+- 需要时展示 diff 并请求确认
+- 最终把结果写回磁盘
 
-### 3.1 文件格式
+写入内容也会做简单清洗，例如把换行压成单行，避免把任意 markdown 结构直接注进去。
 
-```markdown
-# GEMINI.md
+所以更准确的描述应该是：
 
-## 项目描述
-这是一个用于...
+- Gemini CLI 有**显式的记忆写入工具**
+- 它的存储目标默认是全局 `GEMINI.md` 类文件
+- 它不是一个独立的 `memory.json` 键值数据库
 
-## 关键文件
-- `src/` - 源代码
-- `tests/` - 测试
-- `docs/` - 文档
+## 6. `/memory` 命令只是对底层能力的包装
 
-## 构建指令
-```bash
-npm install
-npm run build
-```
+`packages/core/src/commands/memory.ts` 提供了四类操作：
 
-## 约定
-- 使用 TypeScript
-- 遵循 ESLint 规则
-
-## 注意事项
-- 不要修改 `vendor/` 目录
-- 生产环境使用 `npm run start`
-```
+- `showMemory`
+- `addMemory`
+- `refreshMemory`
+- `listMemoryFiles`
 
-### 3.2 加载时机
-
-```typescript
-async function loadProjectContext(
-  projectPath: string
-): Promise<string | null> {
-  const geminiMdPath = path.join(projectPath, 'GEMINI.md')
-
-  if (!await fs.pathExists(geminiMdPath)) {
-    return null
-  }
-
-  return await fs.readFile(geminiMdPath, 'utf-8')
-}
-```
-
-### 3.3 注入到 Prompt
-
-```typescript
-function assembleContext(request: Request): AssembledContext {
-  const base = this.getBaseContext()
-
-  // 加载项目上下文
-  const projectContext = await loadProjectContext(request.projectPath)
-
-  return {
-    ...base,
-    system: [
-      base.system,
-      projectContext ? `\n\n## 项目上下文\n${projectContext}` : ''
-    ].join('\n')
-  }
-}
-```
-
----
-
-## 4. 与 Claude Code 的 Memory 对比
-
-### 4.1 Claude Code 的 Memory 分层
-
-Claude Code 有更完整的 Memory 系统：
-
-```typescript
-// Claude Code 的 Memory 分层
-interface MemorySystem {
-  // 工作记忆（短期）
-  workingMemory: WorkingMemory
-
-  // 项目记忆（中期）
-  projectMemory: ProjectMemory
-
-  // 持久记忆（长期）
-  persistentMemory: PersistentMemory
-
-  // 语义记忆
-  semanticMemory: SemanticMemory
-}
-```
-
-### 4.2 主要差异
-
-| 特性 | Claude Code | Gemini CLI |
-| --- | --- | --- |
-| 分层 | 完整 | 简单 |
-| 自动摘要 | 支持 | 无 |
-| 语义搜索 | 支持 | 无 |
-| 全局记忆 | 支持 | 无 |
-| 项目记忆 | CLAUDE.md | GEMINI.md |
-
-### 4.3 CLAUDE.md vs GEMINI.md
-
-| 特性 | CLAUDE.md | GEMINI.md |
-| --- | --- | --- |
-| 位置 | 项目根目录 | 项目根目录 |
-| 用途 | Agent 上下文 | 项目文档 |
-| 自动加载 | 是 | 是 |
-| 动态更新 | 支持 | 不支持 |
-
----
-
-## 5. Memory 使用流程
-
-### 5.1 写入流程
-
-```mermaid
-%%{init: {'theme': 'neutral'}}%%
-flowchart LR
-    A[Agent 判断需要记忆] --> B{记忆类型}
-    B -->|用户级| C[UserMemory.set]
-    B -->|项目级| D[更新 GEMINI.md]
-    C --> E[持久化到文件]
-    D --> F[写入磁盘]
-```
-
-### 5.2 读取流程
-
-```mermaid
-%%{init: {'theme': 'neutral'}}%%
-flowchart LR
-    A[启动 CLI] --> B[加载 GEMINI.md]
-    B --> C[加载 UserMemory]
-    C --> D[组装系统 Prompt]
-    D --> E[发送给 Gemini]
-```
-
-### 5.3 搜索流程
-
-```typescript
-async function searchMemory(
-  query: string
-): Promise<MemoryEntry[]> {
-  const memories = await this.memory.list()
-  const queryLower = query.toLowerCase()
-
-  return memories.filter(m =>
-    m.key.toLowerCase().includes(queryLower) ||
-    m.value.toLowerCase().includes(queryLower)
-  )
-}
-```
-
----
-
-## 6. 当前限制
-
-### 6.1 缺失的能力
-
-| 能力 | Claude Code 有 | Gemini CLI 状态 |
-| --- | --- | --- |
-| 自动摘要 | 支持 | 无 |
-| 语义搜索 | 支持 | 无 |
-| 全局记忆 | 支持 | 无 |
-| 动态更新 | 支持 | 无 |
-| 记忆分层 | 完整 | 简单 |
-
-### 6.2 改进建议
-
-1. **自动摘要**：当记忆接近阈值时自动摘要
-2. **语义搜索**：使用嵌入向量搜索
-3. **全局记忆**：支持跨项目记忆
-
----
-
-## 7. 关键源码锚点
+其中：
+
+- `/memory add ...` 最终会转成 `save_memory` 工具调用
+- `/memory refresh` 会重新扫描 memory 文件并更新 system instruction
+- `/memory list` 会列出当前实际生效的 memory 文件路径
+
+这说明 memory 不是“启动时读一次就结束”，而是支持运行时刷新和显式追加。
+
+## 7. 当前没有的能力
+
+和很多“长期记忆系统”想象图不同，当前 Gemini CLI 没有在这里实现：
+
+- 向量检索
+- 语义搜索
+- 结构化 KV 记忆库
+- 自动总结再写回 memory
+
+目前的核心仍然是“层级 markdown 记忆 + 显式工具写入 + 运行时重新装载”。
+
+## 8. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| UserMemory | `packages/core/src/memory/user-memory.ts` | 用户记忆 |
-| GEMINI.md | `packages/core/src/memory/project-context.ts` | 项目上下文 |
-| Memory 存储 | `packages/core/src/memory/json-memory.ts` | JSON 存储 |
-| 上下文组装 | `packages/core/src/prompts/context-assembler.ts` | 上下文组装 |
-
----
-
-## 8. 总结
-
-Gemini CLI 的 Memory 系统相比 Claude Code 较为基础：
-
-1. **UserMemory**：简单的 JSON 文件存储
-2. **GEMINI.md**：静态项目文档
-3. **无自动摘要**：需要手动管理
-4. **无语义搜索**：仅支持字符串匹配
-
-缺少 Claude Code 的自动摘要、语义搜索、全局记忆和动态更新等机制。对于简单的项目上下文，当前架构足以支撑。
-
----
-
-> 关联阅读：[12-prompt-system.md](./12-prompt-system.md) 了解 Prompt 组装详情。
+| 记忆结构 | `packages/core/src/config/memory.ts` | `HierarchicalMemory` 定义 |
+| 记忆发现 | `packages/core/src/utils/memoryDiscovery.ts` | 扫描、去重、分类 `GEMINI.md` |
+| 记忆装载 | `packages/core/src/services/contextManager.ts` | 管理 global / extension / project memory |
+| 配置侧注入 | `packages/core/src/config/config.ts` | system memory 与 session memory 分流 |
+| 记忆写入工具 | `packages/core/src/tools/memoryTool.ts` | `save_memory` 的真实实现 |
+| Slash 命令包装 | `packages/core/src/commands/memory.ts` | `/memory` 系列命令 |

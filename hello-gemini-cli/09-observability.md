@@ -206,9 +206,9 @@ messageBus.on('turn:end', async ({ turnId, result }) => {
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
 | MessageBus | `packages/core/src/confirmation-bus/message-bus.ts` | 事件总线 |
-| UIStateContext | `packages/cli/src/components/ui-state-context.tsx` | UI 状态 |
-| Storage | `packages/core/src/storage/storage.ts` | 持久化接口 |
-| TUI 渲染 | `packages/cli/src/app.tsx` | Ink 组件 |
+| UIStateContext | `packages/cli/src/ui/contexts/UIStateContext.tsx` | UI 状态 |
+| Storage | `packages/core/src/config/storage.ts` | 持久化根目录与路径接口 |
+| TUI 渲染 | `packages/cli/src/ui/App.tsx` | Ink 组件 |
 
 ---
 

@@ -163,4 +163,4 @@ Codex 的可观测性相比 OpenCode 较为基础：
 
 ---
 
-> 关联阅读：[06-thread-state-and-protocol.md](./06-thread-state-and-protocol.md) 了解线程状态管理。
+> 关联阅读：[05-state-management.md](./05-state-management.md) 了解线程状态、持久化与回放链路。

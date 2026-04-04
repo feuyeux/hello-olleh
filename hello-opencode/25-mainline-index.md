@@ -4,7 +4,7 @@ title: "执行主线索引：OpenCode 运行主线深度解析"
 ---
 # 执行主线索引：OpenCode 运行主线深度解析
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对。`10-17` 这组文档专门解释默认执行链上每一个函数交接点。
+> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对。当前仓库里，承载这条主线的实际文件编号已经调整；下文统一按现有文件名列出，避免继续引用旧编号。
 
 这条主线可以压成一句话：
 
@@ -14,17 +14,17 @@ title: "执行主线索引：OpenCode 运行主线深度解析"
 
 ---
 
-## 1. `10-17` 各篇分别卡在哪一跳
+## 1. 当前主线文档分别卡在哪一跳
 
 | 文件 | 主文件 | 核心交接点 | 这一跳回答什么 |
 | --- | --- | --- | --- |
-| [11-entry-transports.md](./11-entry-transports.md) | `src/index.ts`、`cli/cmd/run.ts`、`cli/cmd/tui/*`、桌面壳 | 入口怎样收束成同一套 HTTP/SSE contract | CLI/TUI/Web/Attach/ACP/Desktop 为什么最后都能打到同一个 server |
-| [12-server-routing.md](./12-server-routing.md) | `server/server.ts`、`server/routes/session.ts` | 请求怎样获得 `WorkspaceContext` / `Instance` | Hono app 怎样完成认证、实例绑定、路由装配并进入 `/session` |
-| [13-prompt-compilation.md](./13-prompt-compilation.md) | `session/prompt.ts` | `POST /session/:id/message` 怎样变成 durable user message | text/file/agent/subtask parts 怎样被编译、改写和落库 |
-| [14-session-loop.md](./14-session-loop.md) | `session/prompt.ts` | `loop()` 如何从 durable history 推导下一轮动作 | 并发占位、历史回放、subtask、compaction、overflow、normal round 怎样串成一台状态机 |
-| [15-stream-processor.md](./15-stream-processor.md) | `session/processor.ts` | `SessionProcessor.process()` 如何消费单轮流事件 | reasoning、text、tool、step、patch、error 怎样写回 durable history |
-| [16-llm-request.md](./16-llm-request.md) | `session/llm.ts`、`session/system.ts`、`provider/provider.ts` | 进入模型前的最后一次编译 | provider prompt、system、tools、headers、options、middleware 怎样拼起来 |
-| [17-durable-state.md](./17-durable-state.md) | `session/processor.ts`、`session/index.ts`、`message-v2.ts` | 模型流怎样写回 durable state | reasoning、text、tool、step、patch 事件怎样落库并重新投影给前端 |
+| [17-sdk-transport.md](./17-sdk-transport.md) | `src/index.ts`、`cli/cmd/run.ts`、`cli/cmd/tui/*`、桌面壳 | 入口怎样收束成同一套 HTTP/SSE contract | CLI/TUI/Web/Attach/ACP/Desktop 为什么最后都能打到同一个 server |
+| [26-server-routing.md](./26-server-routing.md) | `server/server.ts`、`server/routes/session.ts` | 请求怎样获得 `WorkspaceContext` / `Instance` | Hono app 怎样完成认证、实例绑定、路由装配并进入 `/session` |
+| [12-prompt-system.md](./12-prompt-system.md) | `session/prompt.ts` | `POST /session/:id/message` 怎样变成 durable user message | text/file/agent/subtask parts 怎样被编译、改写和落库 |
+| [27-session-loop.md](./27-session-loop.md) | `session/prompt.ts` | `loop()` 如何从 durable history 推导下一轮动作 | 并发占位、历史回放、subtask、compaction、overflow、normal round 怎样串成一台状态机 |
+| [28-stream-processor.md](./28-stream-processor.md) | `session/processor.ts` | `SessionProcessor.process()` 如何消费单轮流事件 | reasoning、text、tool、step、patch、error 怎样写回 durable history |
+| [29-llm-request.md](./29-llm-request.md) | `session/llm.ts`、`session/system.ts`、`provider/provider.ts` | 进入模型前的最后一次编译 | provider prompt、system、tools、headers、options、middleware 怎样拼起来 |
+| [10-session-resume.md](./10-session-resume.md) | `session/processor.ts`、`session/index.ts`、`message-v2.ts` | 模型流怎样写回 durable state | reasoning、text、tool、step、patch 事件怎样落库并重新投影给前端 |
 
 ---
 
@@ -95,11 +95,11 @@ sequenceDiagram
 
 | 主线节点 | 需要补哪篇专题稿 |
 | --- | --- |
-| 11 入口与 transport | [27-startup-config.md](./27-startup-config.md)、[24-infra.md](./24-infra.md) |
-| 13 输入编译 | [20-model.md](./20-model.md)、[21-context.md](./21-context.md) |
-| 14-15 编排主线 | [22-orchestration.md](./22-orchestration.md)、[23-resilience.md](./23-resilience.md) |
-| 16 模型请求 | [21-context.md](./21-context.md)、[33-design-philosophy.md](./33-design-philosophy.md)、[28-extension-surface.md](./28-extension-surface.md) |
-| 17 durable 写回 | [24-infra.md](./24-infra.md) |
+| 入口与 transport | [19-settings-config.md](./19-settings-config.md)、[31-infra.md](./31-infra.md) |
+| 输入编译 | [30-model.md](./30-model.md)、[11-context-management.md](./11-context-management.md) |
+| 编排主线 | [13-multi-agent.md](./13-multi-agent.md)、[18-resilience.md](./18-resilience.md) |
+| 模型请求 | [11-context-management.md](./11-context-management.md)、[34-design-philosophy.md](./34-design-philosophy.md)、[23-bridge-system.md](./23-bridge-system.md) |
+| durable 写回 | [31-infra.md](./31-infra.md) |
 
 原因很简单：主线稿回答“代码怎么走”，专题稿回答“为什么这条路能稳定成立”。
 
@@ -118,7 +118,7 @@ sequenceDiagram
 
 ## 6. 推荐阅读顺序
 
-1. 先读 [11-entry-transports.md](./11-entry-transports.md) 和 [12-server-routing.md](./12-server-routing.md)，把 transport 边界和 runtime 边界切开。
-2. 再读 [13-prompt-compilation.md](./13-prompt-compilation.md) 到 [15-stream-processor.md](./15-stream-processor.md)，把 `prompt -> loop -> processor` 的交接链吃透。
-3. 接着看 [16-llm-request.md](./16-llm-request.md) 和 [17-durable-state.md](./17-durable-state.md)，理解“请求怎样发出去、结果怎样落回来”。
-4. 最后回看 [20-model.md](./20-model.md) 到 [29-skill-system.md](./29-skill-system.md)，补对象模型、上下文工程、韧性、基础设施，以及启动配置和扩展系统。
+1. 先读 [17-sdk-transport.md](./17-sdk-transport.md) 和 [26-server-routing.md](./26-server-routing.md)，把 transport 边界和 runtime 边界切开。
+2. 再读 [12-prompt-system.md](./12-prompt-system.md) 到 [28-stream-processor.md](./28-stream-processor.md)，把 `prompt -> loop -> processor` 的交接链吃透。
+3. 接着看 [29-llm-request.md](./29-llm-request.md) 和 [10-session-resume.md](./10-session-resume.md)，理解“请求怎样发出去、结果怎样落回来”。
+4. 最后回看 [30-model.md](./30-model.md)、[11-context-management.md](./11-context-management.md)、[13-multi-agent.md](./13-multi-agent.md)、[18-resilience.md](./18-resilience.md)、[31-infra.md](./31-infra.md)、[19-settings-config.md](./19-settings-config.md) 和 [23-bridge-system.md](./23-bridge-system.md)，补对象模型、上下文工程、韧性、基础设施，以及启动配置和扩展系统。

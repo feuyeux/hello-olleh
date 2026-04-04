@@ -1,24 +1,50 @@
-*.js
+# Jekyll
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
 
-*.ps1
+# Ruby
+Gemfile.lock
+.bundle/
+vendor/bundle/
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
 .DS_Store
-.claude
-.idea
+
+# Upstream source code (external repos)
 codex/
 gemini-cli/
 openclaw/
 opencode/
 zeroclaw/
-nul
-*.drawio.bkp
-node_modules/
+
+# Build output
 dist/
 *.log
-.DS_Store
+node_modules/
+
+# Sensitive
 .env
 .env.*
 !.env.example
-.idea/
+nul
+
+# Scripts
+*.ps1
+*.js
+
+# Backup
+*.drawio.bkp
 *.pdf
 *.epub
+
+# Claude
+.claude/

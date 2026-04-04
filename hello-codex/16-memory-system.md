@@ -96,10 +96,10 @@ Codex 没有自动化的跨会话 Memory 存储。长期记忆由用户通过 `A
 
 | 特性 | Codex | Claude Code | Gemini CLI | OpenCode |
 |------|-------|-------------|-----------|---------|
-| **会话内 Memory** | memories pipeline（自动） | 无独立机制 | UserMemory | 无独立机制 |
-| **跨会话 Memory** | `AGENTS.md`（手动） | `CLAUDE.md` + memory files | `GEMINI.md` + UserMemory | Memory 系统 |
-| **自动持久化** | 部分（会话内提取） | 无 | 是（UserMemory） | 是（SQLite） |
-| **用户控制** | `AGENTS.md` 手动编辑 | `CLAUDE.md` 手动编辑 | `/remember` 命令 | 配置驱动 |
+| **会话内 Memory** | memories pipeline（自动） | 无独立机制 | 分层 `GEMINI.md` + JIT context | 无独立机制 |
+| **跨会话 Memory** | `AGENTS.md`（手动） | `CLAUDE.md` + memory files | 全局/项目 `GEMINI.md` + `save_memory` | Memory 系统 |
+| **自动持久化** | 部分（会话内提取） | 无 | 部分（文件持久化，非自动总结） | 是（SQLite） |
+| **用户控制** | `AGENTS.md` 手动编辑 | `CLAUDE.md` 手动编辑 | `/memory` + `GEMINI.md` | 配置驱动 |
 
 ## 5. 设计权衡
 

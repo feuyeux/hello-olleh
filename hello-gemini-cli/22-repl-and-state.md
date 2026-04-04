@@ -15,11 +15,11 @@ gemini [--prompt "..."] [--no-interactive]
 ```
 
 ```typescript
-// packages/cli/src/index.ts
-if (flags.noInteractive || !process.stdin.isTTY) {
-    await runHeadless(flags);
+// packages/cli/src/gemini.tsx（简化后的主分流）
+if (config.isInteractive()) {
+  await startInteractiveUI(...);
 } else {
-    render(<App flags={flags} />);  // Ink TUI
+  await runNonInteractive(...);
 }
 ```
 
@@ -38,10 +38,10 @@ if (flags.noInteractive || !process.stdin.isTTY) {
 
 ### 2.1 流式渲染
 
-Ink 基于 React 模型，通过 `useState` + `useEffect` 实现 token 级流式更新：
+Ink 基于 React 模型，通过 `AppContainer`、`UIStateContext` 和 `ui/components/messages/*` 实现增量更新。下面这段只用于说明渲染思路，不对应单一真实文件：
 
 ```typescript
-// packages/cli/src/ui/AssistantMessage.tsx
+// packages/cli/src/ui/AppContainer.tsx + ui/components/messages/*（示意）
 function AssistantMessage({ turnId }: { turnId: string }) {
   const [content, setContent] = useState('');
   
@@ -84,10 +84,10 @@ gemini --prompt "运行测试并修复失败" --yolo
 ```
 
 ```typescript
-// packages/cli/src/headless.ts
-export async function runHeadless(flags: CliFlags) {
+// packages/cli/src/nonInteractiveCli.ts（简化）
+export async function runNonInteractive(flags: CliFlags) {
   const prompt = flags.prompt ?? await readStdin();
-  const agent = new GeminiAgent(config);
+  const agent = new GeminiClient(config);
   
   for await (const event of agent.run(prompt)) {
     if (event.type === 'token') process.stdout.write(event.content);

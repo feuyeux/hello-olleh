@@ -102,7 +102,7 @@ transcript 的核心数据结构不是数组，而是：
 
 `compact boundary`、`snip`、`context collapse` 在运行时分别如何工作，完整说明见：
 
-- [07-context-management.md](./07-context-management.md)
+- [11-context-management.md](./11-context-management.md)
 
 ## 5. progress 被明确排除在持久化主链之外
 
