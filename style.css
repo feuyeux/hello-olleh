@@ -81,9 +81,9 @@ code, pre {
 
 /* ── Layout Wrapper ───────────────────────────────────────── */
 .page-wrapper {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 1rem;
 }
 
 /* ── Hero ─────────────────────────────────────────────────── */
@@ -191,8 +191,8 @@ code, pre {
 /* ── Chapter Grid ─────────────────────────────────────────── */
 .chapter-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.2rem;
   margin-bottom: 5rem;
 }
 
@@ -286,7 +286,7 @@ code, pre {
 /* ── CLI Grid ─────────────────────────────────────────────── */
 .cli-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
   margin-bottom: 5rem;
 }
@@ -382,9 +382,9 @@ code, pre {
 
 /* ── Markdown Content Override (for rendered pages) ───────── */
 .main-content {
-  max-width: 920px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2.5rem 1.2rem;
+  padding: 2rem 0.8rem;
   font-size: 1.15rem;
 }
 
@@ -550,9 +550,9 @@ code, pre {
 }
 
 .content-page .page-content {
-  max-width: 920px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 0 1.2rem;
+  padding: 0 0.8rem;
 }
 
 /* Page header with back link */
@@ -584,9 +584,9 @@ code, pre {
 
 /* ── Consistent Main Content ───────────────────────────────── */
 .main-content {
-  max-width: 920px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2.5rem 1.2rem;
+  padding: 2rem 0.8rem;
   font-size: 1.15rem;
 }
 
