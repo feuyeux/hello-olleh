@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "04 - 反馈控制"
 ---
 # 反馈控制横向对比

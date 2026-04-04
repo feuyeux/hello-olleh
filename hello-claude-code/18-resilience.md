@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "韧性机制：重试策略、Provider 故障转移与长会话稳定性"
 ---
 # 韧性机制：重试策略、Provider 故障转移与长会话稳定性

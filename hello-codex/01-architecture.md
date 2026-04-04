@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "架构全景：仓库形态、Crate/Package 拓扑、分层模型与核心抽象"
 ---
 # 架构全景：仓库形态、Crate/Package 拓扑、分层模型与核心抽象

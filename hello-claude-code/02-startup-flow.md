@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "启动流程详解"
 ---
 # 启动流程详解

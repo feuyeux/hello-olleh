@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "用户输入、Slash 命令与队列分发"
 ---
 # 用户输入、Slash 命令与队列分发

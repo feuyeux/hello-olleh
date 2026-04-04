@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "05 - 工具治理"
 ---
 # 工具治理对比

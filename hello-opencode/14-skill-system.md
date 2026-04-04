@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B10：SKILL，技能是怎样被发现、授权、加载并重新注入主链路的"
 ---
 # OpenCode 深度专题 B10：SKILL，技能是怎样被发现、授权、加载并重新注入主链路的

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "性能与代码质量：大仓库处理与架构评估"
 ---
 # 性能与代码质量：大仓库处理与架构评估

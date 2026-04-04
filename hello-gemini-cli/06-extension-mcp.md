@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "扩展性：MCP 与扩展机制的加载与隔离"
 ---
 # 扩展性：MCP 与扩展机制的加载与隔离

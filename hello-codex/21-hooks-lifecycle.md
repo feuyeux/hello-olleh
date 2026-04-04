@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Hooks 与生命周期：Codex 的事件拦截与扩展点"
 ---
 # Hooks 与生命周期：Codex 的事件拦截与扩展点

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 架构全景：目录结构、分层模型、核心抽象"
 ---
 # OpenCode 架构全景：目录结构、分层模型、核心抽象

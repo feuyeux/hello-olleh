@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B05：基础设施，SQLite、Storage、Bus、Instance 与事件投影"
 ---
 # OpenCode 深度专题 B05：基础设施，SQLite、Storage、Bus、Instance 与事件投影

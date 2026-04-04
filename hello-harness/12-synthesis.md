@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "12 - 综合裁定"
 ---
 # 综合裁定

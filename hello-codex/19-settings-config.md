@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "配置与设置：config.toml、环境变量与运行时策略"
 ---
 # 配置与设置：`config.toml`、环境变量与运行时策略

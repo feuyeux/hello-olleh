@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Hooks 与生命周期：Effect-ts 驱动的事件流与扩展点"
 ---
 # Hooks 与生命周期：Effect-ts 驱动的事件流与扩展点

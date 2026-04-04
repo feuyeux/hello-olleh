@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "工具系统与权限机制"
 ---
 # 工具系统与权限机制

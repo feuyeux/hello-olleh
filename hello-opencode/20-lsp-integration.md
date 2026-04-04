@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B07：LSP，代码理解、符号定位与诊断反馈是怎样接进主链路的"
 ---
 # OpenCode 深度专题 B07：LSP，代码理解、符号定位与诊断反馈是怎样接进主链路的

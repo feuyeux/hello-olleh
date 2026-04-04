@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Plugin 系统：MCP 作为 Codex 的主要插件机制"
 ---
 # Plugin 系统：MCP 作为 Codex 的主要插件机制

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Codex 项目初始化分析报告"
 ---
 # Codex 项目初始化分析报告

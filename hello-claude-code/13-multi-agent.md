@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "多代理、后台任务与远程会话"
 ---
 # 多代理、后台任务与远程会话

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Hooks 生命周期与运行时语义"
 ---
 # Hooks 生命周期与运行时语义

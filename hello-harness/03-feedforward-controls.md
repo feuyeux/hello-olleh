@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "03 - 前馈控制"
 ---
 # 前馈控制横向对比

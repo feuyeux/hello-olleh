@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 提示词三文件对比分析"
 ---
 # OpenCode 提示词三文件对比分析

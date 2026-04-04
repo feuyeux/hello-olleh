@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "桥接与集成：CLI、SDK、IDE Companion 与 A2A 接口"
 ---
 # 桥接与集成：CLI、SDK、IDE Companion 与 A2A 接口

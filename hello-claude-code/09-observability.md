@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "可观测性：日志、遥测与运行时状态追踪"
 ---
 # 可观测性：日志、遥测与运行时状态追踪

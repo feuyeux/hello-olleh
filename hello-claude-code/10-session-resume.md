@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Transcript 持久化、会话恢复与 resume 语义"
 ---
 # Transcript 持久化、会话恢复与 `resume` 语义

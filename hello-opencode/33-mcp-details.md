@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B13：MCP，Model Context Protocol 扩展系统的全部实现细节"
 ---
 # OpenCode 深度专题 B13：MCP，Model Context Protocol 扩展系统的全部实现细节

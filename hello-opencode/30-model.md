@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B01：Durable State 与对象模型"
 ---
 # OpenCode 深度专题 B01：Durable State 与对象模型

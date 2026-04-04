@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "宿主桥接：app-server 协议与多宿主复用"
 ---
 # 宿主桥接：`app-server` 协议与多宿主复用

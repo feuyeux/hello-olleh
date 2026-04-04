@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B14：设计哲学，固定骨架与晚绑定策略"
 ---
 # OpenCode 深度专题 B14：设计哲学，固定骨架与晚绑定策略

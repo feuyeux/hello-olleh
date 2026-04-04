@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "扩展性：MCP Server 集成、Plugin/Skill 加载与新增工具的修改点"
 ---
 # 扩展性：MCP Server 集成、Plugin/Skill 加载与新增工具的修改点

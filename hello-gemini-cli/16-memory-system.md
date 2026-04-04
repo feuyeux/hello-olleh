@@ -1,3 +1,7 @@
+---
+layout: content
+title: "Gemini CLI Memory 系统：`GEMINI.md` 分层记忆与 `save_memory` 工具"
+---
 # Gemini CLI Memory 系统：`GEMINI.md` 分层记忆与 `save_memory` 工具
 
 当前 Gemini CLI 的 memory 机制，核心并不是一个通用的 JSON KV 存储，而是围绕 `GEMINI.md` 体系、层级发现和显式记忆写入工具展开。

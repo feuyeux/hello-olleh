@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "状态管理：Thread/Turn/ThreadItem 模型、持久化与并发控制"
 ---
 # 状态管理：Thread/Turn/ThreadItem 模型、持久化与并发控制

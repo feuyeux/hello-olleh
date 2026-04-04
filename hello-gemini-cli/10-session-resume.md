@@ -1,3 +1,7 @@
+---
+layout: content
+title: "Gemini CLI Session 持久化与会话恢复"
+---
 # Gemini CLI Session 持久化与会话恢复
 
 本文档分析 Gemini CLI 的会话持久化与恢复机制。和 Codex / OpenCode 不同，它没有单独抽出一套 thread/session 协议，而是把“可恢复会话”落实为项目级 JSON 会话文件、路径计算服务和 `--resume` 解析链。

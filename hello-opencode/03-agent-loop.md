@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 核心执行循环：Session Loop、Prompt 编译、LLM 调用、流式响应处理"
 ---
 # OpenCode 核心执行循环：Session Loop、Prompt 编译、LLM 调用、流式响应处理

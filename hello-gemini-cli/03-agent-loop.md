@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "核心执行循环：Agent 决策链与 LLM 调用"
 ---
 # 核心执行循环：Agent 决策链与 LLM 调用

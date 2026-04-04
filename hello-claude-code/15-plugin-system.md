@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Plugin 系统：JS/TS 插件的加载、命令贡献与 Hooks 注册"
 ---
 # Plugin 系统：JS/TS 插件的加载、命令贡献与 Hooks 注册

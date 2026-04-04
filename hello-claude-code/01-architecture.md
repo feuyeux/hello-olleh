@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "src 工程架构全景"
 ---
 # `src` 工程架构全景

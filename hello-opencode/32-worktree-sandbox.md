@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B11：Worktree 与 Sandbox 机制"
 ---
 # OpenCode 深度专题 B11：Worktree 与 Sandbox 机制

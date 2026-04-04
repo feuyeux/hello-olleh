@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B03：高级编排，Subagent、Command、Compaction 怎样落回同一条主线"
 ---
 # OpenCode 深度专题 B03：高级编排，Subagent、Command、Compaction 怎样落回同一条主线

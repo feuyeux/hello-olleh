@@ -1,3 +1,7 @@
+---
+layout: content
+title: "Claude Code LSP 集成：代码理解与符号定位"
+---
 # Claude Code LSP 集成：代码理解与符号定位
 
 本文档分析 Claude Code 的 LSP（Language Server Protocol）集成情况。

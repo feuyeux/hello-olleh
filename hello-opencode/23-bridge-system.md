@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B09：扩展面，Plugin、MCP、Command、Skill 与 Custom Tool 怎样挂进固定骨架"
 ---
 # OpenCode 深度专题 B09：扩展面，Plugin、MCP、Command、Skill 与 Custom Tool 怎样挂进固定骨架

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "REPL 与交互层：多表面入口与统一 Server Contract"
 ---
 # REPL 与交互层：多表面入口与统一 Server Contract

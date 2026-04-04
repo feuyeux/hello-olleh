@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode A06：LLM.stream()"
 ---
 # OpenCode A06：`LLM.stream()`

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "07 - 可驾驭性"
 ---
 # 可驾驭性对比

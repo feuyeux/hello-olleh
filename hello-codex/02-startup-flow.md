@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "启动链路：入口点、CLI 参数解析、初始化顺序与 Subcommand 分发"
 ---
 # 启动链路：入口点、CLI 参数解析、初始化顺序与 Subcommand 分发

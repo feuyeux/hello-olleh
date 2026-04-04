@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode A02：Server 与路由边界"
 ---
 # OpenCode A02：Server 与路由边界

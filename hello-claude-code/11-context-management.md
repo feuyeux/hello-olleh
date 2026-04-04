@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Claude Code 的上下文管理系统"
 ---
 # Claude Code 的上下文管理系统

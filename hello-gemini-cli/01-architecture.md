@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "架构全景：Gemini CLI 的分层模型与核心抽象"
 ---
 # 架构全景：Gemini CLI 的分层模型与核心抽象

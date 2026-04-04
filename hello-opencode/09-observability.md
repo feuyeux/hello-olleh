@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B06：可观测性，日志、Bus 事件与运行时状态追踪"
 ---
 # OpenCode 深度专题 B06：可观测性，日志、Bus 事件与运行时状态追踪

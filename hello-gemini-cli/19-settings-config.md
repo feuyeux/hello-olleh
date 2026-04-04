@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "配置与设置：分层 settings、工作区信任与运行时装配"
 ---
 # 配置与设置：分层 settings、工作区信任与运行时装配

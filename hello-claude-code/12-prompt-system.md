@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Claude Code 的提示词系统"
 ---
 # Claude Code 的提示词系统

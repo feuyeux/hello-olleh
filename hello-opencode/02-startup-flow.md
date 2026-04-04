@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 启动链路：入口点、CLI/TUI/Web 多表面初始化、Server 启动顺序"
 ---
 # OpenCode 启动链路：入口点、CLI/TUI/Web 多表面初始化、Server 启动顺序

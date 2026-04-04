@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "韧性机制：请求重试、循环恢复与上下文减压"
 ---
 # 韧性机制：请求重试、循环恢复与上下文减压

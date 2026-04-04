@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 项目初始化分析报告"
 ---
 # OpenCode 项目初始化分析报告

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode A04：loop()"
 ---
 # OpenCode A04：`loop()`

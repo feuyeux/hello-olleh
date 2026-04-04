@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "错误处理与安全性：Agent 的自愈与边界防护"
 ---
 # 错误处理与安全性：Agent 的自愈与边界防护

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "上下文、Prompt 与轻量 Memory：AGENTS.md、ContextManager 与 memories pipeline 的拼装边界"
 ---
 # 上下文、Prompt 与轻量 Memory：`AGENTS.md`、`ContextManager` 与 memories pipeline 的拼装边界

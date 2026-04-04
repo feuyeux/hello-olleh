@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Skill 系统：Codex 的能力扩展与自定义指令机制"
 ---
 # Skill 系统：Codex 的能力扩展与自定义指令机制

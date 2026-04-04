@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 工具调用机制：Tool 注册、权限控制、执行闭环、结果写回 Durable State"
 ---
 # OpenCode 工具调用机制：Tool 注册、权限控制、执行闭环、结果写回 Durable State

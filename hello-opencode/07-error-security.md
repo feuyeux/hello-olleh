@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 错误处理与安全性：异常捕获、重试策略、认证鉴权、敏感信息隔离"
 ---
 # OpenCode 错误处理与安全性：异常捕获、重试策略、认证鉴权、敏感信息隔离

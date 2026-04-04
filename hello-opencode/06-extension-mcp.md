@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 扩展性：MCP 集成链路、Plugin 加载、新增工具的修改点"
 ---
 # OpenCode 扩展性：MCP 集成链路、Plugin 加载、新增工具的修改点

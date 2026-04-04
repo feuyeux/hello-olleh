@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "配置、恢复与安全边界：config.toml、resume/fork、approval 与 sandbox 的收束点"
 ---
 # 配置、恢复与安全边界：`config.toml`、`resume/fork`、approval 与 sandbox 的收束点
