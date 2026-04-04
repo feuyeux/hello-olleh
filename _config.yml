@@ -5,25 +5,11 @@ baseurl: "/hello-olleh"
 
 permalink: pretty
 
-# Directory configuration
-layouts_dir: pages/_layouts
-includes_dir: pages/_includes
-data_dir: pages/_data
-sass_dir: pages/_sass
-
 # GitHub Pages configuration
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-sitemap
-
-# Include files needed for GitHub Pages
-include:
-  - pages
-  - Gemfile
-  - CLAUDE.md
-  - AGENTS.md
-  - GEMINI.md
 
 markdown: kramdown
 kramdown:
