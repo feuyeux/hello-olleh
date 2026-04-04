@@ -89,9 +89,23 @@ code, pre {
 /* ── Hero ─────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  padding: 6rem 0 5rem;
+  padding: 4rem 0 3rem;
   text-align: center;
   overflow: hidden;
+}
+
+/* ── Harness Diagram ──────────────────────────────────────── */
+.harness-diagram {
+  text-align: center;
+  margin: 2rem auto;
+  max-width: 100%;
+}
+
+.harness-diagram img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px var(--shadow-warm);
 }
 
 .hero::before {

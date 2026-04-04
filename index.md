@@ -18,6 +18,9 @@ layout: default
 </div>
 
 <div class="page-wrapper">
+  <div class="harness-diagram">
+    <img src="{{ 'hello-harness.png' | relative_url }}" alt="Harness Engineering Framework" />
+  </div>
   <hr class="section-divider">
 
   <section>
