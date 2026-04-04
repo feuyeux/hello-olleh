@@ -129,7 +129,7 @@ title: "性能、缓存与长会话稳定性专题"
 
 上下文治理的完整展开已经单独整理为：
 
-- [07-context-management.md](./07-context-management.md)
+- [11-context-management.md](./11-context-management.md)
 
 本篇只保留与性能和稳定性直接相关的三条结论：
 

@@ -423,22 +423,22 @@ flowchart LR
 
 上下文管理现在独立成篇后，相关文档的分工可以明确为：
 
-- [06-query-and-request.md](./06-query-and-request.md)
+- [03-agent-loop.md](./03-agent-loop.md)
   负责 `query()` 主循环和调用时序，只保留上下文管理的入口位置
-- [16-performance-cache-context.md](./16-performance-cache-context.md)
+- [08-performance.md](./08-performance.md)
   负责性能、cache、GC、观测和长会话稳定性，只保留上下文管理的性能侧影响
-- [13-session-storage-and-resume.md](./13-session-storage-and-resume.md)
+- [10-session-resume.md](./10-session-resume.md)
   负责 transcript / resume 如何恢复 boundary、snip、collapse 结果
-- [14-prompt-system.md](./14-prompt-system.md)
+- [12-prompt-system.md](./12-prompt-system.md)
   负责 compact prompt 和相关二级 prompt 的提示词层设计
 
 如果需要抓主线，推荐阅读顺序是：
 
-1. 本篇 [07-context-management.md](./07-context-management.md)
-2. [06-query-and-request.md](./06-query-and-request.md)
-3. [16-performance-cache-context.md](./16-performance-cache-context.md)
-4. [13-session-storage-and-resume.md](./13-session-storage-and-resume.md)
-5. [14-prompt-system.md](./14-prompt-system.md)
+1. 本篇 [11-context-management.md](./11-context-management.md)
+2. [03-agent-loop.md](./03-agent-loop.md)
+3. [08-performance.md](./08-performance.md)
+4. [10-session-resume.md](./10-session-resume.md)
+5. [12-prompt-system.md](./12-prompt-system.md)
 
 ---
 

@@ -1,120 +1,151 @@
 ---
 layout: default
-title: "项目初始化分析报告：面向首次进入 Gemini CLI 仓库的总览"
+title: "项目初始化分析报告：首次进入 Gemini CLI 仓库时该先看什么"
 ---
-# 项目初始化分析报告：面向首次进入 Gemini CLI 仓库的总览
+# 项目初始化分析报告：首次进入 Gemini CLI 仓库时该先看什么
 
-本文是面向初次阅读 Gemini CLI 源码的读者准备的结构化摘要，对仓库形态、核心模块和阅读入口进行全景介绍。
+这份总览面向第一次进入 Gemini CLI 仓库的读者。重点不是罗列所有目录，而是先建立一套和当前源码一致的阅读地图。
 
 ## 1. 仓库基本信息
 
 | 项 | 值 |
-|----|-----|
-| **项目名** | Gemini CLI |
-| **分析版本** | v0.37.0-preview.1 |
-| **语言** | TypeScript（monorepo） |
-| **构建工具** | npm workspaces / esbuild |
-| **许可证** | Apache-2.0 |
-| **仓库地址** | https://github.com/google-gemini/gemini-cli |
+| --- | --- |
+| 项目名 | Gemini CLI |
+| 当前版本 | `0.36.0` |
+| 语言 | TypeScript Monorepo |
+| 运行时 | Node.js `>=20` |
+| 工作区 | `packages/*` |
 
-## 2. 仓库目录结构
+版本号来自仓库根目录的 `package.json`，不再沿用旧文档中的 `v0.37.0-preview.1`。
 
-```
+## 2. 先建立正确的包级视图
+
+当前仓库最重要的几个包如下：
+
+```text
 gemini-cli/
 ├── packages/
-│   ├── cli/            # CLI 入口、TUI 渲染、沙箱管理
-│   │   ├── src/
-│   │   │   ├── index.ts        # 入口点
-│   │   │   ├── ui/             # Ink-based TUI 组件
-│   │   │   ├── config/         # 配置加载
-│   │   │   └── sandbox/        # 沙箱隔离层
-│   │   └── package.json
-│   └── core/           # Agent 核心、工具系统、API 客户端
-│       ├── src/
-│       │   ├── core/
-│       │   │   ├── gemini-agent.ts  # Agent 主循环
-│       │   │   └── client.ts        # Gemini API 客户端
-│       │   ├── tools/               # 内置工具集
-│       │   └── utils/               # 工具函数
-│       └── package.json
-├── docs/               # 用户文档
-└── package.json        # 根 workspace 配置
+│   ├── cli/                    # 终端宿主、参数解析、TUI、启动链路
+│   ├── core/                   # 模型交互、调度、工具、策略、memory、hooks、agents
+│   ├── sdk/                    # 程序化接入 Gemini CLI 的 SDK
+│   ├── a2a-server/             # 实验性的远程 Agent 服务
+│   └── vscode-ide-companion/   # VS Code 侧桥接与 IDE 上下文服务
+├── integration-tests/          # 集成测试
+├── evals/                      # 行为评估
+└── package.json                # workspace 与根脚本
 ```
 
-## 3. 核心模块速览
+如果你第一次进入仓库，最容易犯的错误是把它看成“CLI 包 + 一点工具代码”。实际上 `packages/core` 才是主引擎，`packages/cli` 只是最常见的宿主。
 
-### 3.1 入口链路
+## 3. 启动链路应该怎么读
 
-```
-packages/cli/src/index.ts
-  → parseArgs()            # 解析 CLI 参数
-  → loadConfig()           # 加载配置
-  → GeminiAgent.create()   # 创建 Agent 实例
-  → App render()           # 启动 Ink TUI 或非交互模式
-```
+最稳妥的入口顺序是：
 
-### 3.2 Agent 主循环（`gemini-agent.ts`）
-
-```
-GeminiAgent.run(userInput)
-  → buildPrompt()
-  → GeminiClient.sendMessageStream()  # 调用 Gemini API
-  → 流式接收 → 解析 tool_calls
-  → ToolExecutor.execute(toolCall)
-  → 将结果作为 tool_result 加入上下文
-  → 循环直至模型不再调用工具
+```text
+packages/cli/src/gemini.tsx
+  -> packages/cli/src/config/settings.ts
+  -> packages/cli/src/config/config.ts
+  -> packages/cli/src/core/initializer.ts
+  -> interactiveCli / nonInteractiveCli / ACP
 ```
 
-### 3.3 工具系统（`packages/core/src/tools/`）
+这条链路大致负责：
 
-内置工具按功能分组：
+- 读取 settings 与工作区 trust
+- 解析 CLI 参数
+- 处理 worktree / sandbox / cleanup
+- 组装 `Config`
+- 决定进入交互式、非交互式还是其他宿主模式
 
-| 分组 | 工具 |
-|------|------|
-| 文件操作 | `read_file`, `write_file`, `edit_file`, `list_directory` |
-| 搜索 | `grep_search`, `glob_search` |
-| Shell | `run_shell_command` |
-| Web | `web_fetch`, `web_search` |
-| Notebook | `notebook_read`, `notebook_edit` |
+如果先跳进 `packages/core`，很容易看不清哪些能力是“引擎原生”，哪些是 CLI 宿主附加的。
 
-## 4. 关键设计决策
+## 4. 执行核心不叫 `gemini-agent.ts`
 
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| **UI 框架** | Ink（React-based TUI） | 组件化、可测试 |
-| **API 通信** | SSE 流式 | 实时响应体验 |
-| **沙箱** | bubblewrap（Linux） | 轻量、无需 VM |
-| **配置** | JSON + 环境变量 | 简单易读 |
-| **LSP** | 不内置，依赖工具 | 降低复杂度 |
-| **多代理** | 单 Agent 架构 | 避免协调开销 |
+旧文档里曾把一个名为 `gemini-agent.ts` 的文件当成主循环锚点，这已经不符合当前源码。更接近事实的核心链路是：
 
-## 5. 推荐阅读顺序
+| 角色 | 代码锚点 | 作用 |
+| --- | --- | --- |
+| 组合根 | `packages/core/src/config/config.ts` | 初始化工具、策略、skills、agents、MCP、客户端 |
+| 客户端编排 | `packages/core/src/core/client.ts` | 驱动 turn、压缩、loop recovery、resume |
+| 聊天状态 | `packages/core/src/core/geminiChat.ts` | 持有 history，处理流式请求与中途重试 |
+| 单轮执行 | `packages/core/src/core/turn.ts` | 把模型输出翻译成事件流 |
+| 工具调度 | `packages/core/src/scheduler/scheduler.ts`、`packages/core/src/scheduler/tool-executor.ts` | 审批、执行工具、回传结果 |
 
-**第一次接触（30 分钟）**：
-1. [01-architecture](../01-architecture/) — 分层模型全景
-2. [02-startup-flow](../02-startup-flow/) — 入口到运行模式
-3. [03-agent-loop](../03-agent-loop/) — 核心执行循环
+理解这五层，比围绕一个已经不存在的旧文件名建立心智模型更有用。
 
-**深入核心（2 小时）**：
-4. [04-tool-system](../04-tool-system/) — 工具注册与执行
-5. [05-state-management](../05-state-management/) — 会话状态
-6. [06-extension-mcp](../06-extension-mcp/) — MCP 扩展
-7. [11-context-management](../11-context-management/) — 上下文预算
+## 5. 当前架构有几个容易低估的点
 
-**专项研究**：
-- 安全边界 → [07-error-security](../07-error-security/)
-- 配置体系 → [19-settings-config](../19-settings-config/)
-- 韧性机制 → [18-resilience](../18-resilience/)
+### 5.1 它已经不是“单 Agent CLI”
 
-## 6. 与其他系统的定位对比
+当前仓库里已经有完整的 agents 子系统：
+
+- `packages/core/src/agents/registry.ts`
+- `packages/core/src/agents/subagent-tool.ts`
+- `packages/core/src/agents/local-executor.ts`
+- `packages/core/src/agents/remote-invocation.ts`
+
+这意味着 Gemini CLI 不再适合被概括成“单 Agent 架构”。更准确的说法是：
+
+- 主会话仍然是中心控制面
+- 但已经支持本地子代理和远程代理
+
+### 5.2 memory 与 prompt 已经分层
+
+不要把它理解成“系统提示 = 一大段模板字符串”。
+
+当前实现里至少有这些层次：
+
+- `ContextManager` 管 memory 与 JIT context
+- `PromptProvider` 管 prompt 片段组装
+- `snippets.ts` 管具体片段渲染
+- `GeminiClient` / `GeminiChat` 决定 memory 进入 system instruction 还是 session context
+
+### 5.3 仓库是多宿主，而不是只服务 CLI
+
+除了终端：
+
+- `sdk` 提供程序化接入
+- `vscode-ide-companion` 提供 IDE context
+- `a2a-server` 提供实验性远程服务
+
+这一点会直接影响你看代码时对“桥接”“协议”“状态同步”的理解。
+
+## 6. 推荐阅读顺序
+
+如果目的是先建立正确的 mental model，建议按下面顺序读：
+
+1. [01-architecture.md](./01-architecture.md)  
+2. [02-startup-flow.md](./02-startup-flow.md)  
+3. [03-agent-loop.md](./03-agent-loop.md)  
+4. [04-tool-system.md](./04-tool-system.md)  
+5. [11-context-management.md](./11-context-management.md)  
+6. [12-prompt-system.md](./12-prompt-system.md)  
+7. [13-multi-agent-remote.md](./13-multi-agent-remote.md)  
+8. [15-plugin-system.md](./15-plugin-system.md)  
+9. [17-sdk-transport.md](./17-sdk-transport.md)  
+10. [23-bridge-system.md](./23-bridge-system.md)
+
+如果只想快速定位“出问题该去哪看”：
+
+- 启动问题：`02-startup-flow`
+- 调度与工具：`03-agent-loop`、`04-tool-system`
+- 上下文膨胀：`11-context-management`、`18-resilience`
+- 集成面：`15-plugin-system`、`17-sdk-transport`、`23-bridge-system`
+
+## 7. 与其他系统的定位对比
 
 | 维度 | Gemini CLI | Claude Code | Codex | OpenCode |
-|------|-----------|-------------|-------|----------|
-| **语言** | TypeScript | TypeScript | Rust + TS | TypeScript (Bun) |
-| **UI** | Ink TUI | Ink TUI | React TUI | Web + TUI |
-| **上下文窗口** | 1M tokens | ~200K | 128K | 128K+ |
-| **LSP** | 无 | 有 | 部分 | 有 |
-| **沙箱** | bubblewrap | 工具级权限 | Docker | worktree |
-| **多代理** | 单 Agent | 支持子代理 | 单 Agent | 支持 |
+| --- | --- | --- | --- | --- |
+| 实现语言 | TypeScript | TypeScript | Rust + TS | TypeScript (Bun) |
+| 宿主形态 | CLI + SDK + IDE Companion + A2A | CLI + IDE Bridge | CLI + Rust core | Web + TUI |
+| 上下文策略 | 大窗口 + 压缩 + JIT context | Compact / memory / hooks | Thread + compact + memories | Session + summary + compaction |
+| 多代理 | 本地/远程子代理 | Sub-agents + tasks | Child-agents | Subagent 工具 |
+| 扩展面 | MCP + extension + skills + agents | Plugin + MCP + skills | MCP 为主 | Plugin + MCP + skill |
 
-Gemini CLI 的核心竞争力在于 **超大上下文窗口 + 简洁工具集 + 模块化 monorepo**，适合需要全量代码库感知的长任务场景。
+## 8. 一句话结论
+
+第一次读 Gemini CLI，最重要的不是记住所有文件名，而是先接受这三个事实：
+
+- `packages/core` 才是主引擎
+- 主循环核心已经是 `Config` + `GeminiClient` + `GeminiChat` + `Scheduler`
+- 当前仓库已经具备多宿主、多代理和多桥接面的形态

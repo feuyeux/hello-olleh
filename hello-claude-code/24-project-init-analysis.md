@@ -115,7 +115,7 @@ API Provider（Anthropic / Bedrock / Vertex）
 | **开放程度** | 部分（反编译）| 开源 | 开源 | 开源 |
 | **扩展体系** | 三层（Skill/Plugin/MCP）| MCP only | MCP | 多层 |
 | **LSP** | 原生集成 | 工具模拟 | 无 | 原生集成 |
-| **多代理** | Sub-agents + Tasks | Child-agents | 单 Agent | Subagent 工具 |
+| **多代理** | Sub-agents + Tasks | Child-agents | 本地/远程子代理 | Subagent 工具 |
 | **持久化** | JSONL Transcript | Thread（SQLite）| Session JSON | SQLite |
 | **特色** | 三层扩展 + Bridge | Rust 性能安全 | 超大上下文 | Effect-ts 函数式 |
 

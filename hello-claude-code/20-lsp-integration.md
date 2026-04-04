@@ -169,4 +169,4 @@ Claude Code **当前没有原生 LSP 集成**，主要通过：
 
 ---
 
-> 关联阅读：[10-mcp-system.md](./10-mcp-system.md) 了解 MCP 扩展机制。
+> 关联阅读：[26-mcp-system.md](./26-mcp-system.md) 了解 MCP 扩展机制。

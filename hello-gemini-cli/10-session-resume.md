@@ -1,220 +1,91 @@
 # Gemini CLI Session 持久化与会话恢复
 
-本文档分析 Gemini CLI 的 Session 持久化与恢复机制。
+本文档分析 Gemini CLI 的会话持久化与恢复机制。和 Codex / OpenCode 不同，它没有单独抽出一套 thread/session 协议，而是把“可恢复会话”落实为项目级 JSON 会话文件、路径计算服务和 `--resume` 解析链。
 
-## 1. Session 在 Gemini CLI 里的定位
+## 1. 这套机制在源码里的真实位置
 
-### 1.1 基本架构
+Gemini CLI 当前与 session 直接相关的主链主要由四个节点组成：
 
-Gemini CLI 的 Session 机制是轻量级的：
+| 组件 | 代码路径 | 作用 |
+| --- | --- | --- |
+| `Storage` | `packages/core/src/config/storage.ts` | 计算 `~/.gemini/`、项目级 `.gemini/` 与 `tmp/<project-hash>/` 等目录 |
+| `ChatRecordingService` | `packages/core/src/services/chatRecordingService.ts` | 持续把用户/模型/工具/思考摘要写入当前 conversation JSON 文件 |
+| `SessionSelector` | `packages/cli/src/utils/sessionUtils.ts` | 把 `--resume latest|<index>|<uuid>` 解析成具体会话文件 |
+| `gemini.tsx` | `packages/cli/src/gemini.tsx` | 启动时处理 `--resume`，把已选会话传给交互式或非交互式入口 |
 
-- Session 是聊天历史的容器
-- 通过 Storage 接口持久化
-- 支持通过 ID 恢复历史会话
+核心判断要先立住：
 
-### 1.2 与其他项目的对比
-
-| 特性 | Claude Code | Codex | OpenCode | Gemini CLI |
-| --- | --- | --- | --- | --- |
-| Session 管理 | 完整 | Thread 协议 | SQLite | JSON 文件 |
-| Resume | 支持 | 支持 | 支持 | 基础 |
-| Checkpoint | 支持 | Turn 粒度 | 支持 | 无 |
-| History | 完整 | 完整 | 完整 | 基础 |
+1. Gemini CLI 有“可恢复会话”，但没有 OpenCode 那种一等的 thread 协议对象。
+2. 会话恢复的基础单位是 conversation JSON 文件，而不是数据库里的 turn / item 表。
+3. Checkpoint 不是另一套 session 文件树，而是 Git 驱动的可选能力。
 
 ---
 
-## 2. Session 数据结构
+## 2. 会话文件是什么
 
-### 2.1 Session 接口
+`ChatRecordingService` 的注释和 `initialize()` 实现已经把存储形态说得很清楚：会话以 JSON 文件存放在 `~/.gemini/tmp/<project-hash>/chats/` 下。新会话会创建一个带时间戳和 session 前缀的文件；恢复会话时则直接复用已有文件。
 
-```typescript
-interface Session {
-  id: string
-  createdAt: Date
-  updatedAt: Date
-  messages: Message[]
-  metadata: SessionMetadata
-}
+就源码可证实的字段看，会话文件至少包含：
 
-interface SessionMetadata {
-  model?: string
-  temperature?: number
-  tools?: string[]
-}
-```
+- `sessionId`
+- `projectHash`
+- `startTime`
+- `lastUpdated`
+- `messages`
+- `kind`（`main` 或 `subagent`）
 
-### 2.2 Message 结构
-
-```typescript
-interface Message {
-  id: string
-  role: 'user' | 'model'
-  parts: Part[]
-  createdAt: Date
-}
-
-type Part = TextPart | ToolCallPart | ToolResultPart
-
-interface TextPart {
-  type: 'text'
-  text: string
-}
-
-interface ToolCallPart {
-  type: 'tool-call'
-  tool: string
-  input: Record<string, any>
-}
-
-interface ToolResultPart {
-  type: 'tool-result'
-  tool: string
-  output: any
-}
-```
+这里最重要的一点是：Gemini CLI 持久化的重点不是抽象 `Session` 类，而是 **ConversationRecord**。也就是说，恢复时更多是在“重新拿回一份对话记录”，而不是重建一个复杂的运行时对象图。
 
 ---
 
-## 3. Storage 接口
+## 3. `--resume` 真实是怎么走的
 
-### 3.1 Storage 抽象
+启动恢复链路主要发生在 `packages/cli/src/gemini.tsx:577-609` 附近：
 
-```typescript
-interface Storage {
-  // 保存会话
-  saveSession(session: Session): Promise<void>
+1. 如果传入 `argv.resume`，先创建 `SessionSelector(config)`。
+2. `resolveSession()` 负责把 `latest`、列表序号或显式会话标识解析成具体文件。
+3. CLI 把结果包装成 `resumedSessionData = { conversation, filePath }`。
+4. 随后调用 `config.setSessionId(...)`，确保后续录制继续写回同一个会话。
+5. 交互式路径把 `resumedSessionData` 传给 `startInteractiveUI(...)`；非交互路径则继续沿当前 CLI 入口传递。
 
-  // 加载会话
-  loadSession(id: string): Promise<Session | null>
+这意味着 Gemini CLI 的“恢复”更像：
 
-  // 列出所有会话
-  listSessions(): Promise<SessionSummary[]>
+> 选择一份已有 conversation 文件，然后让当前运行时继续沿这份记录追加写入。
 
-  // 删除会话
-  deleteSession(id: string): Promise<void>
-}
-```
+而不是：
 
-### 3.2 JsonStorage 实现
-
-```typescript
-class JsonStorage implements Storage {
-  constructor(private dir: string) {}
-
-  async saveSession(session: Session): Promise<void> {
-    const path = `${this.dir}/${session.id}.json`
-    await fs.writeFile(path, JSON.stringify(session, null, 2))
-  }
-
-  async loadSession(id: string): Promise<Session | null> {
-    const path = `${this.dir}/${id}.json`
-    if (!await fs.pathExists(path)) return null
-    const content = await fs.readFile(path, 'utf-8')
-    return JSON.parse(content)
-  }
-
-  async listSessions(): Promise<SessionSummary[]> {
-    const files = await fs.readdir(this.dir)
-    const sessions = await Promise.all(
-      files
-        .filter(f => f.endsWith('.json'))
-        .map(f => this.loadSession(f.replace('.json', '')))
-    )
-    return sessions.map(s => ({
-      id: s.id,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-      messageCount: s.messages.length
-    }))
-  }
-}
-```
+> 先恢复一个独立的 session runtime，再把新请求附着上去。
 
 ---
 
-## 4. 会话恢复流程
+## 4. 持久化不是一次性保存，而是增量录制
 
-### 4.1 恢复时机
+`ChatRecordingService` 会在对话进行时持续写入：
 
-| 时机 | 触发条件 |
-| --- | --- |
-| 启动时 | 检测到已有 session ID |
-| resume 参数 | 用户指定 `--resume <session-id>` |
-| 对话中 | Session 被持久化后 |
+- 用户消息
+- Gemini 模型消息
+- 工具调用与结果
+- token 使用统计
+- thought / reasoning 摘要
 
-### 4.2 恢复流程
-
-```mermaid
-%%{init: {'theme': 'neutral'}}%%
-flowchart LR
-    A[启动 CLI] --> B{有 --resume?}
-    B -->|是| C[loadSession]
-    B -->|否| D{有 last-session?}
-    C --> E[重建 Turn 历史]
-    D -->|是| F[loadSession by ID]
-    D -->|否| G[新建 Session]
-    E --> H[恢复上下文]
-    F --> H
-    G --> H
-```
-
-### 4.3 上下文重建
-
-```typescript
-async function resumeSession(id: string): Promise<Context> {
-  const session = await storage.loadSession(id)
-  if (!session) throw new Error(`Session ${id} not found`)
-
-  // 重建消息历史
-  const messages = session.messages.map(m => ({
-    role: m.role,
-    parts: m.parts
-  }))
-
-  // 重建工具状态
-  const tools = session.metadata.tools || []
-
-  return { messages, tools, sessionId: id }
-}
-```
+所以从工程形态看，Gemini CLI 的 session 更接近“聊天录音带”，而不是“数据库事务日志”。这也是它和 OpenCode / Codex 最大的结构差异之一。
 
 ---
 
-## 5. Checkpoint 机制
+## 5. Checkpoint 需要单独澄清
 
-### 5.1 Checkpoint 时机
+旧版文档把 Gemini CLI 写成“没有 checkpoint”，这个说法过于绝对。当前源码里确实存在 **可选的 checkpointing 能力**，但它的形态不是 session 子目录，而是围绕 Git 恢复建立：
 
-| 时机 | 触发 |
-| --- | --- |
-| Turn 结束 | 每个 Turn 完成 |
-| 工具调用后 | 工具返回结果 |
-| 定期 | 5 分钟间隔 |
+- 配置入口：`general.checkpointing.enabled`
+- 核心服务：`packages/core/src/services/gitService.ts`
+- 恢复命令：`packages/core/src/commands/restore.ts`
+- CLI / ACP 暴露：`packages/cli/src/acp/commands/restore.ts`
 
-### 5.2 Checkpoint 数据
+因此更准确的表述应该是：
 
-```typescript
-interface Checkpoint {
-  id: string
-  sessionId: string
-  turnId: string
-  createdAt: Date
-  messages: Message[]
-  context: {
-    usedTokens: number
-    remainingTokens: number
-  }
-}
-```
-
-### 5.3 与 Storage 的关系
-
-```
-Session (持久化文件)
-├── metadata.json (会话元信息)
-├── checkpoint-001.json (Turn 1 检查点)
-├── checkpoint-002.json (Turn 2 检查点)
-└── ...
-```
+- Gemini CLI **有 checkpointing 能力**
+- 但它不是 OpenCode 那种 durable turn/state 体系
+- 它主要服务于“恢复工作区变更”，而不是构建完整的 session 协议
 
 ---
 
@@ -226,29 +97,13 @@ Session (持久化文件)
 | --- | --- | --- |
 | 存储后端 | SQLite | JSON 文件 |
 | Session 协议 | 完整 Thread 协议 | 简化版 |
-| Checkpoint | 完整 | 无 |
+| Checkpoint | 完整 durable state | 有，但以 Git/restore 为主 |
 | 并发控制 | 支持多线程 | 无 |
 | 远程 Session | 支持 | 无 |
 
-### 6.2 OpenCode 的 Thread 协议
+### 6.2 差别不在“能不能恢复”，而在抽象层次
 
-OpenCode 有更完整的 Session 管理：
-
-```typescript
-// OpenCode 的 Thread 结构
-interface Thread {
-  id: string
-  turns: Turn[]
-  items: ThreadItem[]
-  metadata: ThreadMetadata
-}
-
-interface Turn {
-  id: string
-  status: 'pending' | 'running' | 'completed' | 'failed'
-  items: TurnItem[]
-}
-```
+OpenCode 把 session/thread 做成 durable runtime 的中心对象；Gemini CLI 则把 conversation 录制、resume 参数解析和 Git checkpoint 拆散在几个服务里。两者都能“继续上次工作”，但工程抽象完全不同。
 
 ---
 
@@ -258,16 +113,16 @@ interface Turn {
 
 | 能力 | OpenCode 有 | Gemini CLI 状态 |
 | --- | --- | --- |
-| Checkpoint | 完整 | 无 |
+| Checkpoint | 完整 | 有，但不是 thread 级协议 |
 | 并发控制 | 多 Thread | 无 |
 | 远程 Session | app-server | 无 |
-| Session 协议 | 标准化 | 简化版 |
+| Session 协议 | 标准化 | 未独立建模为协议对象 |
 | 自动恢复 | 完整 | 基础 |
 
 ### 7.2 改进建议
 
-1. **实现 Checkpoint**：定期保存检查点
-2. **增强恢复**：支持部分失败恢复
+1. **增强恢复语义**：把 conversation resume 与 Git checkpoint 的边界写得更清楚
+2. **补齐中断后恢复**：支持更细粒度的部分失败恢复
 3. **并发控制**：支持多 Session 并行
 
 ---
@@ -276,23 +131,16 @@ interface Turn {
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Storage | `packages/core/src/storage/storage.ts` | 存储接口 |
-| JsonStorage | `packages/core/src/storage/json-storage.ts` | JSON 实现 |
-| Session | `packages/core/src/session.ts` | Session 类型 |
-| Checkpoint | `packages/core/src/checkpoint.ts` | 检查点机制 |
+| Storage | `packages/core/src/config/storage.ts` | 目录与文件路径接口 |
+| SessionSelector | `packages/cli/src/utils/sessionUtils.ts` | `--resume` 解析 |
+| ChatRecordingService | `packages/core/src/services/chatRecordingService.ts` | conversation 录制与续写 |
+| Checkpoint | `packages/core/src/services/gitService.ts`, `packages/core/src/commands/restore.ts` | Git 驱动的恢复能力 |
 
 ---
 
 ## 9. 总结
 
-Gemini CLI 的 Session 机制相比 OpenCode 较为基础：
-
-1. **Session**：JSON 文件存储的简化版
-2. **Storage 接口**：本地文件系统
-3. **恢复流程**：基于 ID 的简单恢复
-4. **Checkpoint**：当前未实现
-
-缺少 OpenCode 的 Checkpoint、Thread 协议和并发控制机制。对于简单场景，当前架构足以支撑。
+Gemini CLI 的 session 机制本质上是“conversation 文件 + resume 解析 + Git checkpoint”的组合，而不是一套独立的 thread runtime。它已经具备可恢复会话和可选 checkpointing，但在协议化程度、并发控制和远程 session 方面，仍明显轻于 OpenCode。
 
 ---
 

@@ -4,7 +4,7 @@ title: "上下文、Prompt 与轻量 Memory：AGENTS.md、ContextManager 与 mem
 ---
 # 上下文、Prompt 与轻量 Memory：`AGENTS.md`、`ContextManager` 与 memories pipeline 的拼装边界
 
-这篇补充稿对应 Claude Code 的 `07-context-management`、`14-prompt-system`、`15-memory-system`，也对应 Gemini CLI 的 `20-context-prompt-and-memory` 与 OpenCode 的 `21-context`、`31-memory`。Codex 主线文档已经把 `run_turn()`、`build_prompt()` 和线程协议讲清楚，但如果要和另外三套文档横向对照，仍然需要单独把“模型到底看到了什么”拎出来看。
+这篇补充稿对应 Claude Code 的上下文/提示词/记忆主题，也对应 Gemini CLI 与 OpenCode 的同类专题。这里直接引用当前仓库里的实际文件名，避免继续沿用旧编号。Codex 主线文档已经把 `run_turn()`、`build_prompt()` 和线程协议讲清楚，但如果要和另外三套文档横向对照，仍然需要单独把“模型到底看到了什么”拎出来看。
 
 ## 1. 这条链真正由哪三层组成
 
@@ -88,6 +88,6 @@ Codex 也有 memory，但它的工程形态和 Claude Code、Gemini CLI、OpenCo
 
 ## 6. 对应阅读
 
-- Claude Code: [07-context-management.md](../hello-claude-code/07-context-management.md), [14-prompt-system.md](../hello-claude-code/14-prompt-system.md), [15-memory-system.md](../hello-claude-code/15-memory-system.md)
-- Gemini CLI: [20-context-prompt-and-memory.md](../hello-gemini-cli/20-context-prompt-and-memory.md)
-- OpenCode: [21-context.md](../hello-opencode/21-context.md), [31-memory.md](../hello-opencode/31-memory.md), [34-prompt-diff.md](../hello-opencode/34-prompt-diff.md)
+- Claude Code: [11-context-management.md](../hello-claude-code/11-context-management.md), [12-prompt-system.md](../hello-claude-code/12-prompt-system.md), [16-memory-system.md](../hello-claude-code/16-memory-system.md)
+- Gemini CLI: [11-context-management.md](../hello-gemini-cli/11-context-management.md), [12-prompt-system.md](../hello-gemini-cli/12-prompt-system.md), [16-memory-system.md](../hello-gemini-cli/16-memory-system.md)
+- OpenCode: [11-context-management.md](../hello-opencode/11-context-management.md), [12-prompt-system.md](../hello-opencode/12-prompt-system.md), [16-memory-system.md](../hello-opencode/16-memory-system.md)

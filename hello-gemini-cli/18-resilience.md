@@ -1,119 +1,144 @@
 ---
 layout: default
-title: "韧性机制：重试策略、错误归一化与自愈路径"
+title: "韧性机制：请求重试、循环恢复与上下文减压"
 ---
-# 韧性机制：重试策略、错误归一化与自愈路径
+# 韧性机制：请求重试、循环恢复与上下文减压
 
-本文档分析 Gemini CLI 的韧性系统，涵盖重试策略、错误归一化与会话层自愈。
+Gemini CLI 的韧性并不集中在单一的“恢复管理器”里，而是分散在模型请求、流式输出、循环检测、上下文压缩和会话持久化几条链路中协同实现。
 
-## 1. 韧性在 Gemini CLI 中的定位
+## 1. 韧性的实际分层
 
-Gemini CLI 的韧性机制分散在三个层次：
+| 层次 | 代码锚点 | 主要职责 |
+| --- | --- | --- |
+| 请求重试 | `packages/core/src/utils/retry.ts`、`packages/core/src/core/client.ts` | 处理 429、499、5xx 和部分网络错误 |
+| 流式恢复 | `packages/core/src/core/geminiChat.ts` | 处理中途断流、无效内容、异常 tool call |
+| 循环自愈 | `packages/core/src/services/loopDetectionService.ts`、`packages/core/src/core/client.ts` | 检测卡死模式并向模型注入恢复反馈 |
+| 上下文减压 | `packages/core/src/services/chatCompressionService.ts`、`packages/core/src/services/toolOutputMaskingService.ts` | 压缩旧历史、截断大工具输出、防止上下文爆炸 |
+| 持久化恢复 | `packages/core/src/services/chatRecordingService.ts`、`packages/cli/src/ui/hooks/useSessionResume.ts` | 会话落盘、恢复聊天、可选 checkpoint 回滚 |
 
-| 层次 | 位置 | 关键机制 |
-|------|------|---------|
-| **网络/API 层** | `GeminiClient.generateContent()` | 指数退避重试、速率限制降级 |
-| **Agent 层** | `GeminiAgent.run()` | 工具执行失败自愈、坏流恢复 |
-| **会话层** | `SessionManager` | 会话持久化、断线续接 |
+## 2. API 请求层的重试
 
-## 2. API 层重试策略
+Gemini CLI 的通用重试工具是 `retryWithBackoff()`，默认参数定义在 `packages/core/src/utils/retry.ts`：
 
-### 2.1 `retryWithBackoff`
+- 默认最多 `10` 次尝试
+- 初始延迟 `5000ms`
+- 最大延迟 `30000ms`
+- 默认重试 429、499、5xx，以及部分瞬时网络错误
 
-```typescript
-// packages/core/src/core/client.ts
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries = 3,
-  baseDelayMs = 1000
-): Promise<T> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (!isRetriable(error) || attempt === maxRetries) throw error;
-      await sleep(baseDelayMs * Math.pow(2, attempt));
-    }
-  }
-}
+`GeminiClient.generateContent()` 会把模型请求包装进这套重试逻辑，并额外挂上：
+
+- `onPersistent429`：持续配额失败时触发 fallback 处理
+- `onValidationRequired`：需要用户验证账号或配额时中断并交给外层处理
+- `onRetry`：把重试事件发给 `coreEvents`，让 UI 或日志层可见
+
+这里的重点不是“简单重试三次”，而是把配额、认证和可用性策略一起纳入重试决策。
+
+## 3. 流式输出层的恢复
+
+`GeminiChat.sendMessageStream()` 还处理另一类问题：请求已经发出，但流式响应在中途坏掉。
+
+源码里专门定义了 `MID_STREAM_RETRY_OPTIONS`：
+
+- 总共 `4` 次尝试（首次 + 3 次中途重试）
+- 初始延迟 `1000ms`
+- 指数退避
+
+它要恢复的不只是网络断流，还包括：
+
+- 无 finish reason 的异常响应
+- 没有有效文本的响应
+- 格式不完整或不符合预期的 function call
+- 模型返回了不该出现的工具调用形态
+
+因此 Gemini CLI 的“流式韧性”不是 UI 层补丁，而是 `GeminiChat` 这一层自己负责把坏流修到一个可继续消费的状态。
+
+## 4. 循环检测与自愈
+
+Gemini CLI 不是放任 Agent 无限重试。`LoopDetectionService` 同时做三件事：
+
+- 检测连续相同参数的工具调用
+- 检测持续重复的文本输出
+- 在 turn 数达到阈值后，调用额外的 LLM 进行二次判定
+
+相关阈值在源码里是显式常量，例如：
+
+- 工具调用重复阈值：`5`
+- 内容重复阈值：`10`
+- 达到 `30` turns 后开始做 LLM loop check
+
+一旦检测到循环，`GeminiClient._recoverFromLoop()` 不会直接崩掉会话，而是向模型注入一条系统反馈，要求它停下来重新评估当前策略，避免继续重复同样的工具或回答。
+
+此外，`GeminiClient` 还设置了 `MAX_TURNS = 100`，说明系统同时有硬上限和软恢复两层保护。
+
+## 5. 上下文压力下的韧性
+
+Gemini CLI 的另一个现实风险不是“报错”，而是上下文逐轮膨胀到不可用。当前仓库主要靠两种机制缓解。
+
+### 5.1 聊天压缩
+
+`ChatCompressionService` 会在上下文接近模型上限时压缩旧历史：
+
+- 默认在 token 使用达到模型上限的 `50%` 左右开始考虑压缩
+- 默认保留最近约 `30%` 的历史窗口
+- 对历史中的大工具输出再做额外截断
+
+它不是盲删历史，而是：
+
+- 先保留最近的高价值上下文
+- 再把老历史总结成压缩摘要
+- 必要时把超大工具输出截断并写到临时文件
+
+### 5.2 工具输出 masking
+
+除了整体压缩，`ToolOutputMaskingService` 还会针对历史里“又大又旧”的工具输出做单独瘦身，把上下文中保留的内容变成更小的占位版本，并把变更同步回会话记录。
+
+这意味着 Gemini CLI 的上下文减压是持续进行的，不是等爆掉之后再一次性清空。
+
+## 6. 会话恢复与 checkpoint
+
+### 6.1 聊天记录落盘
+
+`ChatRecordingService` 会把会话写进：
+
+```text
+~/.gemini/tmp/<project>/chats/session-*.json
 ```
 
-- **429（Rate Limit）**：触发指数退避，最多重试 3 次
-- **5xx 服务错误**：同样纳入重试范围
-- **4xx 客户端错误**（非 429）：不重试，直接抛出
+记录内容不仅有用户和模型消息，还包括：
 
-### 2.2 流式响应修复
+- tool call 与 tool result
+- token 统计
+- thoughts
+- 目录上下文
+- 会话摘要
 
-`GeminiChat.sendMessageStream()` 对截断/无效的模型输出进行实时纠偏：
-- 检测 JSON 解析失败 → 尝试修复并重新解码
-- 检测 Tool Call 格式异常 → 转为文本消息继续
+`useSessionResume.ts` 和 `nonInteractiveCli.ts` 在恢复时都会调用 `config.getGeminiClient()?.resumeChat(...)`，把磁盘记录重新装回 UI 历史和客户端历史。
 
-## 3. Agent 层工具失败处理
+### 6.2 可选 checkpoint 回滚
 
-### 3.1 工具执行失败不终止循环
+如果用户开启 `general.checkpointing.enabled`，系统还会为可恢复的工具调用额外写 checkpoint：
 
-```typescript
-// packages/core/src/core/gemini-agent.ts
-const result = await this.toolExecutor.execute(toolCall);
-if (result.error) {
-  // 将错误信息作为 tool result 返回给模型，让模型决定如何处理
-  return { success: false, error: result.error };
-}
+```text
+~/.gemini/tmp/<project>/checkpoints/
 ```
 
-工具失败的结果会以 `tool_result` 形式回传给模型，由模型决定：
-- 换一个工具重试
-- 调整参数后重试
-- 跳过并继续任务
+这套机制依赖 Git snapshot：
 
-### 3.2 循环检测（Loop Detection）
+- `checkpointUtils.ts` 负责生成 checkpoint 元数据
+- `GitService.createFileSnapshot()` 负责创建可回滚快照
+- `/restore` 负责把文件系统和历史一起恢复到旧状态
 
-`LoopDetector` 监控 Agent 行为，防止无限重复同一操作：
+这和“会话 resume”不是一回事。前者是恢复聊天，后者是恢复项目状态。
 
-```typescript
-// packages/core/src/utils/loop-detector.ts
-class LoopDetector {
-  private history: string[] = [];
-  check(action: string): boolean {
-    if (this.history.filter(h => h === action).length >= MAX_REPEAT) {
-      return true; // 触发循环检测
-    }
-    this.history.push(action);
-    return false;
-  }
-}
-```
+## 7. 当前边界
 
-## 4. 会话层韧性
+当前实现已经具备比较完整的自愈链路，但仍有几个边界要注意：
 
-### 4.1 会话持久化防数据丢失
+- 不是所有错误都能自动恢复，认证和配额问题经常需要用户介入
+- checkpoint 依赖 Git，未启用或仓库异常时不能工作
+- 压缩和 masking 解决的是上下文预算问题，不保证语义零损失
+- Hook、策略和远程代理引入的新失败模式，仍然需要各自模块继续兜底
 
-每轮 turn 结束后，`SessionManager` 将会话状态序列化到磁盘：
+## 8. 一句话总结
 
-```
-~/.gemini/sessions/<session-id>/conversation.json
-```
-
-即使进程崩溃，用户也可以用 `gemini --resume <session-id>` 恢复。
-
-### 4.2 工具输出落盘（大输出韧性）
-
-当工具返回超大输出时（如读取大文件），`ToolOutputDistillationService` 会：
-1. 将完整输出写入临时文件
-2. 向模型只提供摘要 + 引用路径
-3. 防止单次超大输出导致上下文溢出崩溃
-
-## 5. 与其他系统的对比
-
-| 系统 | 重试机制 | 工具失败处理 | 会话韧性 |
-|------|---------|------------|---------|
-| **Gemini CLI** | `retryWithBackoff`（3次） | 错误回传模型 | 磁盘持久化 |
-| **Claude Code** | Provider 级多重重试 | 工具错误作为结果 | Transcript 持久化 |
-| **Codex** | `retry_config` + 指数退避 | Rust `Result<>` 类型安全 | Thread 持久化 |
-| **OpenCode** | Effect-ts `retry` operator | 错误归一化 + 自愈 | SQLite durable |
-
-## 6. 当前局限性
-
-- 无全局超时机制：单次 Agent 循环可能无限运行
-- 无跨会话重试编排（不支持 workflow-level retry）
-- 网络分区场景下缺乏主动恢复逻辑
+更准确的概括是：Gemini CLI 的韧性体系由“请求重试 + 坏流恢复 + 循环检测 + 上下文减压 + 会话/项目恢复”共同组成，而不是旧文档里那种 `GeminiAgent.run()` + `SessionManager` 的单点叙事。

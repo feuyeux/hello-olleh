@@ -4,7 +4,7 @@ title: "宿主表面与传输层：app-server、remote websocket、TypeScript SD
 ---
 # 宿主表面与传输层：`app-server`、remote websocket、TypeScript SDK 与多宿主复用
 
-这篇补充稿对齐 Claude Code 的 `17-queryengine-sdk`、`19-transport-system`、`20-bridge-system`，也对应 Gemini CLI 的 `22-session-resume-sdk-and-a2a` 与 OpenCode 的 `11-entry-transports`、`12-server-routing`、`16-llm-request`。
+这篇补充稿对齐 Claude Code 的 QueryEngine/transport/bridge 主题，也对应 Gemini CLI 的 session+SDK 主题，以及 OpenCode 的入口传输、路由边界和模型请求主题。这里直接引用当前仓库里的实际文件名。
 
 ## 1. Codex 的外部表面其实只有一套语义
 
@@ -92,9 +92,9 @@ SDK 不是第二实现，而是事件协议的消费者。
 
 ## 6. 对应阅读
 
-- Claude Code: [17-queryengine-sdk.md](../hello-claude-code/17-queryengine-sdk.md), [19-transport-system.md](../hello-claude-code/19-transport-system.md), [20-bridge-system.md](../hello-claude-code/20-bridge-system.md)
-- Gemini CLI: [22-session-resume-sdk-and-a2a.md](../hello-gemini-cli/22-session-resume-sdk-and-a2a.md)
-- OpenCode: [11-entry-transports.md](../hello-opencode/11-entry-transports.md), [12-server-routing.md](../hello-opencode/12-server-routing.md), [16-llm-request.md](../hello-opencode/16-llm-request.md)
+- Claude Code: [17-sdk-transport.md](../hello-claude-code/17-sdk-transport.md), [23-bridge-system.md](../hello-claude-code/23-bridge-system.md)
+- Gemini CLI: [10-session-resume.md](../hello-gemini-cli/10-session-resume.md), [17-sdk-transport.md](../hello-gemini-cli/17-sdk-transport.md)
+- OpenCode: [17-sdk-transport.md](../hello-opencode/17-sdk-transport.md), [26-server-routing.md](../hello-opencode/26-server-routing.md), [29-llm-request.md](../hello-opencode/29-llm-request.md)
 
 ---
 

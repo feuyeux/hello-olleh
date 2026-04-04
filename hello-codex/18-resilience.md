@@ -4,11 +4,11 @@
 
 ## 1. 韧性在 Codex 里的定位
 
-Codex 的韧性机制是一个完整的"把失败变成可调度状态"的系统：
+Codex 的韧性机制可以概括为一套“把失败继续收束回线程状态”的系统：
 
 1. **错误归一化**：统一错误类型体系
 2. **重试策略**：智能退避而非盲目重试
-3. **上下文溢出处理**：compaction 而非终止
+3. **上下文溢出处理**：pre-turn / auto / remote compaction，而不是直接终止
 4. **Sandbox 隔离**：安全执行边界
 
 ---
@@ -122,19 +122,18 @@ pub enum SandboxErr {
 | --- | --- | --- |
 | 错误归一化 | CodexErr 枚举 | MessageV2 错误类型 |
 | 重试策略 | is_retryable() 判断 | retryable() + delay() |
-| Context Overflow | 触发 compact | 软溢出/硬溢出双路径 |
+| Context Overflow | 触发 manual / pre-turn / auto / remote compaction | 软溢出/硬溢出双路径 |
 | Revert | 无 | Snapshot + history 清理 |
 | Permission | 工具级审批 | 独立 Permission 系统 |
 | doom_loop | 无 | 连续同工具触发 |
 
-### 5.2 OpenCode 更完整的韧性体系
+### 5.2 对比时要注意的边界
 
-OpenCode 的韧性包含四类机制：
+如果只看“是否有 compaction”，两者其实都实现了上下文超限后的自愈；差别主要在于：
 
-1. **错误分类与重试**
-2. **上下文溢出后的自愈**（compaction）
-3. **revert/unrevert 回滚**
-4. **permission/question/cancel 交互式阻塞**
+1. **Codex** 把 compaction 更紧地嵌进 turn 执行和 rollout 重建。
+2. **OpenCode** 把 revert、permission、question 等阻塞分支做成了更显式的独立状态机。
+3. **Codex** 的强项在统一错误语义、provider 重试和沙箱升级路径。
 
 ---
 
@@ -144,16 +143,16 @@ OpenCode 的韧性包含四类机制：
 
 | 能力 | OpenCode 有 | Codex 状态 |
 | --- | --- | --- |
-| Compaction | 完整 | 无 |
-| Revert | 文件快照 + history | 无 |
-| Question 机制 | 完整 | 无 |
-| doom_loop | 三次同工具检测 | 无 |
+| Compaction | 完整 | 已实现：manual / pre-turn / auto / remote compaction |
+| Revert | 文件快照 + history | 没有 OpenCode 那样独立的 snapshot/revert 子系统 |
+| Question 机制 | 完整 | 没有对等的独立澄清状态机，更多通过工具/协议能力收束 |
+| doom_loop | 三次同工具检测 | 未看到与 OpenCode 对等的显式 doom_loop 防护 |
 
 ### 6.2 建议增强
 
-1. **实现 Context Compaction**：当上下文窗口接近时自动压缩
-2. **增加 Revert 机制**：支持文件快照和历史回滚
-3. **Question 系统**：模型主动向用户提问
+1. **补强可观测性**：把 compaction 触发原因和恢复结果暴露得更直观。
+2. **增加显式回滚能力**：如果要追平 OpenCode，仍需要独立的 snapshot / revert 设计。
+3. **补齐交互式阻塞语义**：把澄清、取消和恢复路径做得更可见。
 
 ---
 
@@ -170,14 +169,15 @@ OpenCode 的韧性包含四类机制：
 
 ## 8. 总结
 
-Codex 的韧性机制相比 OpenCode 更为基础：
+Codex 的韧性机制并不只停留在“重试 + 沙箱”：
 
 1. **错误归一化**：27+ 变体的统一错误类型体系
 2. **重试策略**：基于 is_retryable() 的智能重试
-3. **Sandbox 隔离**：平台特定的沙箱实现
+3. **上下文自愈**：已经具备 compaction 路径
+4. **Sandbox 隔离**：平台特定的沙箱实现
 
-缺少 OpenCode 的 compaction、revert、question 等高级韧性机制。对于基本场景，当前架构足以支撑。
+与 OpenCode 相比，差距主要在显式 revert、question 和更完整的交互式阻塞状态机，而不是 compaction 本身。对于本地代理场景，当前架构已经具备较强的恢复能力。
 
 ---
 
-> 关联阅读：[09-error-security.md](./09-error-security.md) 了解错误处理的更多细节。
+> 关联阅读：[07-error-security.md](./07-error-security.md) 了解错误处理与沙箱边界的更多细节。

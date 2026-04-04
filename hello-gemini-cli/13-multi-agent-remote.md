@@ -1,283 +1,104 @@
-# Gemini CLI 多代理与远程模式：单 Agent 架构与工具级并行
-
-本文档分析 Gemini CLI 的多代理支持与远程执行能力。
-
-## 1. 多代理在 Gemini CLI 里的定位
-
-### 1.1 基本架构
-
-Gemini CLI 当前采用**单 Agent 架构**：
-
-- 只有一个 Gemini 模型实例
-- 工具调用通过 Turn 编排
-- 不支持真正的多 Agent 协作
-
-### 1.2 与其他项目的对比
-
-| 特性 | Claude Code | Codex | OpenCode | Gemini CLI |
-| --- | --- | --- | --- | --- |
-| 多 Agent | Agents API | Thread 协议 | 多 Session | 无 |
-| 工具并行 | 完整 | 有限 | 完整 | 基础 |
-| 远程执行 | Bridge | app-server | HTTP/WS | 无 |
-| Headless | 支持 | 支持 | 支持 | 支持 |
+# Gemini CLI 多代理与远程模式：本地子代理、A2A 远程代理与调度器
 
----
+旧版文档把 Gemini CLI 概括成“单 Agent CLI”，这已经明显过时。当前仓库里不仅有本地子代理，也有远程代理与对应的调度、认证、进度回传链路。
 
-## 2. 单 Agent 架构
+## 1. Agent 不是一个，而是一套注册表
 
-### 2.1 Agent 结构
+多代理能力的入口是 `packages/core/src/agents/registry.ts` 中的 `AgentRegistry`。
 
-```typescript
-interface Agent {
-  id: string
-  model: string
-  config: AgentConfig
-  tools: Tool[]
-}
+它会加载四类 agent：
 
-class SingleAgent {
-  constructor(
-    private client: GeminiClient,
-    private tools: ToolRegistry,
-    private config: Config
-  ) {}
+- 内建 agent
+- 用户级 agent
+- 项目级 agent
+- extension 提供的 agent
 
-  async run(request: Request): Promise<Response> {
-    const context = this.assembleContext(request)
-    const result = await this.client.sendMessage(context)
-    return this.processResult(result)
-  }
-}
-```
+当前内建项至少包括：
 
-### 2.2 工具级并行
+- `CodebaseInvestigatorAgent`
+- `CliHelpAgent`
+- `GeneralistAgent`
+- `BrowserAgentDefinition`
+- `MemoryManagerAgent`（按配置启用）
 
-```typescript
-async function executeToolsParallel(
-  toolCalls: ToolCall[]
-): Promise<ToolResult[]> {
-  const results = await Promise.all(
-    toolCalls.map(call => this.toolExecutor.execute(call))
-  )
-  return results
-}
-```
+所以，Gemini CLI 现在的真实情况是“主代理 + 可注册子代理”，而不是“完全没有多代理”。
 
-### 2.3 限制
+## 2. 子代理会被暴露成普通工具
 
-| 限制 | 说明 |
-| --- | --- |
-| 单模型 | 只有一个 Gemini 实例 |
-| 串行工具 | 按序执行工具调用 |
-| 无子 Agent | 不支持 Agent 分叉 |
+`packages/core/src/agents/subagent-tool.ts` 里的 `SubagentTool` 会把 agent definition 包装成一个普通 declarative tool：
 
----
+- 名称沿用 agent 名称
+- 输入参数来自 agent 的 JSON Schema
+- 调用前会做 schema 校验
+- 执行时通过 `SubagentToolWrapper` 继续分派到本地或远程实现
 
-## 3. Headless 模式
+这也是为什么在主循环里，子代理看起来像是“一个工具调用”，但内部其实已经切换到另一套执行上下文。
 
-### 3.1 Headless CLI
+## 3. 本地子代理有独立执行环境
 
-`packages/cli/src/non-interactive-cli.ts`：
+本地 agent 的真正执行者是 `packages/core/src/agents/local-executor.ts`。
 
-```typescript
-async function runNonInteractive(
-  prompt: string,
-  options: NonInteractiveOptions
-): Promise<string> {
-  const config = await initializeApp(options)
-  const agent = new SingleAgent(
-    new GeminiClient(config),
-    new ToolRegistry(config),
-    config
-  )
+它不是简单复用主代理状态，而是显式创建隔离环境：
 
-  const response = await agent.run({
-    message: prompt,
-    history: []
-  })
+- 独立的 `ToolRegistry`
+- 独立的 `PromptRegistry`
+- 独立的 `ResourceRegistry`
+- 派生后的 `MessageBus`
+- 单独的 chat recording，`kind` 标记为 `subagent`
 
-  return response.text
-}
-```
+同时它还会做几件关键事情：
 
-### 3.2 使用场景
+- 从父级 registry 里挑选允许使用的工具
+- 阻止 agent 再调用其他 agent，避免递归套娃
+- 支持 agent 自己挂载 MCP server
+- 通过 `scheduleAgentTools()` 接入调度器
+- 在长会话里继续复用压缩、恢复、超时与恢复逻辑
 
-| 场景 | 命令 |
-| --- | --- |
-| CI/CD | `gemini --non-interactive --prompt "..."` |
-| 脚本自动化 | 通过 stdout 获取结果 |
-| 管道集成 | 与其他工具组合 |
+换句话说，本地子代理并不是“主代理切换一个 prompt 继续跑”，而是真正隔离出一套执行回路。
 
-### 3.3 Headless vs TUI
+## 4. 远程代理通过 A2A 调用
 
-| 模式 | 交互方式 | 使用场景 |
-| --- | --- | --- |
-| TUI | 交互式 | 开发调试 |
-| Headless | 非交互 | 自动化脚本 |
+Gemini CLI 也并非完全没有远程代理。远程分支在 `packages/core/src/agents/remote-invocation.ts`：
 
----
+- 使用 `A2AClientManager` 连接远端 agent
+- 支持认证 provider
+- 维护 `contextId` / `taskId`
+- 流式接收远端执行进度
+- 把远端活动重新组装成可显示的 `SubagentProgress`
 
-## 4. 远程执行
+当前实现里，远程 agent 调用默认仍要求确认，这一点在 `getConfirmationDetails()` 中写得很明确。
 
-### 4.1 当前状态
+因此更准确的表述是：
 
-Gemini CLI **不支持远程执行**：
+- **没有 Codex / OpenCode 那种通用 app-server 宿主**
+- **但已经有 A2A 形式的远程 agent 调用能力**
 
-- 无 app-server
-- 无 Bridge System
-- 无 SDK 抽象层
+## 5. 并行能力也不只停留在设想里
 
-### 4.2 远程架构缺失
+Gemini CLI 的并行不只是“未来可以做”，当前就已经有相当明确的调度实现：
 
-```
-Claude Code 的远程架构：
-┌─────────┐     ┌─────────┐
-│  CLI    │────▶│ Bridge  │────▶ Cloud
-└─────────┘     └─────────┘
+- 主线调度器：`packages/core/src/scheduler/scheduler.ts`
+- 子代理调度入口：`packages/core/src/agents/agent-scheduler.ts`
+- 并行测试：`packages/core/src/scheduler/scheduler_parallel.test.ts`
 
-Gemini CLI 的当前架构：
-┌─────────┐
-│  CLI    │───▶ Gemini API
-└─────────┘
-```
+这说明当前仓库已经具备工具级并行的真实实现基础，而不是纯串行执行模型。
 
-### 4.3 与其他项目的对比
+## 6. 当前边界在哪里
 
-| 能力 | Claude Code | Codex | OpenCode | Gemini CLI |
-| --- | --- | --- | --- | --- |
-| 远程 CLI | Bridge | app-server | HTTP Server | 无 |
-| SDK | QueryEngine | TypeScript SDK | HTTP API | 无 |
-| Web | 支持 | 支持 | 支持 | 无 |
-| Desktop | 支持 | 支持 | 支持 | 无 |
+虽然多代理能力已经存在，但它的边界也很清楚：
 
----
+- 主产品形态仍然是 CLI / TUI，而不是独立 server
+- 子代理主要以“工具化调用”的方式接入，而不是长期常驻会话
+- 本地子代理默认不允许互相递归调用
+- 远程代理集中走 A2A，不是统一的浏览器/桌面桥接协议
 
-## 5. 工具级并行
-
-### 5.1 工具执行策略
-
-```typescript
-interface ToolExecutionStrategy {
-  // 串行执行
-  sequential(calls: ToolCall[]): Promise<ToolResult[]>
-
-  // 并行执行
-  parallel(calls: ToolCall[]): Promise<ToolResult[]>
-
-  // 依赖执行
-  dependencyGraph(calls: ToolCall[]): Promise<ToolResult[]>
-}
-```
-
-### 5.2 并行执行示例
-
-```typescript
-// 场景：用户请求读取多个文件
-// 当前：串行执行
-async function readMultipleFiles(paths: string[]): Promise<string[]> {
-  const results = []
-  for (const path of paths) {
-    results.push(await readFile(path))
-  }
-  return results
-}
-
-// 理想：并行执行
-async function readMultipleFilesParallel(paths: string[]): Promise<string[]> {
-  return Promise.all(paths.map(path => readFile(path)))
-}
-```
-
-### 5.3 依赖分析
-
-```typescript
-function analyzeDependencies(calls: ToolCall[]): DependencyGraph {
-  const graph = new DependencyGraph()
-
-  for (const call of calls) {
-    // 检查输入是否依赖其他工具输出
-    for (const prev of calls) {
-      if (call.dependsOn(prev.id)) {
-        graph.addEdge(call.id, prev.id)
-      }
-    }
-  }
-
-  return graph
-}
-```
-
----
-
-## 6. 与 OpenCode 的多代理对比
-
-### 6.1 OpenCode 的多代理
-
-OpenCode 通过 Session 协议支持多代理：
-
-```typescript
-// OpenCode 的多代理结构
-interface MultiAgentSystem {
-  sessions: Map<string, Session>
-  agents: Map<string, Agent>
-  messageBus: GlobalBus
-}
-
-// Agent 间通信
-agentA.sendMessage({ to: 'agentB', content: '...' })
-```
-
-### 6.2 主要差异
-
-| 特性 | OpenCode | Gemini CLI |
-| --- | --- | --- |
-| 多 Agent | 完整 | 无 |
-| Agent 通信 | GlobalBus | 无 |
-| 并行工具 | 完整 | 基础 |
-| 远程执行 | HTTP Server | 无 |
-
----
-
-## 7. 改进建议
-
-### 7.1 短期增强
-
-1. **工具并行**：实现无依赖工具的并行执行
-2. **Headless 增强**：支持更多 CLI 参数
-3. **会话管理**：增强 Session 管理
-
-### 7.2 长期规划
-
-| 能力 | 实现建议 |
-| --- | --- |
-| 多 Agent | 实现 Agent 协议 |
-| 远程 CLI | 开发轻量级 app-server |
-| SDK | 封装 GeminiClient |
-
----
-
-## 8. 关键源码锚点
+## 7. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Agent | `packages/core/src/agent.ts` | 单 Agent 实现 |
-| Headless | `packages/cli/src/non-interactive-cli.ts` | 非交互 CLI |
-| ToolExecutor | `packages/core/src/tools/tool-executor.ts` | 工具执行 |
-| 工具注册 | `packages/core/src/tools/tool-registry.ts` | 工具注册表 |
-
----
-
-## 9. 总结
-
-Gemini CLI 的多代理与远程能力相比 OpenCode 非常基础：
-
-1. **单 Agent**：只有一个 Gemini 实例
-2. **串行工具**：按序执行工具调用
-3. **Headless**：支持非交互执行
-4. **远程**：不支持
-
-缺少 OpenCode 的多 Agent、GlobalBus、HTTP Server 等机制。对于单人本地使用，当前架构足以支撑。
-
----
-
-> 关联阅读：[03-agent-loop.md](./03-agent-loop.md) 了解 Agent 循环详情。
+| Agent 注册 | `packages/core/src/agents/registry.ts` | 发现并注册本地/远程 agent |
+| 子代理工具封装 | `packages/core/src/agents/subagent-tool.ts` | 把 agent 暴露成普通工具 |
+| 本地子代理执行 | `packages/core/src/agents/local-executor.ts` | 隔离 registry、message bus 与执行循环 |
+| 远程代理调用 | `packages/core/src/agents/remote-invocation.ts` | A2A 远程 agent 流式调用 |
+| 子代理调度 | `packages/core/src/agents/agent-scheduler.ts` | 把 agent 工具调用接入调度器 |
+| 主调度器 | `packages/core/src/scheduler/scheduler.ts` | 主/子代理共用的调度基础设施 |

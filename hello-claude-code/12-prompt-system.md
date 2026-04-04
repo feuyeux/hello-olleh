@@ -669,7 +669,7 @@ built-in prompt command 里比较典型的有：
 
 ## 11. Memory 系统是主系统提示里最重的一块附加 prompt
 
-这一章只保留 prompt 视角下的总览。若要专门看记忆层级、`KAIROS` daily log、`dream` consolidation、SessionMemory 与 agent memory 的关系，请继续看 [15-memory-system.md](./15-memory-system.md)。
+这一章只保留 prompt 视角下的总览。若要专门看记忆层级、`KAIROS` daily log、`dream` consolidation、SessionMemory 与 agent memory 的关系，请继续看 [16-memory-system.md](./16-memory-system.md)。
 
 ## 11.1 auto-memory 不是附属功能，而是主 prompt 的一个 section
 
@@ -853,7 +853,7 @@ compact 不是“随便总结一下”，而是在做“可继续执行的上下
 
 `compact` 在整条上下文治理流水线中的位置，完整说明见：
 
-- [07-context-management.md](./07-context-management.md)
+- [11-context-management.md](./11-context-management.md)
 
 ## 12.2 `awaySummary` 是为回到会话的用户写的
 

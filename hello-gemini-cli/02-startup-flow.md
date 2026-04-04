@@ -11,14 +11,13 @@ Gemini CLI 的启动不仅仅是加载 UI，它包含了一个复杂的环境预
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 flowchart TD
-    Index["packages/cli/src/index.ts"] --> Main["gemini.tsx<br/>main() @ 186"]
-    Main --> Parse["config.ts<br/>parseArguments() @ cli/config"]
+    Main["packages/cli/src/gemini.tsx<br/>main() @ 186"] --> Parse["config.ts<br/>parseArguments() @ cli/config"]
     Parse --> Setup["加载 settings /<br/>trustedFolders / auth"]
     Setup --> Sandbox{沙箱<br/>需要?}
     Sandbox -->|是| StartSandbox["loadSandboxConfig()<br/>重启进子进程 @ 393"]
     Sandbox -->|否| InitCore["initializer.ts<br/>initializeApp() @ core"]
     InitCore --> Mode{交互<br/>模式?}
-    Mode -->|是| UI["AppContainer.tsx<br/>startInteractiveUI()"]
+    Mode -->|是| UI["interactiveCli.tsx<br/>startInteractiveUI()"]
     Mode -->|否| Headless["nonInteractiveCli.ts<br/>runNonInteractive()"]
 
     InitCore --> CFG["Config 类 @ config.ts:682"]

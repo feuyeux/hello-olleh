@@ -26,7 +26,7 @@ title: "09 - 多 Agent 验证"
 
 ### Gemini CLI
 
-`gemini-cli/packages/core/src/agents/generalist-agent.ts` 实现了 `GeneralistAgent`，`subagent-tool-wrapper.test.ts` 对子 Agent 工具包装做了专门测试。多代理能力通过注册表模式组织，子 Agent 是一等公民，有专门的 API 和测试覆盖。
+当前 Gemini CLI 已经不是“无多代理能力”的状态。`gemini-cli/packages/core/src/agents/registry.ts` 负责加载和注册 agent 定义，`subagent-tool.ts` 把 agent 暴露成可调用工具，`local-executor.ts` 负责本地子代理执行，`remote-invocation.ts` 负责远程 A2A 代理调用。也就是说，多代理能力已经进入主运行时，不再只是概念性测试夹具。
 
 ### OpenCode
 
@@ -67,7 +67,7 @@ const VerifyPlanExecutionTool =
 
 ### Gemini CLI
 
-`hookSystem.ts:259-305` 的 BeforeModel/AfterModel 分离使 Hook 链独立于 Agent 执行：
+Gemini CLI 有一定程度的验证隔离，但还不到 Codex Phase 2 那样“强约束验证沙箱”的程度。`subagent-tool.ts` + `local-executor.ts` 允许把子任务放进独立 agent context；与此同时，`hookSystem.ts` 的 BeforeModel/AfterModel 也是与主生成路径并行的检查链：
 
 ```typescript
 async fireBeforeModelEvent(llmRequest): Promise<BeforeModelHookResult> {
@@ -81,7 +81,7 @@ async fireBeforeModelEvent(llmRequest): Promise<BeforeModelHookResult> {
 }
 ```
 
-Hook 在 Agent 决策前介入，且有独立的上下文（Hook 处理器不共享 Agent 的对话历史）。这是中等程度的隔离：Hook 是独立的代码路径，但 Hook 和 Agent 共享同一个 process 环境，不是真正的进程级隔离。
+Hook 在 Agent 决策前介入，是独立代码路径；本地子代理又会创建自己的工具注册表和子消息总线，并显式阻止 agent 递归再调 agent。问题在于：这些能力主要服务“任务卸载”，不是专门为“验证者隔离”设计的，因此它属于中等强度隔离，而不是专用 verifier 隔离。
 
 ### OpenCode
 
@@ -109,7 +109,7 @@ Workflow:
 
 NO-OP 门控防止了"全部通过"的偏见（无信号时返回空，而不是强制生成记忆）。Outcome 标签的三值系统（success/partial/uncertain/fail）强制审查者在不确定时承认不确定（而不是默认成功）。Preference evidence 要求引号原文而非摘要，防止事后合理化。这些设计共同提高了自我审查的可信度，但仍然不如独立的外部审查。
 
-**Gemini CLI**：没有专门的自我审查循环，审查通过 Hook System 部分实现。可信度依赖 Hook 实现的质量。
+**Gemini CLI**：它没有内建的专用 review agent，但也不只是“完全没有自我审查”。当前可用的路径包括 Hook 检查、循环检测，以及显式委派给子代理追加分析。可信度高低取决于是否真的把任务切给了新的 agent context；如果只是主循环自我反思，确认偏差仍然存在。
 
 **OpenCode**：没有自我审查循环。质量判断完全依赖人工审批。
 

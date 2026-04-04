@@ -8,7 +8,7 @@ title: "Claude Code 的传输系统"
 
 本篇讨论 WebSocket、SSE、HybridTransport 与批量上传器如何构成 Claude Code 的网络传输层。
 
-如果要继续看这层能力如何被组织成远程桥接与会话控制，请继续看 [20-bridge-system.md](./20-bridge-system.md)。
+如果要继续看这层能力如何被组织成远程桥接与会话控制，请继续看 [23-bridge-system.md](./23-bridge-system.md)。
 
 ```mermaid
 ---

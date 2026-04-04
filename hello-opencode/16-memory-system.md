@@ -113,7 +113,7 @@ await Promise.all([
 
 ## 7. 和 Compaction 的关系
 
-[22-orchestration](./22-orchestration.md) 讲过 compaction 会触发 `summary` agent 生成 summary message。触发链路是：
+[13-multi-agent.md](./13-multi-agent.md) 已经讲过 compaction 会触发 `summary` agent 生成 summary message。触发链路是：
 
 ```
 CompactionTask → summary agent → SessionProcessor.process() → 生成 summary assistant message
@@ -127,4 +127,3 @@ CompactionTask → summary agent → SessionProcessor.process() → 生成 summa
 ## 8. 把 B12 压成一句代码级结论
 
 > `SessionSummary` 是 OpenCode 当前实现里的"agent 记忆"引擎：它从 step-start/step-finish 快照边界中提取文件 diff，写成 session 级和 message 级两份 durable 记录，并通过 Bus 实时广播给前端。
-

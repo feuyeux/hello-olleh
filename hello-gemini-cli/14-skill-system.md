@@ -1,266 +1,111 @@
-# Gemini CLI Skill 系统：Skills 加载、Markdown 定义与 Prompt 注入
+# Gemini CLI Skill 系统：SKILL.md、加载优先级与 `activate_skill`
 
-本文档分析 Gemini CLI 的 Skill 扩展机制。
+Gemini CLI 当前的 skill 机制很明确：skill 是一个带 frontmatter 的 `SKILL.md`，先被发现，再由模型按需激活。它不是关键词自动匹配器，也不是独立的插件 DSL。
 
-## 1. Skill 系统在 Gemini CLI 里的定位
+## 1. Skill 文件的真实格式
 
-### 1.1 基本架构
+Skill 解析逻辑在 `packages/core/src/skills/skillLoader.ts`。
 
-Gemini CLI 的 Skill 系统用于扩展 Agent 能力：
+当前 loader 只强依赖两项 frontmatter：
 
-- Skill 是预定义的 Prompt 模板
-- 通过 Markdown 文件定义
-- 在启动时加载到上下文中
+- `name`
+- `description`
 
-### 1.2 与其他项目的对比
+正文部分会被完整保存在 `body` 字段中，供后续激活时直接注入。
 
-| 特性 | Claude Code | Codex | OpenCode | Gemini CLI |
-| --- | --- | --- | --- | --- |
-| Skill 格式 | Markdown | 无 | Markdown | Markdown |
-| 加载时机 | 启动/动态 | 无 | 启动时 | 启动时 |
-| 作用域 | 全局/项目 | 无 | 全局 | 全局 |
-| 工具注入 | 支持 | 无 | 支持 | 部分 |
+### 1.1 文件命名规则
 
----
+loader 默认扫描：
 
-## 2. Skill 定义格式
+- `SKILL.md`
+- `*/SKILL.md`
 
-### 2.1 Markdown 结构
+也就是说，skill 目录通常是一层文件夹一个 skill，而不是随便扫所有 markdown 文件。
 
-```markdown
-# skill-name
+### 1.2 loader 做了哪些处理
 
-## 描述
-这个 Skill 做什么
+`loadSkillFromFile()` 会：
 
-## 触发条件
-当用户请求涉及 xxx 时激活
+- 解析 YAML frontmatter
+- 在 YAML 失败时回退到简单 key-value 解析
+- 对 skill 名称做文件名安全化处理
+- 把正文保存在 `body`
 
-## Prompt 模板
-你是一个 xxx 专家...
+因此，当前实现并没有单独的 trigger、examples、tools 白名单等强制元数据字段。
 
-## 可用工具
-- tool1
-- tool2
+## 2. Skill 从哪些位置被发现
 
-## 示例
-用户: xxx
-助手: xxx
-```
+`packages/core/src/skills/skillManager.ts` 中的 `SkillManager.discoverSkills()` 会按优先级加载 skill：
 
-### 2.2 Skill 元数据
+1. 内建 skill
+2. extension 提供的 skill
+3. 用户级 skill
+4. workspace 级 skill
 
-```typescript
-interface Skill {
-  id: string
-  name: string
-  description: string
-  trigger: string[]          // 触发关键词
-  prompt: string             // 系统级 Prompt
-  tools: string[]            // 启用的工具
-  examples?: Example[]       // 示例对话
-}
-```
+具体目录包括：
 
-### 2.3 示例 Skill
+- `packages/core/src/skills/builtin/`
+- `~/.gemini/skills/`
+- `~/.agents/skills/`
+- `<project>/.gemini/skills/`
+- `<project>/.agents/skills/`
 
-```markdown
-# git-expert
+其中 workspace 级 skill 只有在目录被信任时才会启用。
 
-## 描述
-提供 Git 操作的专业建议
+同名 skill 的覆盖规则也写在 `SkillManager` 里：后加载的来源会覆盖前面的定义，因此 workspace skill 可以覆盖 user skill，user skill 也可以覆盖内建 skill。
 
-## 触发条件
-["git", "commit", "branch", "merge", "rebase"]
+## 3. Skill 不是自动触发，而是工具激活
 
-## Prompt 模板
-你是一个 Git 专家，帮助用户解决 Git 相关问题。
-优先使用简单的 git 命令，避免复杂操作。
+这是当前实现最容易被旧文档写错的地方。
 
-## 可用工具
-- Bash (仅限 git 命令)
+Gemini CLI 并没有一个“按关键词自动命中 skill”的中心注册器。实际流程是：
 
-## 示例
-用户: 如何撤销最后一次提交?
-助手: 使用 git revert HEAD 可以安全地撤销...
-```
+1. `PromptProvider` 在 system prompt 中列出可用 skills
+2. 模型需要更细的专用指令时，调用 `activate_skill`
+3. `activate_skill` 把 skill 正文和资源目录结构返回给模型
 
----
+激活逻辑在 `packages/core/src/tools/activate-skill.ts`。
 
-## 3. Skill 加载机制
+## 4. `activate_skill` 真正做了什么
 
-### 3.1 加载流程
+激活一个 skill 时，工具会：
 
-```mermaid
-%%{init: {'theme': 'neutral'}}%%
-flowchart LR
-    A[启动 CLI] --> B[扫描 Skills 目录]
-    B --> C[解析 Markdown]
-    C --> D[验证 Skill 格式]
-    D --> E[注册到 SkillRegistry]
-    E --> F[等待触发]
-```
+- 根据 skill 名称从 `SkillManager` 里取定义
+- 对非内建 skill 请求确认
+- 把 skill 所在目录加入 workspace context，允许读取资源
+- 返回 `<activated_skill>` 包裹的正文 instructions
+- 一并返回 skill 目录结构，方便模型继续读取附带资源
 
-### 3.2 SkillRegistry
+`SkillManager` 还会记录 active skill 名称，但“激活”的核心效果仍然是把 skill body 显式塞回上下文，而不是切换一套隐藏状态机。
 
-```typescript
-interface SkillRegistry {
-  register(skill: Skill): void
-  get(name: string): Skill | null
-  getAll(): Skill[]
-  getByTrigger(text: string): Skill[]
-}
+## 5. Prompt 系统如何感知 skill
 
-class DefaultSkillRegistry implements SkillRegistry {
-  private skills: Map<string, Skill> = new Map()
+`packages/core/src/prompts/promptProvider.ts` 会从 `SkillManager.getSkills()` 拉取可用 skill 列表，再交给 `renderAgentSkills()` 写入 system prompt。
 
-  async loadFromDirectory(dir: string): Promise<void> {
-    const files = await glob(`${dir}/**/*.md`)
-    for (const file of files) {
-      const skill = await this.parseSkill(file)
-      this.register(skill)
-    }
-  }
+所以在当前实现里：
 
-  getByTrigger(text: string): Skill[] {
-    const lower = text.toLowerCase()
-    return Array.from(this.skills.values())
-      .filter(s => s.trigger.some(t => lower.includes(t)))
-  }
-}
-```
+- **发现** 由 `SkillManager` 完成
+- **暴露给模型** 由 `PromptProvider` 完成
+- **真正启用** 由 `activate_skill` 工具完成
 
-### 3.3 加载位置
+三步职责是分开的。
 
-| 位置 | 说明 |
-| --- | --- |
-| `~/.gemini/skills/` | 全局 Skills |
-| `./.gemini/skills/` | 项目级 Skills |
+## 6. 当前边界
 
----
+从源码看，Gemini CLI 的 skill 系统目前有几个明确边界：
 
-## 4. Skill 与 Prompt 注入
+- 没有内建的关键词触发 DSL
+- 没有版本、作者、标签等强制元数据
+- 没有单独的“skill registry 协议层”
+- 复杂行为主要靠 skill 正文和同目录资源文件实现
 
-### 4.1 注入时机
-
-```typescript
-function assembleContext(request: Request): AssembledContext {
-  const base = this.getBaseContext()
-
-  // 检测触发的 Skills
-  const triggeredSkills = this.skillRegistry.getByTrigger(request.message)
-
-  // 注入 Skill Prompt
-  const skillPrompts = triggeredSkills.map(s => s.prompt)
-  const combinedSystem = [base.system, ...skillPrompts].join('\n\n')
-
-  return {
-    ...base,
-    system: combinedSystem
-  }
-}
-```
-
-### 4.2 工具限制
-
-```typescript
-function getToolsForSkills(skills: Skill[]): Tool[] {
-  const enabledToolNames = new Set<string>()
-  skills.forEach(s => s.tools.forEach(t => enabledToolNames.add(t)))
-
-  return this.toolRegistry.getAll()
-    .filter(t => enabledToolNames.has(t.name))
-}
-```
-
----
-
-## 5. 与 OpenCode 的 Skill 对比
-
-### 5.1 OpenCode 的 Skill 系统
-
-OpenCode 有更完整的 Skill 支持：
-
-```typescript
-// OpenCode 的 Skill 结构
-interface Skill {
-  id: string
-  name: string
-  trigger: string | RegExp
-  prompt: string | PromptTemplate
-  tools?: ToolDefinition[]
-  examples?: Example[]
-  metadata: {
-    author?: string
-    version?: string
-    tags?: string[]
-  }
-}
-```
-
-### 5.2 主要差异
-
-| 特性 | OpenCode | Gemini CLI |
-| --- | --- | --- |
-| 工具注入 | 完整 | 部分 |
-| 正则触发 | 支持 | 仅字符串 |
-| Skill 版本 | 支持 | 无 |
-| Skill 市场 | 支持 | 无 |
-
-### 5.3 OpenCode 的五层 Skill 架构
-
-| 层 | 说明 |
-| --- | --- |
-| 配置层 | settings.json 中声明 |
-| 注册层 | SkillRegistry 管理 |
-| 触发层 | 正则/字符串匹配 |
-| 加载层 | 动态加载 Markdown |
-| 执行层 | 注入到 Prompt |
-
----
-
-## 6. 当前限制
-
-### 6.1 缺失的能力
-
-| 能力 | OpenCode 有 | Gemini CLI 状态 |
-| --- | --- | --- |
-| 正则触发 | 支持 | 无 |
-| Skill 版本 | 支持 | 无 |
-| Skill 市场 | 支持 | 无 |
-| 工具完整注入 | 完整 | 部分 |
-| Skill 依赖 | 支持 | 无 |
-
-### 6.2 改进建议
-
-1. **正则触发**：支持正则表达式匹配
-2. **Skill 版本**：添加版本管理
-3. **工具完整注入**：完善工具参数
-
----
+这让它更像“可加载的专家指令包”，而不是一个重型插件框架。
 
 ## 7. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| SkillRegistry | `packages/core/src/skills/skill-registry.ts` | Skill 注册表 |
-| Skill 解析 | `packages/core/src/skills/skill-parser.ts` | Markdown 解析 |
-| Skill 注入 | `packages/core/src/skills/skill-injector.ts` | Prompt 注入 |
-| Skill 格式 | `packages/core/src/skills/skill-schema.ts` | 类型定义 |
-
----
-
-## 8. 总结
-
-Gemini CLI 的 Skill 系统相比 OpenCode 较为基础：
-
-1. **Skill 格式**：Markdown 定义
-2. **加载**：启动时扫描目录
-3. **触发**：字符串匹配
-4. **注入**：简单 Prompt 拼接
-
-缺少 OpenCode 的正则触发、版本管理、Skill 市场等机制。对于简单的 Prompt 扩展，当前架构足以支撑。
-
----
-
-> 关联阅读：[06-extension-mcp.md](./06-extension-mcp.md) 了解 MCP 扩展机制。
+| Skill 解析 | `packages/core/src/skills/skillLoader.ts` | 解析 frontmatter 与正文 |
+| Skill 管理 | `packages/core/src/skills/skillManager.ts` | 发现、覆盖、禁用、激活状态 |
+| 激活工具 | `packages/core/src/tools/activate-skill.ts` | 把 skill 正文与资源注入上下文 |
+| Prompt 接入 | `packages/core/src/prompts/promptProvider.ts` | 在 system prompt 中列出可用 skill |

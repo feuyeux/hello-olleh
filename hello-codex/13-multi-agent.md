@@ -82,11 +82,11 @@ async fn execute_tool_calls(
 
 | 特性 | Codex | Claude Code | Gemini CLI | OpenCode |
 |------|-------|-------------|-----------|---------|
-| **多代理模式** | Child-agents（可选） | Sub-agents（内置） | 单 Agent | Subagent 工具 |
-| **并行方式** | 单轮多工具并行 | Task 后台并行 | 工具级并行 | 多工具并行 |
-| **代理间通信** | Thread 结果传递 | 消息传递 | 不适用 | Bus 事件 |
-| **隔离边界** | Thread（独立状态） | Session（独立）| 不适用 | Instance |
-| **主要使用场景** | 大规模代码任务分解 | 后台长任务 | 顺序任务 | 结构化任务编排 |
+| **多代理模式** | Child-agents（可选） | Sub-agents（内置） | 本地/远程子代理 | Subagent 工具 |
+| **并行方式** | 单轮多工具并行 | Task 后台并行 | 子代理 + 工具并行 | 多工具并行 |
+| **代理间通信** | Thread 结果传递 | 消息传递 | tool result / 进度事件回传 | Bus 事件 |
+| **隔离边界** | Thread（独立状态） | Session（独立）| 独立 agent context | Instance |
+| **主要使用场景** | 大规模代码任务分解 | 后台长任务 | 卸载长任务、远程代理协作 | 结构化任务编排 |
 
 ## 5. 设计权衡
 
