@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "REPL 与状态管理"
 ---
 # REPL 与状态管理

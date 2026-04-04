@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode A01：多端入口与传输适配"
 ---
 # OpenCode A01：多端入口与传输适配

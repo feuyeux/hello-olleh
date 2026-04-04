@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "08 - 熵管理"
 ---
 # 熵管理对比

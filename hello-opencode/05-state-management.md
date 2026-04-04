@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 状态管理：Durable State、消息持久化、并发占位与历史回放"
 ---
 # OpenCode 状态管理：Durable State、消息持久化、并发占位与历史回放

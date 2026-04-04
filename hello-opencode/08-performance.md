@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 性能与代码质量：流式传输、SSE、Bun Runtime 优势、优缺点分析"
 ---
 # OpenCode 性能与代码质量：流式传输、SSE、Bun Runtime 优势、优缺点分析

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "10 - 人类引导"
 ---
 # 人类引导机制对比

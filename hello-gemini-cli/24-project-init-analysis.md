@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "项目初始化分析报告：首次进入 Gemini CLI 仓库时该先看什么"
 ---
 # 项目初始化分析报告：首次进入 Gemini CLI 仓库时该先看什么

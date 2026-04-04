@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B04：韧性机制，重试、溢出自愈、回滚清理与交互式阻塞"
 ---
 # OpenCode 深度专题 B04：韧性机制，重试、溢出自愈、回滚清理与交互式阻塞

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "核心执行循环：Agent 决策链、Prompt 构建、LLM 调用与流式响应处理"
 ---
 # 核心执行循环：Agent 决策链、Prompt 构建、LLM 调用与流式响应处理

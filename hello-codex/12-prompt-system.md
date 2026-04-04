@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Prompt 系统：build_prompt()、AGENTS.md 与系统消息拼装"
 ---
 # Prompt 系统：`build_prompt()`、`AGENTS.md` 与系统消息拼装

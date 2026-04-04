@@ -1,3 +1,7 @@
+---
+layout: content
+title: "Gemini CLI SDK 与传输层：`GeminiClient`、`GeminiChat` 与 CLI 复用层"
+---
 # Gemini CLI SDK 与传输层：`GeminiClient`、`GeminiChat` 与 CLI 复用层
 
 这部分最容易被写成“Gemini CLI 直接调 `@google/genai`，没有中间层”。这种说法不完整。当前仓库里确实没有像 Codex app-server 那样的独立宿主协议，但已经形成了清晰的内部复用层。

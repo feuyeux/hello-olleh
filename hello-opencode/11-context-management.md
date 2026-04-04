@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B02：上下文工程，从输入重写到模型消息投影"
 ---
 # OpenCode 深度专题 B02：上下文工程，从输入重写到模型消息投影

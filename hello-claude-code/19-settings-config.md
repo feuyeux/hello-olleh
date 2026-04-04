@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "设置系统、托管策略与环境变量注入"
 ---
 # 设置系统、托管策略与环境变量注入

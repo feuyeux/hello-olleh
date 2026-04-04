@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "REPL 与交互层：TUI、非交互模式与输入分发"
 ---
 # REPL 与交互层：TUI、非交互模式与输入分发

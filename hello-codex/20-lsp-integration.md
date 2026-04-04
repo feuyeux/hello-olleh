@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "LSP 集成：代码语义理解的工具化路径"
 ---
 # LSP 集成：代码语义理解的工具化路径

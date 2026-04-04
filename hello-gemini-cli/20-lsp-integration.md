@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "LSP 集成：代码理解能力的现状与设计取向"
 ---
 # LSP 集成：代码理解能力的现状与设计取向

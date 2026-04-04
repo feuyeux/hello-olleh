@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode A05：SessionProcessor.process()"
 ---
 # OpenCode A05：`SessionProcessor.process()` 

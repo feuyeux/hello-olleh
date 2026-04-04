@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "工具调用机制：Tool 注册、权限策略与执行闭环"
 ---
 # 工具调用机制：Tool 注册、权限策略与执行闭环

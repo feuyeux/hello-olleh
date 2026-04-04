@@ -10,8 +10,57 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Noto+Serif+SC:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ 'style.css' | relative_url }}">
+  
+  <!-- Mermaid.js for diagram rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize Mermaid with theme matching site
+      mermaid.initialize({ 
+        startOnLoad: false,
+        theme: 'neutral',
+        flowchart: { useMaxWidth: true, htmlLabels: true },
+        sequence: { useMaxWidth: true },
+        securityLevel: 'loose'
+      });
+      
+      // Find all mermaid code blocks and render them
+      document.querySelectorAll('pre code.language-mermaid').forEach((block) => {
+        const pre = block.parentElement;
+        const code = block.textContent;
+        const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+        
+        // Create a container for the mermaid diagram
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        container.id = id;
+        
+        // Process mermaid code - remove frontmatter config if present
+        let mermaidCode = code.replace(/^---\n[\s\S]*?\n---\n/, '');
+        container.textContent = mermaidCode.trim();
+        
+        pre.replaceWith(container);
+      });
+      
+      // Render all mermaid diagrams
+      mermaid.run();
+    });
+  </script>
 </head>
 <body>
+  <!-- Site navigation -->
+  <nav class="site-nav">
+    <div class="nav-inner page-wrapper">
+      <a href="{{ '/' | relative_url }}" class="nav-brand">Hello Olleh</a>
+      <div class="nav-links">
+        <a href="{{ 'hello-claude-code/' | relative_url }}">Claude Code</a>
+        <a href="{{ 'hello-codex/' | relative_url }}">Codex</a>
+        <a href="{{ 'hello-gemini-cli/' | relative_url }}">Gemini CLI</a>
+        <a href="{{ 'hello-opencode/' | relative_url }}">OpenCode</a>
+      </div>
+    </div>
+  </nav>
+  
   {{ content }}
 </body>
 </html>

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "11 - 扩展机制"
 ---
 # 扩展性与 Harness 生态对比

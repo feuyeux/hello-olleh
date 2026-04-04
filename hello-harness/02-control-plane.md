@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "02 - 控制平面"
 ---
 <!-- markdownlint-disable MD060, MD024 -->

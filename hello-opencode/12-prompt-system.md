@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode A03：SessionPrompt.prompt()"
 ---
 # OpenCode A03：`SessionPrompt.prompt()`

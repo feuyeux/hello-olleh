@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "Memory 系统：轻量记忆管道与 AGENTS.md 的长期记忆"
 ---
 # Memory 系统：轻量记忆管道与 `AGENTS.md` 的长期记忆

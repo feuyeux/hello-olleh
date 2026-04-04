@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "06 - 上下文与记忆"
 ---
 # 上下文与记忆工程对比

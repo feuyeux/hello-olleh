@@ -1,3 +1,7 @@
+---
+layout: content
+title: "Codex 可观测性：日志、追踪与监控"
+---
 # Codex 可观测性：日志、追踪与监控
 
 本文档分析 Codex 的可观测性基础设施。

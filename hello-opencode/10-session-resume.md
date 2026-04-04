@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode Durable State 如何写入、传播与再投影"
 ---
 # OpenCode Durable State 如何写入、传播与再投影

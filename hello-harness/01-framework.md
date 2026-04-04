@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "01 - 理论框架总览"
 ---
 <!-- markdownlint-disable MD060, MD024 -->

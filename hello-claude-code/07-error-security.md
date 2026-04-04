@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "API Provider 选择、请求构造、重试与错误治理"
 ---
 # API Provider 选择、请求构造、重试与错误治理

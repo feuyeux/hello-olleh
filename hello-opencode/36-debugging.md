@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 C01：断点调试指南"
 ---
 # OpenCode 深度专题 C01：断点调试指南

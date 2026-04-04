@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "query() 主循环与请求构造"
 ---
 # `query()` 主循环与请求构造

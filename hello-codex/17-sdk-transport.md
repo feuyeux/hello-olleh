@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "宿主表面与传输层：app-server、remote websocket、TypeScript SDK 与多宿主复用"
 ---
 # 宿主表面与传输层：`app-server`、remote websocket、TypeScript SDK 与多宿主复用

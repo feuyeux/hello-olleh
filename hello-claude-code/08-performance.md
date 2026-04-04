@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "性能、缓存与长会话稳定性专题"
 ---
 # 性能、缓存与长会话稳定性专题

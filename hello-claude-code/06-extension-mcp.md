@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "扩展体系：技能、插件与 MCP"
 ---
 # 扩展体系：技能、插件与 MCP

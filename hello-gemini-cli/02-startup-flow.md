@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "启动链路：从入口到运行模式的分发"
 ---
 # 启动链路：从入口到运行模式的分发

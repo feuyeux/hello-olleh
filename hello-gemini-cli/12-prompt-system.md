@@ -1,3 +1,7 @@
+---
+layout: content
+title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
+---
 # Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入
 
 当前 Gemini CLI 的 Prompt 系统，核心不是一组静态模板文件，而是 `PromptProvider` 按运行时配置拼出最终 system prompt，再把记忆与模式相关内容附到末尾。

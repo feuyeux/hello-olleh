@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: content
 title: "OpenCode 深度专题 B12：Memory，Session 级别文件变更追踪与摘要管理"
 ---
 # OpenCode 深度专题 B12：Memory，Session 级别文件变更追踪与摘要管理
