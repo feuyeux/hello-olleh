@@ -21,5 +21,48 @@ For documentation changes, manually verify headings, relative links, referenced 
 ## Commit & Pull Request Guidelines
 Recent commits use short, imperative English subjects such as `Add Claude Code documentation and resources`. Keep commits focused on one analysis area or one snapshot update. PRs should mention the upstream repo and version affected, list changed directories, and note any validation commands you ran. Include screenshots only when visual artifacts such as diagrams or rendered docs materially changed.
 
+## Commit Identity & Co-Authorship Rules
+
+**Rule: The tool identity that makes the commit MUST match the Co-authored-by.**
+
+### Identity Table
+
+| Committing Tool | Author | Co-authored-by |
+|:----------------|:-------|:---------------|
+| Claude | `Claude <noreply@anthropic.com>` | `Co-authored-by: Claude <noreply@anthropic.com>` |
+| Codex | `Codex <noreply@openai.com>` | `Co-authored-by: Codex <noreply@openai.com>` |
+| Gemini | `Gemini <noreply@google.com>` | `Co-authored-by: Gemini <noreply@google.com>` |
+| OpenCode | `OpenCode <opencode@ai.local>` | `Co-authored-by: OpenCode <opencode@ai.local>` |
+
+### Commit Template
+
+```bash
+git commit -m "<type>: <message>" \
+  --author="<ToolName> <noreply@xxx.com>" \
+  -m "Co-authored-by: <ToolName> <noreply@xxx.com>"
+```
+
+### Examples
+
+```bash
+# When Claude makes the commit
+git commit -m "docs: update architecture" \
+  --author="Claude <noreply@anthropic.com>" \
+  -m "Co-authored-by: Claude <noreply@anthropic.com>"
+
+# When Codex makes the commit
+git commit -m "docs: update architecture" \
+  --author="Codex <noreply@openai.com>" \
+  -m "Co-authored-by: Codex <noreply@openai.com>"
+```
+
+### Git Config (Repository-level)
+
+```bash
+# Set for this repo only (not global)
+git config --local user.name "Codex"
+git config --local user.email "noreply@openai.com"
+```
+
 ## Agent Notes
 Start with the root [`README.md`](README.md) and [`hello.txt`](hello.txt) before generating new analysis. Prefer editing `hello-*` outputs over modifying vendored source trees, and avoid committing sync noise unless the snapshot update is intentional.
