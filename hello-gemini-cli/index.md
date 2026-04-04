@@ -6,9 +6,9 @@ title: "Gemini CLI 源码分析"
 <section class="hero page-wrapper">
   <p class="hero-kicker">Source Code Analysis</p>
   <h1 class="hero-title">🟡 Gemini CLI</h1>
-  <p class="hero-subtitle">基于 Gemini CLI v0.37.0-preview.1（TypeScript monorepo）源码的深度解析</p>
+  <p class="hero-subtitle">基于 Gemini CLI v0.36.0（TypeScript monorepo）源码的深度解析</p>
   <div class="hero-badges">
-    <span class="hero-badge"><span class="dot"></span>v0.37.0-preview.1</span>
+    <span class="hero-badge"><span class="dot"></span>v0.36.0</span>
   </div>
 </section>
 
