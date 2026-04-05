@@ -33,53 +33,76 @@ JS/TS 层则由 pnpm monorepo 管理，包含 3 个 package：
 | 工具 | 26 | `codex-utils-*`（absolute-path, cache, cli, elapsed, pty 等）|
 | 集成 | 5+ | `backend-client`, `lmstudio`, `ollama`, `chatgpt` |
 
-### 分层依赖模型
+### 自底向上的依赖分层模型
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 graph LR
     subgraph L0["Layer 0: 基础工具"]
+        direction TB
         utils["codex-utils-* (26)"]
         secrets["codex-secrets"]
         protocol["codex-protocol"]
+        utils ~~~ secrets
+        secrets ~~~ protocol
     end
     subgraph L1["Layer 1: 底层基础设施"]
+        direction TB
         client["codex-client"]
         execpolicy["codex-execpolicy"]
         termdet["codex-terminal-detection"]
+        client ~~~ execpolicy
+        execpolicy ~~~ termdet
     end
     subgraph L2["Layer 2: 配置与认证"]
+        direction TB
         config["codex-config"]
         login["codex-login"]
         codemode["codex-code-mode"]
+        config ~~~ login
+        login ~~~ codemode
     end
     subgraph L3["Layer 3: 抽象层"]
+        direction TB
         api["codex-api"]
         asprot["app-server-protocol"]
         sandbox["codex-sandboxing"]
         shellcmd["codex-shell-command"]
+        api ~~~ asprot
+        asprot ~~~ sandbox
+        sandbox ~~~ shellcmd
     end
     subgraph L4["Layer 4: 执行基础设施"]
+        direction TB
         execsrv["codex-exec-server"]
     end
     subgraph L5["Layer 5: 内核"]
+        direction TB
         core["codex-core ★"]
     end
     subgraph L6["Layer 6: 应用服务"]
+        direction TB
         appsrv["codex-app-server"]
         mcpsrv["codex-mcp-server"]
+        appsrv ~~~ mcpsrv
     end
     subgraph L7["Layer 7: 客户端库"]
+        direction TB
         appcli["app-server-client"]
     end
     subgraph L8["Layer 8: 顶层二进制"]
+        direction TB
         cli["cli"]
         tui["tui"]
         exec["exec"]
+        cli ~~~ tui
+        tui ~~~ exec
     end
 
     L0 --> L1 --> L2 --> L3 --> L4 --> L5 --> L6 --> L7 --> L8
 ```
+
+**读图方式**：这张图表达的是 crate 依赖分层，不是用户请求时序；因此应从 `L0 → L8` 阅读谁被谁复用。若按用户入口或调用链理解，则应反向看作 `L8 → L0`，也就是从 `tui/cli/exec` 逐步下钻到 `core`、执行基础设施与底层协议。
 
 **零循环依赖**：每一层只依赖更低层，不存在层间回引。
 
@@ -95,7 +118,19 @@ codex-state        ← app-server, core, tui
 
 ## IPC/FFI 边界：纯协议通信，无 N-API/WASM
 
-Codex 的 Rust/TypeScript 跨界**不使用 N-API 或 WASM**，而是采用纯 HTTP/WebSocket JSON 协议。这种设计的核心考量是：
+先区分两个容易混淆的概念：
+
+| 概念 | 在这里具体指什么 | 典型形态 |
+| --- | --- | --- |
+| IPC（Inter-Process Communication，进程间通信） | Node/TypeScript 进程与 Rust 进程彼此独立，通过消息传递交互 | HTTP、WebSocket、stdio、Unix socket、JSON-RPC |
+| FFI（Foreign Function Interface，跨语言函数调用） | TypeScript 宿主直接加载 Rust 编译产物，在**同一进程**里跨语言调用函数 | N-API 原生 addon、WASM 模块 |
+
+把它翻成更直白的话：
+
+- **走 FFI**：像是在 Node.js 进程里“内嵌”一块 Rust 逻辑，调用方式接近本地函数调用，边界是函数签名和内存布局。
+- **走 IPC**：像是在 Node.js 外面再起一个 Rust 服务，双方靠请求/响应消息协作，边界是协议、序列化格式和进程隔离。
+
+Codex 的 Rust/TypeScript 跨界**不使用 N-API 或 WASM**，而是采用纯 HTTP/WebSocket JSON 协议。也就是说，TS 侧并不把 Rust 当作“本进程里的原生模块”来调用，而是把它当作**独立运行时服务**来连接。这种设计的核心考量是：
 
 | 考量 | FFI (N-API/WASM) | 纯协议 |
 | --- | --- | --- |
@@ -148,12 +183,17 @@ graph LR
 - TypeScript SDK 依赖特定 schema 版本，不兼容时编译期报错
 - Rust 侧通过 `ts_rs::TS` 宏确保源码改动自动触发 schema 更新
 
-**无 FFI 的安全收益**：
-- app-server 崩溃不会内存破坏 TypeScript 进程
-- WebSocket 连接天然支持断线重连和优雅降级
-- TypeScript 侧无需处理 Rust 所有权语义
+**把双向调用说直白**：
 
-进程层级：
+- **TS → Rust**：CLI/SDK 先拉起或连接 `app-server`，再把“发起会话、发送 prompt、订阅事件、请求执行”这些动作编码成 JSON 请求发过去。这个方向真正要盯的是：连接是否建立、请求 ID/线程 ID 是否对得上、schema 版本是否一致、超时/取消/重试怎么处理。它**不用**处理 Rust 指针、ABI、所有权和 Node addon 崩溃这些 FFI 典型问题。
+- **Rust → TS**：Rust 并不是反向“调用一个 TS 函数”，而是把 `ResponseEvent`、流式文本增量、错误事件、状态更新继续编码成 JSON，再通过 WebSocket/HTTP 流推回给 TS。这个方向要盯的是：事件类型是否稳定、增量顺序是否可重放、断线后是否能重连恢复、TUI/SDK 是否扛得住持续事件流的背压。它**不用**把 Rust 内存对象直接暴露给 TS。
+
+**所以无 FFI 的收益就具体落在这里**：
+- 崩溃面被收束在 Rust 子进程里，`app-server` 出问题通常表现为“连接断开”，而不是把 Node/TS 宿主一起打崩。
+- 跨语言边界变成“可记录、可调试、可回放”的协议消息，而不是共享地址空间里的函数栈和对象指针。
+- 安全控制点更集中：审批、沙箱、exec server 这些能力可以挂在 Rust 运行时侧，不必把原生调用入口直接暴露给 TS。
+
+从调用关系看，进程层级大致是：
 
 ```
 codex (CLI binary)

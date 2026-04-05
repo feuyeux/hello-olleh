@@ -1,21 +1,7 @@
 ---
 layout: default
 ---
-<!-- index page -->
-<div class="hero page-wrapper">
-  <p class="hero-kicker">Source Code Analysis &middot; Harness Engineering</p>
-  <h1 class="hero-title">Hello AI Coding</h1>
-  <p class="hero-subtitle">
-    基于源码深度解析 Claude Code、Codex、Gemini CLI、OpenCode 四大 AI 编程工具的<br>
-    可控性工程实现差异，以 Harness Engineering 框架为分析透镜
-  </p>
-  <div class="hero-badges">
-    <span class="hero-badge"><span class="dot"></span>Claude Code</span>
-    <span class="hero-badge"><span class="dot"></span>OpenAI Codex</span>
-    <span class="hero-badge"><span class="dot"></span>Gemini CLI</span>
-    <span class="hero-badge"><span class="dot"></span>OpenCode</span>
-  </div>
-</div>
+
 
 <div class="page-wrapper">
   <div class="harness-diagram">
@@ -26,7 +12,21 @@ layout: default
   <section>
     <div class="section-header">
       <h2>分析对象</h2>
-      <p>四个 AI Coding CLI 的源码版本与语言栈</p>
+      <p>四个 AI Coding CLI 的源码版本、语言栈与源码仓库入口</p>
+    </div>
+    <div class="source-links">
+      <a class="source-link" href="{{ 'claude-code/' | relative_url }}">
+        <span class="dot"></span>claude-code/
+      </a>
+      <a class="source-link" href="https://github.com/openai/codex.git" target="_blank" rel="noreferrer">
+        <span class="dot"></span>github.com/openai/codex.git
+      </a>
+      <a class="source-link" href="https://github.com/google-gemini/gemini-cli.git" target="_blank" rel="noreferrer">
+        <span class="dot"></span>github.com/google-gemini/gemini-cli.git
+      </a>
+      <a class="source-link" href="https://github.com/anomalyco/opencode.git" target="_blank" rel="noreferrer">
+        <span class="dot"></span>github.com/anomalyco/opencode.git
+      </a>
     </div>
     <div class="cli-grid">
       <a class="cli-card" href="{{ 'hello-claude-code/' | relative_url }}">
