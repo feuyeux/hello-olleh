@@ -19,3 +19,18 @@ kramdown:
 
 # Build settings
 timezone: Asia/Shanghai
+
+# Exclude upstream source directories from Jekyll processing
+exclude:
+  - claude-code
+  - codex
+  - gemini-cli
+  - opencode
+  - openclaw
+  - prompts
+  - scripts
+  - hello-harness
+  - vendor/bundle
+  - node_modules
+  - .git
+  - .github
