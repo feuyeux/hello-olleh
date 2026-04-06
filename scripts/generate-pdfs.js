@@ -139,6 +139,47 @@ ${css}
     .page-nav {
       display: none;
     }
+    .cli-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .cli-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .chapter-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .chapter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .harness-diagram {
+      display: none;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
   </style>
 </head>
 <body>
@@ -191,6 +232,8 @@ const cssPath = path.join(__dirname, '..', 'style.css');
 const tmpDir = path.join(siteDir, 'tmp');
 
 const ebooks = [
+  { name: 'hello-olleh', title: 'Hello Olleh - AI Coding CLI 源码分析总览', isIndex: true },
+  { name: 'hello-harness', title: 'Harness Engineering Framework 源码分析' },
   { name: 'hello-claude-code', title: 'Claude Code 源码分析' },
   { name: 'hello-codex', title: 'OpenAI Codex 源码分析' },
   { name: 'hello-gemini-cli', title: 'Gemini CLI 源码分析' },
@@ -210,19 +253,34 @@ async function main() {
       continue;
     }
 
-    const files = naturalSort(getChapterFiles(chapterDir));
-    if (files.length === 0) {
-      console.log(`Skipping ${ebook.name}: no chapter files found`);
-      continue;
+    let files;
+    let chaptersHtml;
+
+    if (ebook.isIndex) {
+      // For index, just use the index.html content
+      const indexPath = path.join(chapterDir, 'index.html');
+      if (!fs.existsSync(indexPath)) {
+        console.log(`Skipping ${ebook.name}: index.html not found`);
+        continue;
+      }
+      const content = extractBody(indexPath);
+      chaptersHtml = `<div class="chapter">${content}</div>`;
+      console.log(`\nGenerating PDF for ${ebook.name}...`);
+    } else {
+      files = naturalSort(getChapterFiles(chapterDir));
+      if (files.length === 0) {
+        console.log(`Skipping ${ebook.name}: no chapter files found`);
+        continue;
+      }
+
+      console.log(`\nGenerating ebook for ${ebook.name} (${files.length} chapters)...`);
+
+      // Combine all chapters
+      chaptersHtml = files.map(f => {
+        const content = extractBody(path.join(chapterDir, f));
+        return `<div class="chapter">${content}</div>`;
+      }).join('\n');
     }
-
-    console.log(`\nGenerating ebook for ${ebook.name} (${files.length} chapters)...`);
-
-    // Combine all chapters
-    const chaptersHtml = files.map(f => {
-      const content = extractBody(path.join(chapterDir, f));
-      return `<div class="chapter">${content}</div>`;
-    }).join('\n');
 
     // Create combined HTML
     const combinedHtml = createEbookHtml(ebook.title, chaptersHtml, cssPath);
