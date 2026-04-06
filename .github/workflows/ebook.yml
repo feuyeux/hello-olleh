@@ -44,9 +44,9 @@ jobs:
       - name: Generate PDF ebooks
         run: node scripts/generate-pdfs.js
 
-      - name: Upload PDF artifacts
+      - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ebooks
-          path: _site/*.pdf
+          name: hello-olleh-ebook
+          path: _site/hello-olleh-complete.pdf
           retention-days: 30

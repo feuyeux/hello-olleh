@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Generate PDF ebooks from Jekyll _site directory
- * Merges all chapter HTML pages into a single PDF per workspace
+ * Generate a complete PDF ebook from Jekyll _site directory
+ * Merges all content (homepage + harness + all workspaces) into a single PDF
  */
 
 const fs = require('fs');
@@ -54,15 +54,15 @@ function getChapterFiles(dir) {
   }
 }
 
-// Create combined HTML ebook
-function createEbookHtml(title, chapters, cssPath) {
+// Create combined HTML ebook with all content
+function createCompleteEbookHtml(sections, cssPath) {
   const css = fs.readFileSync(cssPath, 'utf-8');
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>${title}</title>
+  <title>Hello Olleh - AI Coding CLI 源码分析</title>
   <style>
 ${css}
     body {
@@ -73,9 +73,16 @@ ${css}
       font-size: 14px;
       line-height: 1.8;
     }
-    .chapter {
+    .section {
       page-break-before: always;
       padding: 20px 0;
+    }
+    .section:first-of-type {
+      page-break-before: avoid;
+    }
+    .chapter {
+      page-break-before: always;
+      padding: 15px 0;
     }
     .chapter:first-of-type {
       page-break-before: avoid;
@@ -133,11 +140,12 @@ ${css}
       padding-left: 15px;
       color: #5a5550;
     }
-    .site-nav {
+    .site-nav, .page-nav, .source-links, .harness-diagram {
       display: none;
     }
-    .page-nav {
-      display: none;
+    img {
+      max-width: 100%;
+      height: auto;
     }
     .cli-grid {
       display: grid;
@@ -146,15 +154,14 @@ ${css}
       margin: 20px 0;
     }
     .cli-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
+      background: #fffef8;
+      border: 1px solid #d4cfc4;
       border-radius: 8px;
       padding: 15px;
       display: flex;
       align-items: center;
       gap: 15px;
-      color: var(--text-primary);
-      text-decoration: none;
+      color: #2d2a26;
     }
     .chapter-grid {
       display: grid;
@@ -163,28 +170,31 @@ ${css}
       margin: 20px 0;
     }
     .chapter-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
+      background: #fffef8;
+      border: 1px solid #d4cfc4;
       border-radius: 8px;
       padding: 15px;
       display: flex;
       align-items: center;
       gap: 15px;
-      color: var(--text-primary);
-      text-decoration: none;
+      color: #2d2a26;
     }
-    .harness-diagram {
+    .source-link {
+      background: #fffef8;
+      border: 1px solid #d4cfc4;
+      border-radius: 8px;
+      padding: 12px 15px;
+      display: block;
+      color: #2d2a26;
+      margin: 8px 0;
+    }
+    hr {
       display: none;
-    }
-    img {
-      max-width: 100%;
-      height: auto;
     }
   </style>
 </head>
 <body>
-<h1>${title}</h1>
-${chapters}
+${sections}
 </body>
 </html>`;
 }
@@ -231,13 +241,14 @@ const siteDir = path.join(__dirname, '..', '_site');
 const cssPath = path.join(__dirname, '..', 'style.css');
 const tmpDir = path.join(siteDir, 'tmp');
 
-const ebooks = [
+// Define all sections in order
+const sections = [
   { name: 'hello-olleh', title: 'Hello Olleh - AI Coding CLI 源码分析总览', isIndex: true },
-  { name: 'hello-harness', title: 'Harness Engineering Framework 源码分析' },
-  { name: 'hello-claude-code', title: 'Claude Code 源码分析' },
-  { name: 'hello-codex', title: 'OpenAI Codex 源码分析' },
-  { name: 'hello-gemini-cli', title: 'Gemini CLI 源码分析' },
-  { name: 'hello-opencode', title: 'OpenCode 源码分析' }
+  { name: 'hello-harness', title: 'Harness Engineering Framework' },
+  { name: 'hello-claude-code', title: 'Claude Code' },
+  { name: 'hello-codex', title: 'OpenAI Codex' },
+  { name: 'hello-gemini-cli', title: 'Gemini CLI' },
+  { name: 'hello-opencode', title: 'OpenCode' }
 ];
 
 async function main() {
@@ -246,54 +257,63 @@ async function main() {
     fs.mkdirSync(tmpDir, { recursive: true });
   }
 
-  for (const ebook of ebooks) {
-    const chapterDir = path.join(siteDir, ebook.name);
-    if (!fs.existsSync(chapterDir)) {
-      console.log(`Skipping ${ebook.name}: directory not found`);
+  const allSections = [];
+  let totalChapters = 0;
+
+  for (const section of sections) {
+    const sectionDir = path.join(siteDir, section.name);
+    if (!fs.existsSync(sectionDir)) {
+      console.log(`Skipping ${section.name}: directory not found`);
       continue;
     }
 
-    let files;
-    let chaptersHtml;
-
-    if (ebook.isIndex) {
-      // For index, just use the index.html content
-      const indexPath = path.join(chapterDir, 'index.html');
+    if (section.isIndex) {
+      const indexPath = path.join(sectionDir, 'index.html');
       if (!fs.existsSync(indexPath)) {
-        console.log(`Skipping ${ebook.name}: index.html not found`);
+        console.log(`Skipping ${section.name}: index.html not found`);
         continue;
       }
       const content = extractBody(indexPath);
-      chaptersHtml = `<div class="chapter">${content}</div>`;
-      console.log(`\nGenerating PDF for ${ebook.name}...`);
+      allSections.push(`<div class="section"><h1>${section.title}</h1>${content}</div>`);
+      console.log(`Added ${section.name} (index)`);
     } else {
-      files = naturalSort(getChapterFiles(chapterDir));
+      const files = naturalSort(getChapterFiles(sectionDir));
       if (files.length === 0) {
-        console.log(`Skipping ${ebook.name}: no chapter files found`);
+        console.log(`Skipping ${section.name}: no chapter files found`);
         continue;
       }
 
-      console.log(`\nGenerating ebook for ${ebook.name} (${files.length} chapters)...`);
+      totalChapters += files.length;
+      console.log(`Added ${section.name} (${files.length} chapters)`);
 
-      // Combine all chapters
-      chaptersHtml = files.map(f => {
-        const content = extractBody(path.join(chapterDir, f));
-        return `<div class="chapter">${content}</div>`;
-      }).join('\n');
+      // Add section header
+      let sectionHtml = `<div class="section"><h1>${section.title}</h1>`;
+
+      // Add all chapters
+      for (const f of files) {
+        const content = extractBody(path.join(sectionDir, f));
+        sectionHtml += `<div class="chapter">${content}</div>`;
+      }
+
+      sectionHtml += '</div>';
+      allSections.push(sectionHtml);
     }
+  }
 
-    // Create combined HTML
-    const combinedHtml = createEbookHtml(ebook.title, chaptersHtml, cssPath);
-    const tmpHtmlPath = path.join(tmpDir, `${ebook.name}-ebook.html`);
-    fs.writeFileSync(tmpHtmlPath, combinedHtml, 'utf-8');
+  console.log(`\nTotal: ${totalChapters} chapters from ${allSections.length} sections`);
 
-    // Generate PDF
-    const pdfPath = path.join(siteDir, `${ebook.name}.pdf`);
-    try {
-      await generatePDF(tmpHtmlPath, pdfPath);
-    } catch (err) {
-      console.error(`Error generating PDF for ${ebook.name}: ${err.message}`);
-    }
+  // Create combined HTML
+  const combinedHtml = createCompleteEbookHtml(allSections.join('\n'), cssPath);
+  const tmpHtmlPath = path.join(tmpDir, 'hello-olleh-complete.html');
+  fs.writeFileSync(tmpHtmlPath, combinedHtml, 'utf-8');
+
+  // Generate single PDF
+  const pdfPath = path.join(siteDir, 'hello-olleh-complete.pdf');
+  try {
+    await generatePDF(tmpHtmlPath, pdfPath);
+  } catch (err) {
+    console.error(`Error generating PDF: ${err.message}`);
+    process.exit(1);
   }
 
   // Cleanup tmp
@@ -301,7 +321,7 @@ async function main() {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 
-  console.log('\nDone!');
+  console.log('\nDone! Generated: hello-olleh-complete.pdf');
 }
 
 main().catch(console.error);
