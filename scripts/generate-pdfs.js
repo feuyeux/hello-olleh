@@ -6,6 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { pathToFileURL } = require('url');
 
 // Find Chrome/Chromium executable
 async function findChrome() {
@@ -81,9 +82,53 @@ function getSiteIndexPath(siteDir, section) {
   return path.join(siteDir, section.name, 'index.html');
 }
 
+function getBaseUrl(configPath) {
+  try {
+    const config = fs.readFileSync(configPath, 'utf-8');
+    const match = config.match(/^baseurl:\s*["']?([^"'\n]+)["']?\s*$/m);
+    if (!match) return '';
+    const baseUrl = match[1].trim();
+    return baseUrl === '/' ? '' : baseUrl.replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function toSiteFileUrl(siteDir, sitePath) {
+  const normalizedPath = sitePath.replace(/^\/+/, '');
+  let resolvedPath = path.join(siteDir, normalizedPath);
+
+  if (sitePath.endsWith('/')) {
+    resolvedPath = path.join(resolvedPath, 'index.html');
+  } else if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
+    resolvedPath = path.join(resolvedPath, 'index.html');
+  }
+
+  return pathToFileURL(resolvedPath).href;
+}
+
+function rewriteSiteRelativeUrls(html, siteDir, baseUrl) {
+  if (!baseUrl) return html;
+
+  const attrPattern = new RegExp(
+    `\\b(href|src)=("|\')${escapeRegExp(baseUrl)}/([^"\']*)\\2`,
+    'g'
+  );
+
+  return html.replace(attrPattern, (_match, attr, quote, sitePath) => {
+    const fileUrl = toSiteFileUrl(siteDir, sitePath);
+    return `${attr}=${quote}${fileUrl}${quote}`;
+  });
+}
+
 // Create combined HTML ebook with all content
-function createCompleteEbookHtml(sections, cssPath) {
+function createCompleteEbookHtml(sections, cssPath, siteDir, baseUrl) {
   const css = fs.readFileSync(cssPath, 'utf-8');
+  const rewrittenSections = rewriteSiteRelativeUrls(sections, siteDir, baseUrl);
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -221,7 +266,7 @@ ${css}
   </style>
 </head>
 <body>
-${sections}
+${rewrittenSections}
 </body>
 </html>`;
 }
@@ -258,13 +303,15 @@ async function generatePDF(inputPath, outputPath) {
     const fileUrl = `file://${path.resolve(inputPath)}`;
 
     console.log(`Loading: ${fileUrl}`);
-    await page.goto(fileUrl, { waitUntil: ['networkidle0', 'domcontentloaded'], timeout: 120000 });
-    await page.waitForTimeout(2000);
+    await page.goto(fileUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForTimeout(1000);
+    await page.emulateMediaType('screen');
 
     await page.pdf({
       path: path.resolve(outputPath),
       format: 'A4',
       printBackground: true,
+      timeout: 0,
       margin: { top: '20mm', bottom: '25mm', left: '15mm', right: '15mm' },
       displayHeaderFooter: true,
       headerTemplate: `<div style="font-size:10px;text-align:center;width:100%;font-family:sans-serif;"><span class="title"></span></div>`,
@@ -280,6 +327,7 @@ async function generatePDF(inputPath, outputPath) {
 // Main
 const siteDir = path.join(__dirname, '..', '_site');
 const cssPath = path.join(__dirname, '..', 'style.css');
+const configPath = path.join(__dirname, '..', '_config.yml');
 const tmpDir = path.join(siteDir, 'tmp');
 
 // Define all sections in order
@@ -344,7 +392,8 @@ async function main() {
   console.log(`\nTotal: ${totalChapters} chapters from ${allSections.length} sections`);
 
   // Create combined HTML
-  const combinedHtml = createCompleteEbookHtml(allSections.join('\n'), cssPath);
+  const baseUrl = getBaseUrl(configPath);
+  const combinedHtml = createCompleteEbookHtml(allSections.join('\n'), cssPath, siteDir, baseUrl);
   const tmpHtmlPath = path.join(tmpDir, 'hello-olleh-complete.html');
   fs.writeFileSync(tmpHtmlPath, combinedHtml, 'utf-8');
 
@@ -374,6 +423,8 @@ module.exports = {
   naturalSort,
   getChapterPaths,
   getSiteIndexPath,
+  getBaseUrl,
+  rewriteSiteRelativeUrls,
   extractBody,
   createCompleteEbookHtml
 };
