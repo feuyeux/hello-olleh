@@ -10,6 +10,23 @@ A06 进入模型请求出站链路。在 `v1.3.2` 中，大模型请求会经过
 
 ---
 
+
+**目录**
+
+- [1. 入口坐标](#1-入口坐标)
+- [2. system prompt 由四层来源叠加组成](#2-system-prompt-由四层来源叠加组成)
+- [3. provider prompt 的选择是硬编码策略，不是配置文件规则](#3-provider-prompt-的选择是硬编码策略不是配置文件规则)
+- [4. 环境层和指令层各自提供了什么](#4-环境层和指令层各自提供了什么)
+- [5. model 参数的优先级也在代码里写死了](#5-model-参数的优先级也在代码里写死了)
+- [6. 进入 `streamText()` 之前，工具系统已经被包了两层](#6-进入-streamtext-之前工具系统已经被包了两层)
+- [7. `LLM.stream()` 里的 provider 兼容层有四块](#7-llmstream-里的-provider-兼容层有四块)
+- [8. 最后一步：`streamText()` 之前还有 middleware](#8-最后一步streamtext-之前还有-middleware)
+- [9. `streamText()` 调用时最终带上了什么](#9-streamtext-调用时最终带上了什么)
+- [10. AI SDK `streamText().fullStream` 一共有多少种状态](#10-ai-sdk-streamtextfullstream-一共有多少种状态)
+- [11. A06 和 A07 的边界](#11-a06-和-a07-的边界)
+
+---
+
 ## 1. 入口坐标
 
 这条调用链的关键代码有四组：
@@ -599,3 +616,32 @@ A06 讲的是请求怎样被拼出来、怎样发出去；A07 才讲返回流怎
 
 所以如果你要找“为什么这个请求这样发”，看 A06；如果你要找“为什么前端能看到 reasoning/tool/patch 这些 part”，看 A07。
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `LLM.stream()` | `llm/llm.ts` | 顶层 LLM 请求接口：接收 messages+tools，返回 `fullStream` |
+| system prompt assembler | `llm/prompt.ts` | 四层 system prompt 拼接：base+context+agent+user override |
+| `streamText()` | `ai-sdk/stream.ts` (via AI SDK) | Vercel AI SDK 底层流式调用，适配各提供商 |
+| provider middleware chain | `llm/middleware.ts` | 请求前/后钩子：usage tracking、cache hint、model routing |
+| provider compatibility layer | `llm/compat.ts` | 抹平不同提供商的参数差异（tool_choice、temperature limit 等） |
+| token budget calculator | `llm/budget.ts` | 根据模型 context window 计算可用 token 并截断历史消息 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **AI SDK 抽象隔离提供商**：通过 Vercel AI SDK 的 provider registry，切换模型不修改业务逻辑，只更换 provider key。
+- **四层 system prompt 分离**：框架层、上下文层、agent 规则层、用户覆盖层分别独立，可独立测试和调整。
+- **middleware 链可扩展**：请求/响应中间件链支持插入 usage tracking、cache header 等，无需修改核心 LLM 调用。
+
+**风险与改进点**
+
+- **提供商 compatibility 层维护成本高**：每个新增提供商的差异需手动在 compat.ts 中注册，易遗漏边缘参数。
+- **token budget 估算依赖 tokenizer**：不同模型使用不同 tokenizer，跨模型时 budget 计算可能偏差导致截断不准确。
+- **system prompt 长度无上限保护**：四层拼接后未限制总长度，插件大量注入 context 时可能超出模型限制。

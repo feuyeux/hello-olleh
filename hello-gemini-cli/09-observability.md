@@ -6,6 +6,21 @@ title: "Gemini CLI 可观测性：日志、MessageBus 与 UI 状态追踪"
 
 本文档分析 Gemini CLI 的可观测性基础设施。
 
+
+**目录**
+
+- [1. 可观测性在 Gemini CLI 里的定位](#1-可观测性在-gemini-cli-里的定位)
+- [2. 日志系统](#2-日志系统)
+- [3. MessageBus 事件总线](#3-messagebus-事件总线)
+- [4. UIStateContext 状态管理](#4-uistatecontext-状态管理)
+- [5. Storage 持久化](#5-storage-持久化)
+- [6. 与 OpenCode 的完整可观测性对比](#6-与-opencode-的完整可观测性对比)
+- [7. 改进建议](#7-改进建议)
+- [8. 关键源码锚点](#8-关键源码锚点)
+- [9. 总结](#9-总结)
+
+---
+
 ## 1. 可观测性在 Gemini CLI 里的定位
 
 ### 1.1 三支柱架构
@@ -230,3 +245,31 @@ Gemini CLI 的可观测性相比 OpenCode 较为基础：
 ---
 
 > 关联阅读：[05-state-management.md](./05-state-management.md) 了解 Storage 详情。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `MessageBus` | `packages/core/src/confirmation-bus/message-bus.ts` | 继承 EventEmitter，提供 emit/on/off 工具调用状态广播 |
+| `UIStateContext` | `packages/cli/src/ui/contexts/UIStateContext.tsx` | React Context 状态容器：持有 currentTurn、messages、status |
+| `Storage.initialize()` | `packages/core/src/config/storage.ts` | 计算 `~/.gemini/`、项目级 `.gemini/` 等持久化根路径 |
+| `ChatRecordingService.recordMessage()` | `packages/core/src/services/chatRecordingService.ts` | 实时录制用户/模型/工具/思考消息并序列化到 JSON 文件 |
+| `JsonStorage.saveSession()` | — | 将 session 对象序列化为 JSON 文件写入 Storage 目录 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **MessageBus 事件驱动解耦**：工具执行状态通过 EventEmitter 广播，Scheduler 不直接依赖 UI 层，各层可独立测试。
+- **UIStateContext 增量渲染**：React Context + Ink 组合实现增量 UI 更新，不需要全量重绘终端。
+- **ChatRecordingService 实时落盘**：每次消息增量写入，不等会话结束才保存，进程崩溃后数据不全量丢失。
+
+**风险与改进点**
+
+- **MessageBus 仅本地 EventEmitter**：无法跨进程广播，不支持多 session 全局事件（相比 OpenCode GlobalBus 功能弱）。
+- **日志无结构化格式与文件轮转**：仅使用 `console.log/error`，无 timestamp、level、service tag，也无自动日志清理机制，长期运行 log 会无限增长。
+- **UIStateContext 无虚拟化**：长会话下持有大量历史消息的 Context 会导致 Ink 组件频繁全量 re-render，存在性能瓶颈。

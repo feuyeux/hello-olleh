@@ -10,6 +10,24 @@ title: "OpenCode 深度专题 B08：启动与配置加载，从全局目录到 .
 
 ---
 
+
+**目录**
+
+- [0. 工程框架概览：代码组织与构建体系](#0-工程框架概览代码组织与构建体系)
+- [1. 启动与配置不是一步，而是四段](#1-启动与配置不是一步而是四段)
+- [2. import 阶段已经有显式副作用](#2-import-阶段已经有显式副作用)
+- [3. `src/index.ts` 的 middleware 先准备运行环境，再谈命令分发](#3-srcindexts-的-middleware-先准备运行环境再谈命令分发)
+- [4. `Config.get()` 不是读一个文件，而是编译一棵配置树](#4-configget-不是读一个文件而是编译一棵配置树)
+- [5. 项目配置与 `.opencode` 目录是两条不同的发现机制](#5-项目配置与-opencode-目录是两条不同的发现机制)
+- [6. `.opencode` 目录装载的不只是 JSON，还包括可执行扩展内容](#6-opencode-目录装载的不只是-json还包括可执行扩展内容)
+- [7. 配置文本本身还支持二次展开](#7-配置文本本身还支持二次展开)
+- [8. `Config.get()` 最后还会做一轮兼容与归一化](#8-configget-最后还会做一轮兼容与归一化)
+- [9. `InstanceBootstrap()` 才是“完整项目 runtime”真正启动的地方](#9-instancebootstrap-才是完整项目-runtime真正启动的地方)
+- [10. 启动与配置系统为什么是 OpenCode 骨架的一部分](#10-启动与配置系统为什么是-opencode-骨架的一部分)
+- [11. 把 B08 压成一句代码级结论](#11-把-b08-压成一句代码级结论)
+
+---
+
 ## 0. 工程框架概览：代码组织与构建体系
 
 ### 0.1 当前是 Turborepo monorepo，核心分为三个包
@@ -326,3 +344,31 @@ OpenCode 当前的启动/配置链可以压成四句话：
 所以如果要一句话概括 B08：
 
 > 在 OpenCode 里，“启动”真正启动的不是某个聊天循环，而是一整套带配置编译和作用域服务图的 runtime 装配过程。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Config.get()` | `config/config.ts` | 编译配置树：global → project → `.opencode` 三层叠加，并做兼容归一化 |
+| `Config.compile()` | `config/config.ts:143-166` | 发现并合并 global config + project 配置，支持 template 展开 |
+| `InstanceBootstrap()` | `project/bootstrap.ts` | 完整 project runtime 启动入口：注册 tools/MCP/LSP/session store |
+| `src/index.ts` middleware | `cli/src/index.ts` | 启动前环境准备：PATH 注入、binary 检测、`.opencode` 装载 |
+| `.opencode` 目录加载器 | `project/` | 扫描并加载 `.opencode/*.ts`（tools/commands/skills）|
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **四段启动流程有序**：import 副作用 → middleware 环境准备 → `Config.get()` 配置树编译 → `InstanceBootstrap()` runtime 装配，层次清晰，调试时可在任一阶段加断点。
+- **配置支持二次展开（template 变量）**：配置文本中的变量引用在 `compile()` 阶段自动展开，避免运行时字符串拼接分散在业务代码中。
+- **`.opencode` 目录装载可执行扩展**：不只是 JSON 配置，`.opencode/*.ts` 文件可以直接注册 tool/command/skill，配置与代码融为一体。
+
+**风险与改进点**
+
+- **import 阶段副作用不可见**：Effect service 注册在 module 加载时发生，若某个 service 初始化失败，错误可能在调用栈深处才被发现，不如显式 `bootstrap()` 调用直观。
+- **`InstanceBootstrap()` 串行装配无超时**：所有服务（tools/MCP/LSP）按顺序初始化，若某个 MCP server 响应慢，整个启动流程会无限等待。
+- **多 workspace 配置隔离依赖文件路径约定**：不同 workspace 的配置完全依赖目录结构区分，若用户在相同 workspace 目录打开多个 project，可能误用同一份配置。

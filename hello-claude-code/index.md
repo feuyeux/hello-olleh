@@ -50,6 +50,7 @@ title: "Claude Code 源码分析"
     <a class="chapter-card" href="24-project-init-analysis"><div class="chapter-number">24</div><div class="chapter-title">项目初始化分析报告：面向首次进入 Claude Code 仓库的总览</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="25-input-command-queue"><div class="chapter-number">25</div><div class="chapter-title">用户输入、Slash 命令与队列分发</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="26-mcp-system"><div class="chapter-number">26</div><div class="chapter-title">Claude Code 的 MCP 系统（深度专题）</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="27-debugging"><div class="chapter-number">27</div><div class="chapter-title">调试指南</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 </div>
 

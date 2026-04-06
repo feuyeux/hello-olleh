@@ -6,6 +6,20 @@ title: "错误处理与安全性：异常捕获、重试策略、沙箱隔离与
 
 主向导对应章节：`错误处理与安全性`
 
+
+**目录**
+
+- [统一错误类型体系](#统一错误类型体系)
+- [重试策略](#重试策略)
+- [沙箱隔离](#沙箱隔离)
+- [路径安全](#路径安全)
+- [apply_patch 拦截机制](#apply_patch-拦截机制)
+- [权限合并与升级](#权限合并与升级)
+- [敏感文件防泄漏的多层防御](#敏感文件防泄漏的多层防御)
+- [关键函数签名](#关键函数签名)
+
+---
+
 ## 统一错误类型体系
 
 ### CodexErr（`core/src/error.rs:66`）
@@ -409,3 +423,20 @@ Codex 的敏感文件保护不是靠单点过滤，而是**多层约束**：
 | `merge_permission_profiles()` | `policy_transforms.rs` | 63 |
 | `effective_file_system_sandbox_policy()` | `policy_transforms.rs` | 275 |
 | `normalize_permission_paths()` | `policy_transforms.rs` | 166 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **多层防御不依赖单点**：工具白名单 → 路径解析 → 文件系统沙箱 → 审批链 → apply_patch 拦截，每一层独立失效也不会完全穿透，纵深防御不依赖单一 check。
+- **`merge_permission_profiles()` 声明式权限合并**：策略合并有专用函数处理，避免调用点散乱地手动 OR/AND 权限位，权限升级路径可审计。
+- **环境变量前缀过滤**：`.env` 加载仅允许 `CODEX_*` 前缀，从源头阻止 `AWS_SECRET_KEY`、`DATABASE_URL` 等敏感变量泄漏到子进程。
+- **`apply_patch` 拦截作为补充保障**：即使工具执行到达 patch 阶段，`intercept_apply_patch()` 仍可按路径强制拦截，防止绕过权限检查的写操作。
+
+**风险与改进点**
+
+- **`SandboxManager::transform()` 无超时**：沙箱规则计算在工具执行关键路径上，若规则复杂度增长，可能形成隐性延迟，缺少超时或复杂度预算。
+- **`merge_permission_profiles()` 冲突语义不透明**：多个 profile 合并时，哪种策略优先、冲突如何解决，文档和代码注释都不充分，维护者难以自信地添加新 profile。
+- **`backoff()` 硬编码策略**：退避逻辑（等待时间、最大次数）写在函数体内，调整需要改代码，无法通过配置覆盖，对网络环境差或速率限制严格的场景不够灵活。

@@ -6,6 +6,18 @@ title: "REPL 与交互层：多表面入口与统一 Server Contract"
 
 本文分析 OpenCode 的交互层设计，包括多表面（CLI/TUI/Web/Desktop）共享同一 Server 协议的架构，以及用户输入处理流程。
 
+
+**目录**
+
+- [1. 多表面架构](#1-多表面架构)
+- [2. Server Contract](#2-server-contract)
+- [3. TUI 模式](#3-tui-模式)
+- [4. Web UI](#4-web-ui)
+- [5. 非交互（CLI）模式](#5-非交互cli模式)
+- [6. 与其他系统的对比](#6-与其他系统的对比)
+
+---
+
 ## 1. 多表面架构
 
 OpenCode 是四个系统中交互层最丰富的：
@@ -111,3 +123,32 @@ cat error.log | opencode run "分析这些错误并给出修复方案"
 | **远程访问** | ✅（Web UI）| ❌ | 部分 | ❌ |
 
 OpenCode 的多表面架构是四个系统中最开放的，Server 协议使得任意客户端（甚至第三方）都能接入。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `TuiTransport` | `cli/` | TUI 模式 transport：本地 Ink UI + Bun HTTP server 通信 |
+| `HttpTransport` | `cli/` | HTTP 模式 transport：远端附加或 headless API 客户端 |
+| `Server.start()` | `server/server.ts` | 统一 Bun HTTP server：所有 surface 的服务端 |
+| `ui.tsx` | `cli/` | Ink TUI 主组件入口：渲染 session 状态和工具执行进度 |
+| `nonInteractive()` | `cli/cmd/run.ts` | Headless/pipe 模式：stdin/args 驱动，不启动 TUI |
+| `Bus.subscribe()` (UI side) | — | 前端 SSE 订阅反代：将 server Bus 事件推送到 TUI 组件状态 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **多 surface 共享同一 server 和 durable history**：TUI/Web/ACP 不各自维护状态，统一从 durable history 读数据，表面切换不丢状态。
+- **`attach` 命令支持远端 TUI**：在远端机器上运行 server 后，本地 attach 打开 TUI，开发体验接近本地运行。
+- **Headless 模式通过 HTTP client 接入，非特殊路径**：非交互模式复用与 TUI 相同的 SSE event 流，无"静默模式"特例代码。
+
+**风险与改进点**
+
+- **TUI 与 server 的通信无认证**：本地 TUI 通过 HTTP 与同进程 server 通信，若端口绑定到 `0.0.0.0`，外部可直接访问 session API，存在安全风险。
+- **Web UI 无官方构建产物**：Web UI 需要独立构建，CLI 分发包默认不包含前端资源，普通用户无法直接使用 Web surface，DX 受限。
+- **attach 模式无 session 选择 UI**：attach 命令连接到 server 后自动选择最新 session，不能在 TUI 内切换到其他正在运行的 session。

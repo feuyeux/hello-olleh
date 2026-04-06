@@ -6,6 +6,39 @@ title: "启动流程详解"
 
 本篇拆解 Claude Code CLI 从进程启动到会话可交互之间的阶段划分、trust 边界和交互/非交互分流。
 
+
+**目录**
+
+- [1. 总体时序图](#1-总体时序图)
+- [2. 分析维度](#2-分析维度)
+- [3. 阶段 0：比普通 import 更早的预取](#3-阶段-0比普通-import-更早的预取)
+- [4. 阶段 1：早期 settings / entrypoint 判定](#4-阶段-1早期-settings-entrypoint-判定)
+- [5. 阶段 2：`init()` 做基础初始化](#5-阶段-2init-做基础初始化)
+- [6. 阶段 3：`setup()` 负责把运行环境搭好](#6-阶段-3setup-负责把运行环境搭好)
+- [6.1 setup 的总职责](#61-setup-的总职责)
+- [6.2 最先处理的是基础安全与会话 ID](#62-最先处理的是基础安全与会话-id)
+- [6.3 再处理消息通道与 teammate 快照](#63-再处理消息通道与-teammate-快照)
+- [6.4 终端恢复逻辑说明这是一个“侵入式终端产品”](#64-终端恢复逻辑说明这是一个侵入式终端产品)
+- [6.5 `setCwd()` 与 hooks 快照必须非常早](#65-setcwd-与-hooks-快照必须非常早)
+- [6.6 worktree 是 setup 的一级公民](#66-worktree-是-setup-的一级公民)
+- [7. 阶段 4：setup 中的后台任务与预取](#7-阶段-4setup-中的后台任务与预取)
+- [8. 阶段 5：交互模式下创建 Ink root 与 setup screens](#8-阶段-5交互模式下创建-ink-root-与-setup-screens)
+- [9. `showSetupScreens()` 是启动中的“信任边界闸门”](#9-showsetupscreens-是启动中的信任边界闸门)
+- [10. 阶段 6：REPL 真正启动](#10-阶段-6repl-真正启动)
+- [11. 阶段 7：首屏完成后再做 deferred prefetch](#11-阶段-7首屏完成后再做-deferred-prefetch)
+- [12. 交互模式与非交互模式的差异](#12-交互模式与非交互模式的差异)
+- [12.1 非交互模式会跳过什么](#121-非交互模式会跳过什么)
+- [12.2 为什么要分得这么细](#122-为什么要分得这么细)
+- [13. 启动流程中的典型设计模式](#13-启动流程中的典型设计模式)
+- [13.1 “先小后大”](#131-先小后大)
+- [13.2 “trust 后再解锁能力”](#132-trust-后再解锁能力)
+- [13.3 “首屏关键路径与首轮关键路径分开”](#133-首屏关键路径与首轮关键路径分开)
+- [13.4 启动可观测性](#134-启动可观测性)
+- [14. 启动链路关键文件地图](#14-启动链路关键文件地图)
+- [15. 总结](#15-总结)
+
+---
+
 ## 1. 总体时序图
 
 ```mermaid
@@ -521,3 +554,34 @@ setup screens / Ink 首屏只是第一层目标。
 - telemetry sinks
 
 没有这条启动主线，后面的 query 主循环就无法稳定运行。
+
+---
+
+## 关键函数清单
+
+| 函数/符号 | 文件 | 职责 |
+|----------|------|------|
+| `main()` | `src/entrypoints/main.tsx` | 进程入口，最早触发 settings 加载和 entrypoint 判断 |
+| `init()` | `src/entrypoints/main.tsx` | 基础初始化：TTY 检测、locale、终端能力探测 |
+| `loadSettings()` | `src/utils/loadSettings.ts` | 加载 `.claude/settings.json`，合并环境变量覆盖 |
+| `getAnthropicClient()` | `src/services/api/claude.ts` | 初始化阶段构造 API client、验证 auth |
+| `setupTelemetry()` | — | 初始化 telemetry sinks（otel / stdout / noop）|
+| `initPermissions()` | — | 初始化 permission mode 和 trust state |
+| `prefetchSkills()` | — | 首屏后 deferred 预取，不阻塞 TUI 渲染 |
+| `REPL()` | `src/REPL.tsx` | 接管交互控制，开始渲染 TUI |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **三窗口启动分层**：顶层 side effect → `init()` → deferred prefetch，严格区分"必须在渲染前完成"和"可以后台完成"的工作，首屏时间可控。
+- **Settings 在最早阶段加载**：entrypoint 判断依赖 settings，确保不会渲染 TUI 后才发现配置错误。
+- **permission/trust 在启动时锁定**：避免会话中途权限状态不一致。
+
+**风险与改进点**
+
+- **顶层 import 副作用不可见**：module-level side effect 在 `main()` 之前执行，不易追踪副作用执行顺序，调试启动卡顿时很难定位。
+- **`init()` 职责过于宽泛**：TTY 检测、locale、telemetry、auth 验证都混在一个初始化函数里，单一职责不够。
+- **deferred prefetch 无取消机制**：若用户在 prefetch 完成前关闭会话，后台任务的清理依赖 process exit 信号，存在资源泄露窗口。

@@ -10,6 +10,17 @@ title: "OpenCode A02：Server 与路由边界"
 
 ---
 
+
+**目录**
+
+- [概览：一条请求进入 runtime 要经历三个阶段](#概览一条请求进入-runtime-要经历三个阶段)
+- [第一阶段：基础设施层](#第一阶段基础设施层)
+- [第二阶段：上下文绑定层](#第二阶段上下文绑定层)
+- [第三阶段：业务路由层](#第三阶段业务路由层)
+- [Server 层小结](#server-层小结)
+
+---
+
 ## 概览：一条请求进入 runtime 要经历三个阶段
 
 A01 解决了"多端入口如何收束到同一协议"，A02 要解决的是"请求进来之后，如何选中正确的工程上下文并分派到正确的处理函数"。
@@ -237,3 +248,32 @@ HTTP 请求
 
 有了这两个坐标，再看 `13-17` 这条 `prompt -> loop -> processor -> llm -> writeback` 主线，就不会把 transport 和 runtime 混在一起。
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Bun.serve()` | `server/server.ts` | 统一 HTTP server 入口，路由所有请求 |
+| `Instance` middleware | `server/middleware.ts` | 上下文绑定层：从请求中解析 instance 并注入 scope |
+| `WorkspaceContext` 中间件 | `server/middleware.ts` | 从 URL/header 解析 workspace context，确保请求落在正确 runtime |
+| `session` route handler | `server/routes/session.ts` | session REST+SSE 混合路由：会话创建、消息发送、状态订阅 |
+| `global` route handler | `server/routes/global.ts` | 全局 SSE 事件流端点：跨 instance 全局状态推送 |
+| `event` route handler | `server/routes/event.ts` | instance 内 SSE 事件流：session 状态实时推送 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **三阶段路由分离清晰**：基础设施层（logging/CORS）→ 上下文绑定层（Instance/Workspace）→ 业务路由层，职责不混杂，中间件可独立升级。
+- **SSE 作为唯一 push 通道**：无 WebSocket 复杂性，SSE 轻量且支持断线重连，客户端实现简单。
+- **REST + SSE 混合路由**：写操作走 REST，状态 push 走 SSE，语义清晰，不混用同一连接。
+
+**风险与改进点**
+
+- **Instance middleware 无 auth 验证**：`Instance` 中间件从请求中解析 instance scope，但无身份验证，任何具有网络访问的客户端都可以操作任意 instance。
+- **SSE 连接无限重连时惊群**：客户端 SSE 断连后自动重连，若 server 过载时大量客户端同时重连，可能形成惊群效应。
+- **业务路由无版本前缀**：所有路由直接挂载在根路径，无 `/v1/` 版本前缀，未来 API 破坏性变更无法与旧客户端并存。

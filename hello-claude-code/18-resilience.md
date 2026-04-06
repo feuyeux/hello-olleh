@@ -9,6 +9,19 @@ title: "韧性机制：重试策略、Provider 故障转移与长会话稳定性
 > 另见：[07-error-security](./07-error-security.md) — 错误类型分类与安全边界  
 > 另见：[08-performance](./08-performance.md) — Prompt Cache 与长会话性能
 
+
+**目录**
+
+- [1. 韧性体系层次](#1-韧性体系层次)
+- [2. API 层重试策略](#2-api-层重试策略)
+- [3. Provider 故障转移](#3-provider-故障转移)
+- [4. Context 溢出自愈](#4-context-溢出自愈)
+- [5. Transcript 持久化（存储层韧性）](#5-transcript-持久化存储层韧性)
+- [6. 工具超时保护](#6-工具超时保护)
+- [7. 与其他系统的对比](#7-与其他系统的对比)
+
+---
+
 ## 1. 韧性体系层次
 
 Claude Code 的韧性机制分布在三个层次：
@@ -153,3 +166,32 @@ async function executeWithTimeout(tool: Tool, input: unknown): Promise<unknown> 
 | **Context 自愈** | 自动 `/compact` | 手动 compact | `ToolOutputDistillationService` | Effect-ts compaction |
 | **持久化** | JSONL Transcript | Thread 持久化 | Session JSON | SQLite durable |
 | **工具超时** | 按工具类型差异化 | 全局 timeout | 无内置超时 | Effect-ts timeout |
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `withExponentialBackoff()` | `src/utils/retry.ts` | 指数退避重试：对 429/529/5xx 自动重试 |
+| `ContextWindowManager` | `src/agent/contextWindow.ts` | context window 监控：计算 token 使用率并触发压缩 |
+| `compactConversation()` | `src/agent/conversationManager.ts` | 对话历史压缩：调用 LLM 生成摘要替换长历史 |
+| `AbortController` integration | `src/agent/agentLoop.ts` | 全局取消信号：Ctrl-C 触发 abort，传播到所有异步操作 |
+| `ErrorBoundary` handler | `src/utils/errors.ts` | 顶层错误分类：区分可重试错误、用户错误、内部错误 |
+| session checkpoint | `src/services/sessionManager.ts` | 关键操作前写入检查点，崩溃后可从上次检查点恢复 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **分层错误处理**：`ErrorBoundary` 区分可重试/用户/内部错误，重试策略按错误类型差异化，不会对非可重试错误浪费重试次数。
+- **context 压缩内置于主循环**：context window 监控和压缩触发无需外部协调，自动在 token 使用达到阈值时介入。
+- **AbortController 统一取消**：取消信号通过 AbortController 统一传播，无需手动检查取消状态，减少遗漏处理的概率。
+
+**风险与改进点**
+
+- **压缩 LLM 调用无熔断器**：压缩调用失败时（如 API 过载）无回退策略，可能在高压情况下级联失败。
+- **重试窗口无全局协调**：多个 session 并发重试 429 时，各 session 的退避时钟独立，无法基于共享 rate limit 信息协调重试时机。
+- **Ctrl-C 中断无状态保存**：用户中断时正在执行的工具调用结果丢失，下次恢复后可能重复执行某些操作。

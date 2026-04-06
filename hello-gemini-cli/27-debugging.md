@@ -6,6 +6,18 @@ title: "调试指南"
 
 本文介绍 Gemini CLI 的调试方法。
 
+
+**目录**
+
+- [1. 调试标志](#1-调试标志)
+- [2. 沙箱调试](#2-沙箱调试)
+- [3. 日志配置](#3-日志配置)
+- [4. 关键源码](#4-关键源码)
+- [5. IDE 调试](#5-ide-调试)
+- [6. 常见调试技巧](#6-常见调试技巧)
+
+---
+
 ## 1. 调试标志
 
 | 标志 | 说明 |
@@ -95,3 +107,32 @@ npm test -- --testNamePattern="mcp"
 
 *文档版本: 1.0*
 *分析日期: 2026-04-06*
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `--debug` flag | CLI 入口 | 启用调试输出：打印 API 请求、工具调用详情 |
+| `LOG_LEVEL` env var | 进程环境 | 控制日志详细程度（debug/info/warn/error）|
+| `GEMINI_SANDBOX` env var | 进程环境 | 控制 sandbox 策略，设为 `none` 可跳过沙箱调试 |
+| `inspector` / `--inspect-brk` | Node.js | Node.js debugger 入口，VS Code 附加调试 |
+| `ChatRecordingService` | `packages/core/src/services/chatRecordingService.ts` | 对话录制兼调试日志：所有交互写入 JSON 文件可回放 |
+| `LoopDetectionService.disable()` | `packages/core/src/services/loopDetectionService.ts` | 调试时临时禁用循环检测，避免干扰重复测试用例 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`--debug` flag 全局启用**：一个 flag 切换到详细输出，无需修改代码或设置多个环境变量，调试上手快。
+- **Conversation JSON 文件可回放**：`ChatRecordingService` 的 JSON 录制既是持久化机制也是调试快照，可以直接 `cat` 或 `jq` 分析。
+- **沙箱策略可单独关闭**：`GEMINI_SANDBOX=none` 可以快速定位是否是沙箱策略导致的工具执行失败，调试 sandbox 边界问题便捷。
+
+**风险与改进点**
+
+- **无结构化调试日志格式**：`--debug` 输出是非结构化的 `console.log`，无法被 log 聚合工具（如 Elasticsearch/Loki）直接解析，生产问题排查成本高。
+- **调试标志无持久化**：`--debug` 需要每次启动时手动添加，无法在配置文件中持久化，开发调试 session 重启后需要重新指定。
+- **MCP server 调试无专用工具**：调试 MCP server 通信（stdio 协议）需要手动解析工具日志，缺少 MCP 专用 inspector 或协议录制工具。

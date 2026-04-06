@@ -6,6 +6,19 @@ title: "Prompt 系统：build_prompt()、AGENTS.md 与系统消息拼装"
 
 本文分析 Codex 的 Prompt 构建机制，重点关注系统消息的组成、`AGENTS.md` 的注入方式，以及 `build_prompt()` 如何把所有上下文组装为模型输入。
 
+
+**目录**
+
+- [1. Prompt 组装的三层结构](#1-prompt-组装的三层结构)
+- [2. `AGENTS.md` 的加载规则](#2-agentsmd-的加载规则)
+- [3. 系统消息组装](#3-系统消息组装)
+- [4. `build_prompt()` 主函数](#4-build_prompt-主函数)
+- [5. 工具描述注入](#5-工具描述注入)
+- [6. 与其他系统的对比](#6-与其他系统的对比)
+- [7. 设计特点](#7-设计特点)
+
+---
+
 ## 1. Prompt 组装的三层结构
 
 Codex 的 Prompt 构建在 `codex-rs/core/src/` 下实现，由三层信息叠加：
@@ -121,3 +134,31 @@ pub fn all_tools(config: &Config) -> Vec<Tool> {
 - **确定性**：`build_prompt()` 是纯函数，相同输入产生相同输出
 - **分层合并**：通用→具体的覆写语义使项目级配置优先级最高
 - **紧凑型**：无专用 Prompt 编译管道（对比 OpenCode 的 `SessionPrompt.prompt()`），直接在调用点组装
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `build_prompt()` | `codex-rs/core/src/codex.rs` | 主 prompt 组装器：system + tools + history 三层收束 |
+| `load_agents_md()` | `codex-rs/core/src/prompt/` | 加载并层叠 `AGENTS.md`（当前目录 → 层层向上 → HOME）|
+| `assemble_system_message()` | `codex-rs/core/src/prompt/` | 组装 system message：AGENTS.md + instructions + 工具描述 |
+| `format_tool_description()` | `codex-rs/core/src/tools/` | 将 ToolSpec 格式化为 prompt 中的工具描述文本 |
+| `ToolOrchestrator::get_declarations()` | `codex-rs/core/src/orchestrator.rs` | 导出所有注册工具的 schema 供 model 使用 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`AGENTS.md` 分层加载清晰**：从当前目录向上查找，层层叠加，项目级指令覆盖全局，与 Git 仓库结构天然对齐，不需要额外配置文件指定层级。
+- **Prompt 确定性强**：`build_prompt()` 函数式组合，相同输入产生相同输出，无隐式全局状态影响 prompt 内容，调试和测试友好。
+- **工具描述合并进 prompt**：工具 schema 作为 prompt 的一部分传给模型，而不是额外参数，兼容不原生支持 function calling 的模型。
+
+**风险与改进点**
+
+- **`AGENTS.md` 层叠规则仅做追加合并**：不同层的 instructions 简单拼接，若全局和项目 `AGENTS.md` 存在语义冲突，模型需要自行判断优先级，行为不确定。
+- **工具声明无 token 预算隔离**：工具描述随注册工具数量增长，无独立的 tool-declarations token budget，大量 MCP 工具时可能显著压缩可用 context。
+- **无 Prompt 版本管理**：`AGENTS.md` 内容变更对会话历史的影响不可知，session resume 时使用新 prompt 可能与历史对话产生语义不连贯。

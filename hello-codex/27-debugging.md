@@ -6,6 +6,17 @@ title: "调试指南"
 
 本文介绍 Codex 的调试方法。
 
+
+**目录**
+
+- [1. 调试标志](#1-调试标志)
+- [2. 日志配置](#2-日志配置)
+- [3. 关键源码](#3-关键源码)
+- [4. IDE 调试](#4-ide-调试)
+- [5. 常见调试技巧](#5-常见调试技巧)
+
+---
+
 ## 1. 调试标志
 
 | 标志 | 说明 |
@@ -107,3 +118,32 @@ codex sandbox linux -- your command
 
 *文档版本: 1.0*
 *分析日期: 2026-04-06*
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `RUST_LOG` env | `codex-rs/cli/src/main.rs` | 控制 `tracing` 日志级别：`RUST_LOG=codex=debug` 开启详细日志 |
+| `tracing::instrument` macro | `codex-rs/core/src/*.rs` | 函数级追踪宏：自动记录函数进入/退出和参数 |
+| `DebugDump::write()` | `codex-rs/core/src/debug.rs` | 将当前 session 状态（messages/tools/config）导出为 JSON |
+| `--replay` flag | `codex-rs/cli/src/args.rs` | 从历史文件重放对话，用于复现 bug 时的确定性输入 |
+| `SandboxAuditLog` | `codex-rs/exec/src/sandbox.rs` | 记录沙盒内所有文件操作：用于事后审计工具调用行为 |
+| `PanicSummary` | `codex-rs/cli/src/main.rs` | 顶层 panic 格式化：输出结构化错误信息和 github issue 链接 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`tracing` 生态集成完整**：Rust `tracing` crate 提供结构化日志和 span 追踪，与 `RUST_LOG` 过滤器配合灵活调整粒度。
+- **`--replay` 确定性重放**：从历史文件重放消息可精确复现 bug，避免依赖真实 LLM 响应的不确定性。
+- **Panic 友好化输出**：`PanicSummary` 将底层 Rust panic 转换为用户可读的错误信息，降低用户对内部崩溃的困惑。
+
+**风险与改进点**
+
+- **调试日志缺少结构化查询工具**：`RUST_LOG=debug` 输出纯文本，无内置日志聚合或查询 UI，大量日志中定位问题依赖手动 grep。
+- **`DebugDump` 包含敏感信息**：dump 输出包含完整的对话历史和 API key（若通过 env），无脱敏处理，不宜直接分享。
+- **`--replay` 依赖历史文件格式稳定**：histor 文件格式变更会导致旧 `--replay` 文件失效，影响历史 bug 复现能力。

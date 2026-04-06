@@ -6,6 +6,17 @@ title: "多代理与并行：Codex 的单代理架构与 child-agents 机制"
 
 本文分析 Codex 在多代理（Multi-Agent）方向的设计，包括其以单代理为核心的架构取向，以及通过 child-agents 实现任务分派的机制。
 
+
+**目录**
+
+- [1. 架构取向：单代理为主](#1-架构取向单代理为主)
+- [2. Child-Agents 机制](#2-child-agents-机制)
+- [3. 工具级并行](#3-工具级并行)
+- [4. 与其他系统的对比](#4-与其他系统的对比)
+- [5. 设计权衡](#5-设计权衡)
+
+---
+
 ## 1. 架构取向：单代理为主
 
 Codex 的核心设计围绕**单线程 Agent 执行循环**（`submission_loop` → `run_turn`）展开，强调：
@@ -101,3 +112,31 @@ async fn execute_tool_calls(
 - 明确可分解的子任务（如"独立分析每个模块"）
 - 需要隔离执行（一个 child 失败不影响父 agent）
 - 任务结果之间无强依赖关系
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `ChildAgent` / `CodexAgent` | `codex-rs/core/src/agents/` | Child agent 定义：独立 tool set、独立 context、受限权限 |
+| `FuturesOrdered` (工具级并行) | `codex-rs/core/src/codex.rs:7176` | 在 `try_run_sampling_request()` 中并发执行多个工具调用 |
+| `submission_loop()` | `codex-rs/core/src/codex.rs:4289` | 主会话事件分发器：单线程顺序，防止多代理竞态 |
+| `ThreadManager::fork_thread()` | `codex-rs/core/src/thread_manager.rs:598` | Fork 创建子线程（独立快照），支持并行子任务 |
+| `SandboxPolicy` | `codex-rs/core/src/sandboxing/` | 子代理沙箱约束：防止子代理越权访问父代理资源 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **单代理为主设计减少协调复杂度**：工具级并发（`FuturesOrdered`）在单线程内解决大多数并行需求，不引入跨代理状态同步问题。
+- **工具级并行有序**：`FuturesOrdered` 保持工具结果的提交顺序，避免乱序结果导致的 context 不一致。
+- **子代理沙箱隔离**：子代理的 `SandboxPolicy` 独立于父代理，防止子代理操作泄漏到父代理的工作区或 SQLite。
+
+**风险与改进点**
+
+- **Child-Agent 的通信仅靠 `submission_loop` 消息**：子代理与父代理通过消息传递通信，复杂协作（如子代理查询父代理状态）无直接支持。
+- **Fork 后无合并原语**：Fork 用于创建并行分支，但 fork thread 的结果如何合并回主线程无显式机制，需要手动在工具结果层面处理。
+- **无动态代理创建**：Child-Agent 类型在编译时确定，运行时无法动态注册新的 agent 类型，限制了 plugin 扩展多代理能力。

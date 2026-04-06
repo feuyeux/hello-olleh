@@ -11,6 +11,21 @@ A06 已经说明请求如何进入 `streamText()`。A07 接着说明返回流如
 
 ---
 
+
+**目录**
+
+- [1. A07 覆盖的主线范围](#1-a07-覆盖的主线范围)
+- [2. Durable 写入口集中在 `Session.update*`](#2-durable-写入口集中在-sessionupdate)
+- [3. `Database.effect()` 保证了“先写库，再发事件”](#3-databaseeffect-保证了先写库再发事件)
+- [4. `processor` 用这三组 API 把流事件翻译成 durable state](#4-processor-用这三组-api-把流事件翻译成-durable-state)
+- [5. `SessionStatus` 属于运行态，不进入 durable history](#5-sessionstatus-属于运行态不进入-durable-history)
+- [6. Durable 写入完成后，事件怎样传播到前端](#6-durable-写入完成后事件怎样传播到前端)
+- [7. durable rows 怎样重新读成 runtime 可消费对象](#7-durable-rows-怎样重新读成-runtime-可消费对象)
+- [8. 同一份 durable history 还要重新投影回模型上下文](#8-同一份-durable-history-还要重新投影回模型上下文)
+- [9. A06 与 A07 在这里闭环](#9-a06-与-a07-在这里闭环)
+
+---
+
 ## 1. A07 覆盖的主线范围
 
 `packages/opencode/src/session/processor.ts:54`
@@ -938,3 +953,32 @@ flowchart TD
 
 这条闭环支撑了 OpenCode 的恢复、fork、compaction、多端订阅与历史重放。A 系列到这里完成了从入口、路由、输入编译、编排、模型请求到 durable state 投影的完整主线。
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Session.update*()` API | `session/index.ts` | Durable 写入口：updateMessage/updatePart/updatePartDelta 三级粒度写库 |
+| `Database.effect()` | `storage/db.ts:121-146` | 事务效果批处理：先写库再发事件，保证 durable → event 顺序 |
+| `SessionProcessor.process()` | `session/processor.ts` | 将流事件翻译成 durable part 更新的核心处理器 |
+| `Session.messages()` | `session/index.ts` | 从 SQLite 重新加载 durable rows，重建运行时对象树 |
+| `DurableHistory.toModel()` | — | 将 durable history 重新投影回模型可消费消息格式 |
+| `Bus.publish()` | — | durable 写完成后广播事件，驱动 SSE 推送前端 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **"先写库，再发事件"排序保证**：`Database.effect()` 确保 durable 写操作在事件广播前完成，前端收到 SSE 事件时数据已经持久化。
+- **Durable 天然支持恢复**：所有会话状态压回 SQLite，崩溃后只需重载 durable rows，`processor` 的幂等性保证重放安全。
+- **多端订阅共享同一 durable history**：TUI/Web/ACP 都从同一份 durable history 读数据，无需维护多份状态副本。
+
+**风险与改进点**
+
+- **`SessionStatus` 运行态不进入 durable**：session 运行状态存在内存中，崩溃后 status 归零，恢复会话时 UI 无法还原"已完成步骤"的视觉状态。
+- **`Database.effect()` 批处理延迟不可控**：effect 队列在主事务后才执行，若事务量大，批处理延迟可能使前端 SSE 推送滞后，影响实时感知。
+- **大量并发写导致 SQLite WAL 压力**：多工具并发调用时，每个工具结果分别触发 durable 写，SQLite WAL 文件在高并发下可能快速增长。

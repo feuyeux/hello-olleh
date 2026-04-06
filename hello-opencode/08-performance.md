@@ -8,6 +8,19 @@ title: "OpenCode 性能与代码质量：流式传输、SSE、Bun Runtime 优势
 
 ---
 
+
+**目录**
+
+- [1. 流式传输架构](#1-流式传输架构)
+- [2. SSE 实时推送](#2-sse-实时推送)
+- [3. Bun Runtime 优势](#3-bun-runtime-优势)
+- [4. 性能优化机制](#4-性能优化机制)
+- [5. 代码质量评估](#5-代码质量评估)
+- [6. 设计哲学总结](#6-设计哲学总结)
+- [7. 关键源码定位](#7-关键源码定位)
+
+---
+
 ## 1. 流式传输架构
 
 ### 1.1 双层流
@@ -182,6 +195,21 @@ Bun.$`git status --short`
 - `effect` 不会立刻执行，而是先塞进队列
 - 等主事务写完再统一执行
 - 减少数据库 fsync 次数
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Session.updatePartDelta()` | `session/index.ts:778-789` | 流式增量写 text/reasoning delta 到 SQLite |
+| `Session.updatePart()` | `session/index.ts` | 批量写完整 part（流结束时触发）|
+| `Bus.publish()` | — | 将 durable 写操作广播为 SSE 事件，驱动实时推送 |
+| `fullStream` 处理器 | `session/processor.ts` | 消费 AI SDK 21 种状态，分发 durable 写 + 广播事件 |
+| `db.effect()` | `storage/db.ts:121-146` | 批处理 database effect，事务完成后统一执行，减少 fsync |
+| `Bun.serve()` | `server/server.ts` | Bun 原生 HTTP server 启动入口，内置 WebSocket 支持 |
+| `McpClientManager` (复用逻辑) | `mcp/index.ts` | 相同 `(root+serverID)` 复用同一 client，`spawning` map 防重 |
+| `Lsp.start()` (lazy) | `lsp/index.ts` | LSP server 懒启动：eager init + lazy spawn by file match |
 
 ---
 

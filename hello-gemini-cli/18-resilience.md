@@ -6,6 +6,20 @@ title: "韧性机制：请求重试、循环恢复与上下文减压"
 
 Gemini CLI 的韧性并不集中在单一的“恢复管理器”里，而是分散在模型请求、流式输出、循环检测、上下文压缩和会话持久化几条链路中协同实现。
 
+
+**目录**
+
+- [1. 韧性的实际分层](#1-韧性的实际分层)
+- [2. API 请求层的重试](#2-api-请求层的重试)
+- [3. 流式输出层的恢复](#3-流式输出层的恢复)
+- [4. 循环检测与自愈](#4-循环检测与自愈)
+- [5. 上下文压力下的韧性](#5-上下文压力下的韧性)
+- [6. 会话恢复与 checkpoint](#6-会话恢复与-checkpoint)
+- [7. 当前边界](#7-当前边界)
+- [8. 一句话总结](#8-一句话总结)
+
+---
+
 ## 1. 韧性的实际分层
 
 | 层次 | 代码锚点 | 主要职责 |
@@ -142,3 +156,32 @@ Gemini CLI 的另一个现实风险不是“报错”，而是上下文逐轮膨
 ## 8. 一句话总结
 
 更准确的概括是：Gemini CLI 的韧性体系由“请求重试 + 坏流恢复 + 循环检测 + 上下文减压 + 会话/项目恢复”共同组成，而不是旧文档里那种 `GeminiAgent.run()` + `SessionManager` 的单点叙事。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `GeminiClient.retryRequest()` | `packages/core/src/core/client.ts` | API 重试：指数退避 + 可重试错误判断 |
+| `ChatCompressionService.compress()` | `packages/core/src/services/chatCompressionService.ts` | 上下文压缩：50% 阈值触发，保留最近 30% 历史 |
+| `LoopDetectionService.detect()` | `packages/core/src/services/loopDetectionService.ts` | 三层循环检测（工具重复/内容重复/LLM 辅助），支持 session 级禁用 |
+| `ToolOutputMaskingService` | `packages/core/src/services/` | 历史中大工具输出二次瘦身 |
+| `SessionSelector.resolveSession()` | `packages/cli/src/utils/sessionUtils.ts` | `--resume` 解析：找到目标 conversation 文件 |
+| `GitService.restore()` | `packages/core/src/commands/restore.ts` | Git checkpoint 恢复工作区变更 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **多层韧性叠加**：API 重试 + 流式恢复 + 循环检测 + 上下文压缩 + checkpoint 各自独立，任一层失效不会使整个系统崩溃。
+- **循环检测多维度**：工具哈希 + 内容去重 + LLM 辅助三类检测覆盖了规则难以捕获的语义级无进展循环。
+- **Session 恢复基于文件录制**：`ChatRecordingService` 实时落盘，进程崩溃不会全量丢失对话历史，`--resume` 可以续接中断的会话。
+
+**风险与改进点**
+
+- **重试与压缩行为对用户不透明**：哪些操作触发了重试、触发了压缩，终端 UI 没有明确信号，用户不知道系统在"处于韧性状态"还是"正常运行"。
+- **循环检测无法覆盖跨 session 的重复**：`LoopDetectionService` 仅在单次运行内有效，跨会话的相同任务陷入循环无法被检测到。
+- **Checkpoint 恢复语义不完整**：Git checkpoint 恢复的是工作区文件变更，不能恢复 tool call 状态、pending approval、内存中的运行时对象图。

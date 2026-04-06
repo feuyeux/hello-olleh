@@ -6,6 +6,23 @@ title: "工具调用机制：工具注册、权限控制、执行闭环与结果
 
 主向导对应章节：`工具调用机制`
 
+
+**目录**
+
+- [工具系统目录结构](#工具系统目录结构)
+- [工具注册机制](#工具注册机制)
+- [工具调用生命周期（4 阶段）](#工具调用生命周期4-阶段)
+- [权限与审批模型](#权限与审批模型)
+- [沙箱类型](#沙箱类型)
+- [网络审批系统](#网络审批系统)
+- [内建工具类型（30+）](#内建工具类型30)
+- [工具输出与结果回传](#工具输出与结果回传)
+- [并行工具执行](#并行工具执行)
+- [Hooks 集成](#hooks-集成)
+- [完整调用链总结](#完整调用链总结)
+
+---
+
 ## 工具系统目录结构
 
 ```
@@ -391,3 +408,36 @@ Format for Model (Structured / Freeform)
          |
 ResponseInputItem (回传给模型)
 ```
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `ToolRegistry` | `codex-rs/core/src/agent/registry.rs` | 注册和查询所有工具（内置 + Dynamic + MCP）|
+| `ToolCall::execute()` | `codex-rs/core/src/...` | 工具执行入口：sandbox 包装 + policy 检查 |
+| `SandboxPolicy` | `codex-rs/core/src/...` | 沙箱策略枚举：None / Workspace-only / Docker / Seatbelt |
+| `AskForApproval` | `codex-rs/core/src/...` | 审批模式枚举：Never / OnFailure / Always / Auto |
+| `resolve_command_approval()` | `codex-rs/core/src/...` | 根据 policy + sandbox 状态决定是否需要用户确认 |
+| `FuturesOrdered::push_back()` | （tokio） | 工具并发执行队列入口，保证有序结果收集 |
+| `before_tool` hook | `codex-rs/core/src/...` | 工具执行前拦截点 |
+| `after_tool` hook | `codex-rs/core/src/...` | 工具执行后拦截点 |
+| `format_tool_output()` | `codex-rs/core/src/...` | 将工具输出转换为模型可消费的 `ResponseInputItem` |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **四阶段生命周期清晰**：注册 → 调用决策（审批）→ 沙箱隔离执行 → 结果格式化，每阶段职责单一，可独立测试。
+- **多层沙箱可组合**：None、Workspace-only、macOS Seatbelt、Linux seccomp/Docker 四级隔离按需启用，安全策略从宽松到严格均有覆盖。
+- **`FuturesOrdered` 并发有序**：工具并发执行，但结果按请求顺序收集，保证回传给模型的 `ResponseInputItem` 顺序一致。
+- **网络审批独立体系**：对外向网络请求设置独立的 `NetworkAsk` 策略，与本地文件操作审批解耦。
+
+**风险与改进点**
+
+- **内置工具超 30 种**：工具种类多，统一的 `ToolRegistry` 维护所有类型，若没有清晰的分组/分文件管理，未来扩展可能产生命名冲突。
+- **沙箱能力依赖宿主 OS**：macOS Seatbelt 和 Linux seccomp 无法在对方平台使用，跨平台测试覆盖较难统一。
+- **工具输出 token 无上限**：文档未明确工具输出的 token 预算上限，超大输出可能撑爆上下文窗口。
+- **Dynamic tools 延迟加载**：`DynamicTool` 在工具调用时才解析 schema，若远程 MCP server 不可用，错误只在运行时暴露而非启动时。

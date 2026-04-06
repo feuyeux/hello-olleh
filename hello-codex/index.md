@@ -48,6 +48,9 @@ title: "OpenAI Codex 源码分析"
     <a class="chapter-card" href="22-repl-and-state"><div class="chapter-number">22</div><div class="chapter-title">REPL 与交互层：TUI、非交互模式与输入分发</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="23-bridge-system"><div class="chapter-number">23</div><div class="chapter-title">宿主桥接：app-server 协议与多宿主复用</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="24-project-init-analysis"><div class="chapter-number">24</div><div class="chapter-title">项目初始化分析报告：面向首次进入仓库的总览版摘要</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="25-input-command-queue"><div class="chapter-number">25</div><div class="chapter-title">用户输入、命令解析与 Mailbox 队列系统</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="26-mcp-system"><div class="chapter-number">26</div><div class="chapter-title">Codex 的 MCP/RMCP 系统</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="27-debugging"><div class="chapter-number">27</div><div class="chapter-title">调试指南</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 </div>
 

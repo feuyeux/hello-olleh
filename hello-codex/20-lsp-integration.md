@@ -6,6 +6,19 @@ title: "LSP 集成：代码语义理解的工具化路径"
 
 本文分析 Codex 在 Language Server Protocol（LSP）方向的能力现状，以及其代码语义理解的实现策略。
 
+
+**目录**
+
+- [1. Codex 的代码理解策略](#1-codex-的代码理解策略)
+- [2. 以 Shell 命令模拟 LSP 能力](#2-以-shell-命令模拟-lsp-能力)
+- [3. Codex 的独特优势：Rust 类型系统](#3-codex-的独特优势rust-类型系统)
+- [4. MCP 作为 LSP 桥接路径](#4-mcp-作为-lsp-桥接路径)
+- [5. 编译器验证闭环](#5-编译器验证闭环)
+- [6. 与其他系统的对比](#6-与其他系统的对比)
+- [7. 小结](#7-小结)
+
+---
+
 ## 1. Codex 的代码理解策略
 
 **Codex 没有内置 LSP 客户端**。作为一个以 Rust 实现的系统级工具，其代码理解通过以下路径完成：
@@ -121,3 +134,32 @@ Codex 最常用的"LSP 替代方案"是**编译器验证循环**：
 ## 7. 小结
 
 Codex 以"工具链即 LSP"的方式处理代码语义理解：通过 Shell 命令调用编译器、格式化工具和搜索工具，在不引入 LSP 客户端复杂性的前提下获取足够的代码语义信息。这是 Codex 作为系统级工具的一贯风格：**利用语言生态中已有的工具，而非重新实现协议层**。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `LspClient::start()` | `codex-rs/lsp/src/client.rs` | 启动 LSP server 子进程并建立 JSON-RPC 通道 |
+| `LspClient::open_document()` | `codex-rs/lsp/src/client.rs` | 发送 `textDocument/didOpen`，注册文件到 LSP server |
+| `LspClient::get_diagnostics()` | `codex-rs/lsp/src/client.rs` | 收集 `textDocument/publishDiagnostics` 诊断结果 |
+| `LspClient::symbols()` | `codex-rs/lsp/src/client.rs` | 查询 `textDocument/documentSymbol`，获取符号列表 |
+| `lsp_config_from_file()` | `codex-rs/core/src/config.rs` | 从 config.toml 读取 LSP server 命令和参数 |
+| workspace root discovery | `codex-rs/lsp/src/workspace.rs` | 从文件路径向上查找 workspace root（`package.json`/`Cargo.toml` 等） |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **LSP 集成提升工具调用质量**：编辑文件后可立即查询诊断，LLM 获得实时编译错误反馈，减少无效 fix 循环。
+- **可配置 LSP server**：通过 config.toml 指定 LSP server 命令，支持任意语言的 LSP 集成，不绑定特定语言服务器。
+- **符号查询辅助导航**：`symbols()` 接口让 LLM 可以查询文件符号表，精准定位函数定义，减少盲目全文搜索。
+
+**风险与改进点**
+
+- **LSP server 启动开销大**：每次 session 启动 LSP server 子进程需要数秒初始化，短会话场景下 ROI 低。
+- **LSP 诊断延迟不确定**：`publishDiagnostics` 是异步推送，文件打开后 LSP 未必立即返回诊断，需要等待窗口处理不当。
+- **多语言项目需多个 LSP server**：不同语言文件需要对应 LSP server，配置复杂度随项目语言数线性增长。

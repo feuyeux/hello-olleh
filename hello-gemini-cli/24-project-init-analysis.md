@@ -6,6 +6,20 @@ title: "项目初始化分析报告：首次进入 Gemini CLI 仓库时该先看
 
 这份总览面向第一次进入 Gemini CLI 仓库的读者。重点不是罗列所有目录，而是先建立一套和当前源码一致的阅读地图。
 
+
+**目录**
+
+- [1. 仓库基本信息](#1-仓库基本信息)
+- [2. 先建立正确的包级视图](#2-先建立正确的包级视图)
+- [3. 启动链路应该怎么读](#3-启动链路应该怎么读)
+- [4. 执行核心不叫 `gemini-agent.ts`](#4-执行核心不叫-gemini-agentts)
+- [5. 当前架构有几个容易低估的点](#5-当前架构有几个容易低估的点)
+- [6. 推荐阅读顺序](#6-推荐阅读顺序)
+- [7. 与其他系统的定位对比](#7-与其他系统的定位对比)
+- [8. 一句话结论](#8-一句话结论)
+
+---
+
 ## 1. 仓库基本信息
 
 | 项 | 值 |
@@ -149,3 +163,32 @@ packages/cli/src/gemini.tsx
 - `packages/core` 才是主引擎
 - 主循环核心已经是 `Config` + `GeminiClient` + `GeminiChat` + `Scheduler`
 - 当前仓库已经具备多宿主、多代理和多桥接面的形态
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `main()` | `packages/cli/src/index.ts` | CLI 最顶层入口，解析 argv 并分发给 `gemini.tsx` |
+| `Config.initialize()` | `packages/core/src/config/config.ts:1289` | 所有服务的固定装配入口：ToolRegistry、MCP、GeminiClient |
+| `startInteractiveUI()` | `packages/cli/src/gemini.tsx` | 交互路径启动：初始化 Ink TUI + AppContainer |
+| `nonInteractiveMode()` | `packages/cli/src/gemini.tsx` | 非交互路径启动：处理 stdin/--message，headless 执行 |
+| `GeminiClient.sendMessageStream()` | `packages/core/src/core/client.ts:868` | 外部可调用的流式请求入口，SDK 复用点 |
+| `AgentRegistry` | `packages/core/src/agents/registry.ts` | 多代理注册表：内建+用户+项目+extension agent 统一管理 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **MonoRepo 包复用清晰**：`@google/gemini-cli-core` 提供所有业务能力，`cli` 包只负责 TUI 宿主和参数解析，SDK 直接提取 `core` 包即可，无需拆分项目。
+- **入口分层明确**：`index.ts` → `gemini.tsx` → 交互/非交互分支，阅读路线短，不需要追踪隐式注册或 DI 容器。
+- **版本与模型配置解耦**：模型 ID 通过 `Config.getModelId()` 读取，不硬编码在入口，换模型只需改配置。
+
+**风险与改进点**
+
+- **`Config` 类是"上帝对象"**：同时承担服务容器、配置读取、状态持有、初始化协调四种角色，新功能很容易堆积到 `Config`，形成难以拆分的单点依赖。
+- **初始化链无进度反馈**：`Config.initialize()` 是同步串行链，MCP server 连接慢时用户不知道初始化卡在哪，UX 体验较差。
+- **仓库缺乏架构 ADR / Decision Log**：大量设计决策（如为什么用 Ink、为什么不内置 LSP）隐含在代码结构中，没有显式文档化，新贡献者上手成本高。

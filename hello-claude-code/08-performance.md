@@ -6,6 +6,33 @@ title: "性能、缓存与长会话稳定性专题"
 
 本篇收拢启动性能、prompt cache、资源释放与长会话稳定性相关的工程设计。
 
+
+**目录**
+
+- [1. 问题范围](#1-问题范围)
+- [2. 启动性能：把工作拆成三个窗口](#2-启动性能把工作拆成三个窗口)
+- [2.1 顶层 side effect 窗口](#21-顶层-side-effect-窗口)
+- [2.2 setup 窗口](#22-setup-窗口)
+- [2.3 首屏后 deferred prefetch 窗口](#23-首屏后-deferred-prefetch-窗口)
+- [3. prompt cache 稳定性是一级设计目标](#3-prompt-cache-稳定性是一级设计目标)
+- [3.1 为什么一个 settings 临时文件路径都要做 content hash](#31-为什么一个-settings-临时文件路径都要做-content-hash)
+- [3.2 `claude.ts` 里大量 header / beta latch 也是为 cache 稳定](#32-claudets-里大量-header-beta-latch-也是为-cache-稳定)
+- [3.3 prompt cache break detection](#33-prompt-cache-break-detection)
+- [4. 上下文治理已独立成篇](#4-上下文治理已独立成篇)
+- [5. REPL 层对内存与 GC 非常敏感](#5-repl-层对内存与-gc-非常敏感)
+- [5.1 替换 ephemeral progress 而不是持续 append](#51-替换-ephemeral-progress-而不是持续-append)
+- [5.2 大量 stable callback / ref 是为了防闭包保留](#52-大量-stable-callback-ref-是为了防闭包保留)
+- [5.3 rewind 时还要清 microcompact/context collapse 状态](#53-rewind-时还要清-microcompactcontext-collapse-状态)
+- [6. `claude.ts` 对 streaming 资源泄漏有专门防护](#6-claudets-对-streaming-资源泄漏有专门防护)
+- [7. query checkpoints 是贯穿式观测点](#7-query-checkpoints-是贯穿式观测点)
+- [8. transcript 与持久化也被当成性能/稳定性问题处理](#8-transcript-与持久化也被当成性能稳定性问题处理)
+- [9. `cache-safe request shaping` 的源码展开](#9-cache-safe-request-shaping-的源码展开)
+- [10. 这套系统的性能设计关键词](#10-这套系统的性能设计关键词)
+- [11. 关键源码锚点](#11-关键源码锚点)
+- [12. 总结](#12-总结)
+
+---
+
 ## 1. 问题范围
 
 这套工程的大量复杂度并不直接来自业务功能，而是来自以下几类真实成本控制：
@@ -293,3 +320,32 @@ transcript 不是“顺便记一下”，而是会直接影响：
 - 闭包、stream、transcript 都要防泄漏与防失真。
 
 这些机制共同构成了面向长会话、真实成本和真实故障模式的生产级运行时。
+
+---
+
+## 关键函数清单
+
+| 函数/机制 | 文件 | 职责 |
+|----------|------|------|
+| `prefetchSkills()` | — | 首屏后异步预取 skill 文件，不阻塞 TUI 渲染 |
+| `getMessagesAfterCompactBoundary()` | `src/query.ts` | 按 compact 边界裁剪历史，控制上下文 token 量 |
+| `compactConversation()` | — | 触发上下文压缩：调用模型生成摘要并替换历史 |
+| `withRetry()` | `src/services/api/claude.ts` | 含退避策略的重试，处理速率限制和网络抖动 |
+| `asSystemPrompt()` | `src/query.ts:449` | 懒组装 system prompt，避免每次请求都重新计算静态部分 |
+| `Ink render pipeline` | `src/REPL.tsx` | Ink 的批量 reconcile，避免 token 流中每个字符触发一次全量重渲染 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **三窗口启动策略**：顶层 side effect、`init()` 核心初始化、deferred prefetch 三阶段，首屏渲染时间可预测和可测量。
+- **上下文分层压缩**：`compact` 边界 + summary 替换，避免长会话 token 暴涨；压缩路径明确，不依赖截断（截断会丢失上下文语义）。
+- **Ink 批量渲染**：流式 token 到达时 Ink 做批量 DOM reconcile，不是每个 token 都强制重渲染，渲染效率和流式体验的平衡点较好。
+
+**风险与改进点**
+
+- **无性能基准（benchmark）**：当前代码库没有系统化的流式吞吐量和首屏渲染延迟 benchmark，性能改进无实测依据。
+- **`compact` 触发时机非显而易见**：compact 由 token 阈值触发，阈值调整会直接影响用户感知的响应速度，当前没有运行时可观测指标暴露 compact 频率。
+- **prefetch 无幂等保护**：若用户极快地多次触发会话，多个并发的 prefetch 可能产生重复请求，没有 dedup 机制。

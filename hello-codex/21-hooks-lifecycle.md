@@ -6,6 +6,16 @@ title: "Hooks 与生命周期：Codex 的事件拦截与扩展点"
 
 本文分析 Codex 的生命周期事件体系与 Hook 扩展机制。
 
+
+**目录**
+
+- [1. Codex 生命周期概览](#1-codex-生命周期概览)
+- [2. Op 事件总线](#2-op-事件总线)
+- [3. 可扩展的拦截点](#3-可扩展的拦截点)
+- [4. 与 Claude Code Hooks 的对比](#4-与-claude-code-hooks-的对比)
+
+---
+
 ## 1. Codex 生命周期概览
 
 Codex 的执行生命周期由 `submission_loop` 统一编排，关键阶段如下：
@@ -95,3 +105,32 @@ Op::Shutdown => {
 | **执行位置** | 同进程 | Shell 命令（独立进程）|
 
 Codex 的生命周期拦截是代码层面的扩展点，适合二次开发；Claude Code 的 Hooks 则是配置驱动的用户扩展。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `HookRunner::run_before()` | `codex-rs/core/src/hook.rs` | 执行工具调用前置钩子：验证权限或修改参数 |
+| `HookRunner::run_after()` | `codex-rs/core/src/hook.rs` | 执行工具调用后置钩子：审计日志、结果转换 |
+| `LifecycleHook` enum | `codex-rs/core/src/hook.rs` | 钩子类型枚举：BeforeTool / AfterTool / SessionStart / SessionEnd |
+| `HookConfig` | `codex-rs/core/src/config.rs` | config.toml 中钩子命令配置：trigger → command 映射 |
+| `SessionLifecycle::on_start()` | `codex-rs/core/src/lifecycle.rs` | session 启动时触发：初始化沙盒、加载 skill、建立 LSP |
+| `SessionLifecycle::on_end()` | `codex-rs/core/src/lifecycle.rs` | session 结束时触发：持久化历史、清理沙盒、关闭 LSP |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **明确的四类生命周期点**：BeforeTool/AfterTool/SessionStart/SessionEnd 覆盖了用户最常需要介入的关键节点，不过多不过少。
+- **外部命令钩子可编程**：钩子执行外部可执行文件，用户无需修改 codex 源码即可扩展生命周期行为。
+- **Session 启动/关闭资源管理清晰**：start/end 钩子保证沙盒和 LSP 的生命周期与 session 对齐，无泄漏风险。
+
+**风险与改进点**
+
+- **钩子执行无超时限制**：钩子命令执行时间无上限，长时间阻塞的钩子会导致整个 session 暂停。
+- **钩子失败策略不明确**：前置钩子失败时是继续执行还是中止工具调用，策略未文档化，用户需测试才知道行为。
+- **无钩子间通信机制**：多个钩子按顺序执行，后置钩子无法获取前置钩子的输出，限制了复杂钩子链的实现。

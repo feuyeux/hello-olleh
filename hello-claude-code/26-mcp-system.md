@@ -4,6 +4,23 @@ title: "Claude Code 的 MCP 系统"
 ---
 # Claude Code 的 MCP 系统
 
+
+**目录**
+
+- [1. MCP 系统概述](#1-mcp-系统概述)
+- [2. MCP 客户端](#2-mcp-客户端)
+- [3. MCP 传输](#3-mcp-传输)
+- [4. MCP 工具集成](#4-mcp-工具集成)
+- [5. MCP 资源](#5-mcp-资源)
+- [6. MCP 配置](#6-mcp-配置)
+- [7. MCP 权限](#7-mcp-权限)
+- [8. MCP 状态管理](#8-mcp-状态管理)
+- [9. MCP 生命周期](#9-mcp-生命周期)
+- [10. MCP 提示 (Prompts)](#10-mcp-提示-prompts)
+- [13. 补充：关键实现细节](#13-补充关键实现细节)
+
+---
+
 ## 1. MCP 系统概述
 
 本篇讨论 MCP client、transport、tool/resource/prompt 接口，以及它如何接入 Claude Code 的统一工具总线。
@@ -465,3 +482,32 @@ JSON Schema → Zod schema 的转换不是通用的。它处理常见的 JSON Sc
 
 *文档版本: 1.0*
 *分析日期: 2026-03-31*
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `McpHub` | `src/services/mcp/mcpHub.ts` | MCP 连接管理中心：初始化、健康检查、断线处理 |
+| `McpHub.listTools()` | `src/services/mcp/mcpHub.ts` | 聚合所有 MCP server 的工具列表，返回统一格式 |
+| `McpHub.callTool()` | `src/services/mcp/mcpHub.ts` | 路由工具调用到对应 MCP server，收集结果 |
+| `McpHub.listResources()` | `src/services/mcp/mcpHub.ts` | 获取所有 server 的 Resource 列表 |
+| `StdioClientTransport` | `@modelcontextprotocol/sdk` | SDK 提供的 stdio 传输层：fork 子进程通信 |
+| `StreamableHTTPClientTransport` | `@modelcontextprotocol/sdk` | SDK 提供的 HTTP SSE 传输层 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **官方 SDK 传输层**：直接复用 `@modelcontextprotocol/sdk` 的 stdio/SSE 传输实现，无需维护自定义传输逻辑，协议升级跟随 SDK。
+- **McpHub 统一多 server 路由**：多个 MCP server 的调用通过 McpHub 统一分发，客户端无需感知 server 边界。
+- **按工具名路由**：`callTool()` 根据工具名自动路由到注册对应工具的 server，无需客户端指定 server。
+
+**风险与改进点**
+
+- **工具名冲突无处理策略**：多个 MCP server 注册同名工具时，McpHub 路由行为（取第一个？报错？）未文档化，用户无法预期行为。
+- **callTool 无超时参数**：工具调用无调用级超时设置，全局超时无法适应不同工具时延差异。
+- **Resource/Prompt 功能利用率低**：MCP 协议的 Resource 和 Prompt 特性在 Claude Code 中未充分暴露给 LLM，仅 Tool 被主动使用。

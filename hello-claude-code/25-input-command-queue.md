@@ -6,6 +6,34 @@ title: "用户输入、Slash 命令与队列分发"
 
 本篇梳理用户提交输入后，系统如何完成输入分类、队列调度和 slash command 分流。
 
+
+**目录**
+
+- [1. 这一层解决什么问题](#1-这一层解决什么问题)
+- [2. 整体流程图](#2-整体流程图)
+- [3. `handlePromptSubmit`：输入总入口](#3-handlepromptsubmit输入总入口)
+- [4. 队列系统：为什么要在输入层就建模](#4-队列系统为什么要在输入层就建模)
+- [5. `QueryGuard`：防并发 query 的同步闸门](#5-queryguard防并发-query-的同步闸门)
+- [6. `executeUserInput`：真正进入处理前的那一步](#6-executeuserinput真正进入处理前的那一步)
+- [7. `processUserInput`：输入语义转换层](#7-processuserinput输入语义转换层)
+- [7.1 先做通用包装，再委托基础处理](#71-先做通用包装再委托基础处理)
+- [8. `processUserInputBase`：真正的模式分发器](#8-processuserinputbase真正的模式分发器)
+- [9. `processSlashCommand`：slash 命令并不是简单字符串匹配](#9-processslashcommandslash-命令并不是简单字符串匹配)
+- [9.1 先 parse，再判断是不是“真命令”](#91-先-parse再判断是不是真命令)
+- [9.2 slash command 的返回值远不只是 messages](#92-slash-command-的返回值远不只是-messages)
+- [10. slash command 的三种典型结果](#10-slash-command-的三种典型结果)
+- [10.1 本地命令，直接结束](#101-本地命令直接结束)
+- [10.2 命令产出消息，但不 query](#102-命令产出消息但不-query)
+- [10.3 命令转换成 prompt，再进入 query](#103-命令转换成-prompt再进入-query)
+- [11. 技能型 slash 命令为什么这么强](#11-技能型-slash-命令为什么这么强)
+- [12. 普通 prompt 路径并不简单](#12-普通-prompt-路径并不简单)
+- [13. 输入忙碌时的策略：排队而不是乱插](#13-输入忙碌时的策略排队而不是乱插)
+- [14. 输入层与 REPL 的边界](#14-输入层与-repl-的边界)
+- [15. 关键源码锚点](#15-关键源码锚点)
+- [16. 总结](#16-总结)
+
+---
+
 ## 1. 这一层解决什么问题
 
 对于用户来说，看到的是“输入一行文本然后 Claude 开始回答”。但在源码里，输入层至少要解决下面几类问题：
@@ -375,3 +403,32 @@ slash command 是前置控制层，而不是单纯的文本宏。
 5. 在准备完毕后才把这次输入送入 query 主循环。
 
 `query.ts` 接收到的不是原始输入字符串，而是一组结构化的 `messages + ToolUseContext + turn 级策略`。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `InputQueue` | `src/ui/inputQueue.ts` | 用户输入缓冲：多行输入暂存，Enter 确认后一次性发送 |
+| `CommandParser.parse()` | `src/commands/parser.ts` | 解析 `/` 开头的斜杠命令，返回 Command 对象 |
+| `CommandRegistry` | `src/commands/registry.ts` | 内置命令注册表：`/clear` `/model` `/resume` `/bug` 等入口 |
+| `CommandHandler.execute()` | `src/commands/handler.ts` | 执行命令：更新 UI 状态或向 agent 发送特殊指令 |
+| `InputHistoryManager` | `src/ui/history.ts` | 输入历史管理：上下键导航，持久化到磁盘 |
+| `FileReferenceResolver` | `src/ui/fileReference.ts` | 解析 `@filepath` 语法，将文件内容内联到 prompt |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`@filepath` 内联文件内容**：用户可在 prompt 中直接引用文件路径，Claude Code 自动展开内容，比手动复制粘贴效率高。
+- **`/bug` 命令自动附上下文**：`/bug` 命令自动收集 session 信息和系统环境，生成预填充的 GitHub issue URL，降低用户 bug 报告门槛。
+- **CommandRegistry 可扩展**：命令通过注册表管理，新增内置命令只需注册，不修改输入处理主流程。
+
+**风险与改进点**
+
+- **`@filepath` 无大小检查**：引用大文件（如编译产物）时直接内联，可能意外将 MB 级内容注入 prompt，耗尽 context window。
+- **CommandParser 与 InputQueue 耦合**：斜杠命令检测嵌入输入处理流程，难以在单元测试中独立测试命令解析逻辑。
+- **命令无 Tab 补全**：内置命令需完整输入，无像 fish shell 的模糊补全，命令拼写错误时静默或提示不友好。

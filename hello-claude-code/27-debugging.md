@@ -6,6 +6,18 @@ title: "调试指南"
 
 本文介绍 Claude Code 的调试方法。
 
+
+**目录**
+
+- [1. 调试标志](#1-调试标志)
+- [2. 日志级别控制](#2-日志级别控制)
+- [3. 日志配置](#3-日志配置)
+- [4. 关键源码](#4-关键源码)
+- [5. IDE 调试](#5-ide-调试)
+- [6. 常见调试技巧](#6-常见调试技巧)
+
+---
+
 ## 1. 调试标志
 
 | 标志 | 说明 |
@@ -105,3 +117,32 @@ DEBUG=1 claude --debug
 
 *文档版本: 1.0*
 *分析日期: 2026-04-06*
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `DEBUG` env var | `src/utils/debug.ts` | 控制详细日志输出：`DEBUG=claude-code:*` 开启全模块日志 |
+| `Logger` | `src/utils/logger.ts` | 结构化日志工具：按模块 namespace 分类，支持级别过滤 |
+| `--debug` flag | `src/cli.ts` | CLI 调试标志：启用详细模式，打印完整 system prompt 和 API 请求 |
+| `DebugPanel` | `src/ui/components/DebugPanel.tsx` | TUI 调试面板：实时显示 token 使用、工具调用队列、API 状态 |
+| `SessionDumper.dump()` | `src/debug/sessionDumper.ts` | 将当前 session 状态（messages/tools/config）导出为 JSON 文件 |
+| `/doctor` command | `src/commands/doctor.ts` | 诊断命令：检查 API key、MCP 连接、配置合法性并报告问题 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`/doctor` 一键诊断**：`/doctor` 命令覆盖 API key 验证、MCP 连接状态、配置格式三类常见问题，用户无需手动逐一排查。
+- **`--debug` 完整 prompt 输出**：调试标志打印完整 system prompt 和 API 请求体，开发者可精确验证 prompt 组装结果是否符合预期。
+- **DebugPanel 实时状态**：TUI 内嵌调试面板提供 token 使用和工具调用的实时数据，无需开单独终端看日志。
+
+**风险与改进点**
+
+- **`--debug` 输出包含 API key 片段**：完整 API 请求 dump 可能包含 Authorization header，错误粘贴到 issue 时存在 key 泄漏风险。
+- **日志无结构化查询支持**：日志为纯文本，大量调试输出中定位特定问题依赖手动 grep，缺少如 jq 可查询的结构化格式。
+- **`SessionDumper` 访问权限无控制**：任何能执行命令的用户都可 dump session，完整历史包含可能敏感的对话内容。

@@ -6,6 +6,18 @@ title: "错误处理与安全性：Agent 的自愈与边界防护"
 
 作为一个具有本地代码执行能力的 Agent，安全性（Security）与鲁棒性（Robustness）是 Gemini CLI 的生命线。
 
+
+**目录**
+
+- [1. 深度安全防御体系](#1-深度安全防御体系)
+- [2. 错误处理与自愈 (Self-Healing)](#2-错误处理与自愈-self-healing)
+- [3. 安全审批流 (Confirmation Flow)](#3-安全审批流-confirmation-flow)
+- [4. 关键代码定位](#4-关键代码定位)
+- [5. 核心函数清单 (Function List)](#5-核心函数清单-function-list)
+- [6. 代码质量评估 (Code Quality Assessment)](#6-代码质量评估-code-quality-assessment)
+
+---
+
 ## 1. 深度安全防御体系
 
 Gemini CLI 采用多层嵌套防御机制，确保 Agent 在处理复杂任务时不越权、不泄密。

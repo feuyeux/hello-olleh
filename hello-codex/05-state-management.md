@@ -6,6 +6,20 @@ title: "状态管理：Thread/Turn/ThreadItem 模型、持久化与并发控制"
 
 主向导对应章节：`状态管理`
 
+
+**目录**
+
+- [三层状态模型](#三层状态模型)
+- [线程生命周期参数](#线程生命周期参数)
+- [内存状态管理](#内存状态管理)
+- [持久化：双 SQLite 数据库](#持久化双-sqlite-数据库)
+- [Rollout 记录与回放](#rollout-记录与回放)
+- [并发控制模式总结](#并发控制模式总结)
+- [关键函数签名](#关键函数签名)
+- [实验性特性](#实验性特性)
+
+---
+
 ## 三层状态模型
 
 Codex 的状态模型分为三层：Thread（线程）、Turn（回合）、ThreadItem（回合内容项）。这不是"当前 prompt"为中心的设计，而是"线程协议"为中心的设计。
@@ -317,3 +331,21 @@ pub struct ThreadMetadata {
 - `persist_extended_history: bool` — 保存丰富 EventMsg 变体用于精确重建
 - `experimental_raw_events: bool` — 原始 Responses API items（仅内部）
 - `history/path overrides` — 不稳定，供 Codex Cloud 使用
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **三层状态分离清晰**：内存操作态（TurnContext）、可持久线程态（Thread）、持久会话态（Session）三层边界明确，避免了单一大状态对象带来的锁竞争和难以追踪的状态混乱。
+- **双 SQLite 职责分离**：history DB 和 thread DB 各司其职，history 可单独清理而不影响 thread 结构，符合最小耦合原则。
+- **Rollout 记录与回放**：`record_conversation_items()` 持续记录，支持无损重建会话，使 session resume 成为一等公民而非事后补丁。
+- **并发控制简洁**：每个 session 单线程操作，借助 Tokio actor 模式消除绝大多数状态同步代码。
+
+**风险与改进点**
+
+- **实验性特性标记不清**：`persist_extended_history`、`experimental_raw_events` 等字段虽标注 experimental，但没有统一的 feature flag 管控，测试覆盖和弃用路径不明确。
+- **ThreadMetadataBuilder 字段多**：`build()` 方法依赖大量字段正确填充，缺少运行时校验，字段遗漏会导致缺省值静默生效而非快速失败。
+- **history/path overrides 供内部服务使用**：这类"内部专用但对外可见"的字段存在 API 泄露风险，若外部用户意外使用，未来难以安全移除。
+- **文件系统路径硬编码风险**：history db 路径与 thread db 路径的构造逻辑散落在 Config 初始化中，难以在测试环境中替换为内存 DB。

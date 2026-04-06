@@ -6,6 +6,19 @@ title: "Gemini CLI 多代理与远程模式：本地子代理、A2A 远程代理
 
 旧版文档把 Gemini CLI 概括成“单 Agent CLI”，这已经明显过时。当前仓库里不仅有本地子代理，也有远程代理与对应的调度、认证、进度回传链路。
 
+
+**目录**
+
+- [1. Agent 不是一个，而是一套注册表](#1-agent-不是一个而是一套注册表)
+- [2. 子代理会被暴露成普通工具](#2-子代理会被暴露成普通工具)
+- [3. 本地子代理有独立执行环境](#3-本地子代理有独立执行环境)
+- [4. 远程代理通过 A2A 调用](#4-远程代理通过-a2a-调用)
+- [5. 并行能力也不只停留在设想里](#5-并行能力也不只停留在设想里)
+- [6. 当前边界在哪里](#6-当前边界在哪里)
+- [7. 关键源码锚点](#7-关键源码锚点)
+
+---
+
 ## 1. Agent 不是一个，而是一套注册表
 
 多代理能力的入口是 `packages/core/src/agents/registry.ts` 中的 `AgentRegistry`。
@@ -106,3 +119,32 @@ Gemini CLI 的并行不只是“未来可以做”，当前就已经有相当明
 | 远程代理调用 | `packages/core/src/agents/remote-invocation.ts` | A2A 远程 agent 流式调用 |
 | 子代理调度 | `packages/core/src/agents/agent-scheduler.ts` | 把 agent 工具调用接入调度器 |
 | 主调度器 | `packages/core/src/scheduler/scheduler.ts` | 主/子代理共用的调度基础设施 |
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `AgentRegistry` | `packages/core/src/agents/registry.ts` | 加载内建/用户级/项目级/extension agent 定义，提供统一注册表 |
+| `SubagentTool` | `packages/core/src/agents/subagent-tool.ts` | 将 agent 定义包装成标准 declarative tool，调用前做 schema 校验 |
+| `LocalAgentExecutor` | `packages/core/src/agents/local-executor.ts` | 创建隔离执行环境（独立 ToolRegistry/PromptRegistry/MessageBus），阻止递归 |
+| `A2AClientManager` | `packages/core/src/agents/remote-invocation.ts` | 连接远端 agent，维护 contextId/taskId，流式接收执行进度 |
+| `Scheduler.scheduleAgentTools()` | `packages/core/src/scheduler/scheduler.ts` | 将子代理工具调用接入主调度器的并发与审批链路 |
+| `SubagentToolWrapper.getConfirmationDetails()` | `packages/core/src/agents/subagent-tool.ts` | 决定远程 agent 调用是否需要用户确认 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **子代理看起来像工具**：`SubagentTool` 将 agent 包装为 declarative tool，主循环无需区分"工具调用"和"子代理调用"，扩展成本低。
+- **LocalAgentExecutor 真正隔离执行**：独立的 ToolRegistry/PromptRegistry/MessageBus 防止父子代理状态污染，`kind=subagent` 的 chat recording 也独立归档。
+- **A2A 协议支撑远程 agent 调用**：不依赖 app-server 宿主，通过标准 A2A 协议接入，远端 agent 可以是任何实现了协议的服务。
+
+**风险与改进点**
+
+- **LocalAgentExecutor 禁止 agent 嵌套**：通过权限控制阻止子代理再调用其他代理，虽然避免了递归套娃，但也限制了合法的多层任务分解场景。
+- **远程 agent 调用默认需要确认**：`getConfirmationDetails()` 要求用户确认，在批量自动化 headless 场景下会阻塞流程，无法配置跳过。
+- **`AgentRegistry` 无热更新**：agent 定义在启动时加载，会话中新增 agent（如动态安装 extension）需要重启生效，无法动态注册。

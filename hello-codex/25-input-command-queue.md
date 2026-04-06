@@ -6,6 +6,24 @@ title: "用户输入、命令解析与 Mailbox 队列系统"
 
 本篇梳理 Codex 中用户提交输入后，系统如何完成命令解析、邮箱队列管理和跨 Agent 通信的完整流程。
 
+
+**目录**
+
+- [1. 核心架构概述](#1-核心架构概述)
+- [2. 整体流程图](#2-整体流程图)
+- [3. CLI 入口与子命令](#3-cli-入口与子命令)
+- [4. TUI 事件循环](#4-tui-事件循环)
+- [5. Mailbox：Agent 间通信队列](#5-mailboxagent-间通信队列)
+- [6. Submission / Event Queue 模式](#6-submission-event-queue-模式)
+- [7. 命令规范化 (Command Canonicalization)](#7-命令规范化-command-canonicalization)
+- [8. 命令解析 (ParsedCommand)](#8-命令解析-parsedcommand)
+- [9. Exec 模块](#9-exec-模块)
+- [10. 与 Claude Code 的差异](#10-与-claude-code-的差异)
+- [11. 关键源码锚点](#11-关键源码锚点)
+- [12. 总结](#12-总结)
+
+---
+
 ## 1. 核心架构概述
 
 Codex 的输入处理涉及以下核心模块：
@@ -343,3 +361,32 @@ Codex 的输入层特点：
 
 *文档版本: 1.0*
 *分析日期: 2026-04-06*
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `InputQueue` | `codex-rs/tui/src/input.rs` | 用户输入队列：缓冲多行输入，等待 Enter 确认后统一发送 |
+| `CommandParser::parse()` | `codex-rs/tui/src/command.rs` | 解析以 `/` 开头的斜杠命令，返回 `Command` 枚举 |
+| `Command` enum | `codex-rs/tui/src/command.rs` | 内置命令集：/clear /model /resume /history /help 等 |
+| `CommandHandler::execute()` | `codex-rs/tui/src/command.rs` | 执行解析后的 Command，更新 AppState 或发送到 core |
+| `HistoryNavigator` | `codex-rs/tui/src/input.rs` | 上下键历史导航：在 InputQueue 中注入历史输入条目 |
+| `PromptInput` | `codex-rs/tui/src/input.rs` | 统一输入模型：文本内容 + 附件（文件/图片引用） |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **斜杠命令系统可发现**：`/help` 提供命令列表，用户无需记忆所有命令；命令补全可扩展。
+- **PromptInput 统一附件与文本**：文本和文件附件在同一输入模型中，发送给 core 时格式一致，不需要两套处理路径。
+- **InputQueue 支持多行组合**：缓冲区设计允许用户粘贴多行代码后一次确认发送，不会因换行提前触发。
+
+**风险与改进点**
+
+- **命令解析与输入处理耦合**：`CommandParser` 嵌入 `InputQueue` 处理流程，难以在集成测试中独立测试命令解析逻辑。
+- **无 shell-style tab 补全**：斜杠命令无 Tab 补全，命令名需要完整输入，不如 fish/zsh 交互友好。
+- **PromptInput 附件无大小限制**：内联文件引用时未限制文件大小，大文件注入可能超出 LLM context window。

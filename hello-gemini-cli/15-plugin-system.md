@@ -6,6 +6,18 @@ title: "Gemini CLI 扩展系统：`gemini-extension.json`、MCP Server 与装载
 
 Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extension 能贡献的一部分能力，不等同于全部“插件系统”。
 
+
+**目录**
+
+- [1. 一个 extension 能提供什么](#1-一个-extension-能提供什么)
+- [2. 扩展管理的核心是 `ExtensionManager`](#2-扩展管理的核心是-extensionmanager)
+- [3. MCP 是 extension 能力里最重要的一类](#3-mcp-是-extension-能力里最重要的一类)
+- [4. 安全治理不是外挂](#4-安全治理不是外挂)
+- [5. 一个最小 MCP extension 长什么样](#5-一个最小-mcp-extension-长什么样)
+- [6. 关键源码锚点](#6-关键源码锚点)
+
+---
+
 ## 1. 一个 extension 能提供什么
 
 磁盘上的扩展配置定义在 `packages/cli/src/config/extension.ts`，核心文件是 `gemini-extension.json`。
@@ -122,3 +134,19 @@ Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extensi
 | MCP 生命周期管理 | `packages/core/src/tools/mcp-client-manager.ts` | 连接、发现、诊断、刷新 |
 | MCP 连接实现 | `packages/core/src/tools/mcp-client.ts` | stdio / SSE / Streamable HTTP transport |
 | 示例 manifest | `packages/cli/src/commands/extensions/examples/mcp-server/gemini-extension.json` | 最小 MCP extension 例子 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`ExtensionManager` 统一入口**：所有 extension（MCP、skills、commands、其他工具）通过同一个管理器加载，外部工具接入不需要修改主流程代码。
+- **MCP 作为扩展协议标准**：外部工具通过 MCP 协议接入，与内建工具在 JSON Schema、审批链、并发控制方面完全等价，替换成本低。
+- **安全治理不是外挂**：Extension 的 sandbox 权限在 `ExtensionManager` 装配时就被绑定，无法被 extension 自行提升，防止特权蔓延。
+
+**风险与改进点**
+
+- **Extension MCP server 启动慢影响整体**：Extension 中的 MCP server 在 `Config.initialize()` 阶段同步初始化，若某个 MCP server 响应慢，会阻塞整个 CLI 启动流程。
+- **Extension 热重载不支持**：Extension 配置变更需要重启 CLI 才能生效，开发调试 extension 时 DX 较差。
+- **Extension 命名空间冲突**：多个 extension 可能注册同名工具，当前缺少冲突检测和明确的覆盖策略，行为不确定。

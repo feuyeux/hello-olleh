@@ -6,6 +6,26 @@ title: "设置系统、托管策略与环境变量注入"
 
 本篇梳理 `settings` 如何通过多源合并、托管策略和 trust 前后分阶段注入影响运行时行为。
 
+
+**目录**
+
+- [1. 为什么这是一条独立主线](#1-为什么这是一条独立主线)
+- [2. 设置源不是一层，而是一个合并栈](#2-设置源不是一层而是一个合并栈)
+- [3. `--setting-sources` 不是装饰参数，而是初始化边界条件](#3-setting-sources-不是装饰参数而是初始化边界条件)
+- [4. `--settings` 的临时文件路径为什么要做 content hash](#4-settings-的临时文件路径为什么要做-content-hash)
+- [5. `policySettings` 不是普通 override，而是“单一获胜者”](#5-policysettings-不是普通-override而是单一获胜者)
+- [6. MDM 读取为什么被拆成 raw read 和 parse/cache 两层](#6-mdm-读取为什么被拆成-raw-read-和-parsecache-两层)
+- [7. 环境变量注入分成 trust 前后两段](#7-环境变量注入分成-trust-前后两段)
+- [8. settings change detector 不只是 watcher，而是“运行期配置治理器”](#8-settings-change-detector-不只是-watcher而是运行期配置治理器)
+- [9. `internal write` 与 `deletion grace` 说明团队遇到过真实抖动问题](#9-internal-write-与-deletion-grace-说明团队遇到过真实抖动问题)
+- [10. 某些设置读取会故意绕开 project settings](#10-某些设置读取会故意绕开-project-settings)
+- [11. 一张总图](#11-一张总图)
+- [12. 一组常见 env 配置的源码解读](#12-一组常见-env-配置的源码解读)
+- [13. 关键源码锚点](#13-关键源码锚点)
+- [14. 总结](#14-总结)
+
+---
+
 ## 1. 为什么这是一条独立主线
 
 现有文档已经提到：
@@ -349,3 +369,32 @@ flowchart LR
 4. 用 watcher、MDM poll 和 `ConfigChange` hooks 把配置变化纳入运行期治理。
 
 启动链路、权限系统、hooks 与 provider 选择都依赖这条设置主线。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `loadConfig()` | `src/config/config.ts` | 配置加载入口：合并 global / project / env / CLI 四层 |
+| `GlobalSettings` | `src/config/types.ts` | `~/.claude/settings.json` 对应类型，最低优先级 |
+| `ProjectSettings` | `src/config/types.ts` | `.claude/settings.json` 项目级配置类型 |
+| `LocalSettings` | `src/config/types.ts` | 本地未提交覆盖配置：`.claude/settings.local.json` |
+| `env_overrides()` | `src/config/config.ts` | 从环境变量（`ANTHROPIC_MODEL` 等）读取并覆盖配置 |
+| `validateConfig()` | `src/config/validation.ts` | schema 验证：对 settings 文件做 Zod 校验，提前捕获格式错误 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Zod schema 验证**：`validateConfig()` 使用 Zod 在运行时校验 settings 文件，格式错误提前发现，不会在深层调用处静默失败。
+- **Local settings 分离**：`.claude/settings.local.json` 允许开发者在不影响团队配置的前提下本地覆盖，不需要修改 `.gitignore`。
+- **四层优先级合并**：global → project → local → env/CLI 的覆盖链透明易理解，且每层单独文件便于 diff 跟踪变更。
+
+**风险与改进点**
+
+- **settings.json 格式版本无迁移机制**：新版本 Claude Code 增减配置字段时，旧 settings.json 无法自动迁移，可能出现未知字段警告或字段丢失。
+- **env 变量键名不一致**：部分配置通过 `ANTHROPIC_` 前缀读取，部分通过 `CLAUDE_` 前缀，前缀不统一增加记忆负担。
+- **projectSettings 无权限控制**：项目目录的任何人都可修改 `.claude/settings.json`，恶意配置可注入到所有使用该项目的用户。

@@ -6,6 +6,20 @@ title: "扩展性：MCP Server 集成、Plugin/Skill 加载与新增工具的修
 
 主向导对应章节：`扩展性`
 
+
+**目录**
+
+- [扩展机制总览](#扩展机制总览)
+- [MCP Server 集成](#mcp-server-集成)
+- [插件系统](#插件系统)
+- [技能系统](#技能系统)
+- [动态工具](#动态工具)
+- [MCP Server 模式（codex 作为 MCP server）](#mcp-server-模式codex-作为-mcp-server)
+- [Connector / App 发现](#connector-app-发现)
+- [新增工具的修改点](#新增工具的修改点)
+
+---
+
 ## 扩展机制总览
 
 Codex 的扩展体系分为五层：
@@ -416,3 +430,35 @@ pub async fn list_accessible_connectors_from_mcp_tools(
 | Featured Plugins | 时间戳缓存 | 3 小时 |
 | Accessible Connectors | 静态缓存 + 认证 key | 15 分钟 |
 | MCP Tools | 每用户账户缓存 | 连接生命周期 |
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `McpClient::connect()` | `codex-rs/core/src/mcp/...` | 连接 MCP server（stdio / SSE）|
+| `McpClient::list_tools()` | `codex-rs/core/src/mcp/...` | 拉取远程工具声明列表 |
+| `McpClient::call_tool()` | `codex-rs/core/src/mcp/...` | 调用单个 MCP 工具 |
+| `PluginManager::load_plugins()` | `codex-rs/core/src/...` | 发现并加载 plugin 配置 |
+| `PluginManager::get_featured()` | — | 带时间戳缓存（3 小时）的 featured plugin 获取 |
+| `SkillManager::discover_skills()` | `codex-rs/core/src/...` | 扫描工作目录中的 `.md` skill 文件 |
+| `DynamicTool::resolve()` | `codex-rs/core/src/...` | 延迟加载动态工具 schema |
+| `codex_serve()` | — | Codex 作为 MCP server 模式的入口函数 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **四类扩展点统一**：MCP 工具、Plugin、Skill、Dynamic Tool 通过统一的工具注册表接入，扩展机制不需要修改核心 loop。
+- **缓存策略分级**：Featured Plugins 3 小时、Connector 15 分钟、MCP 连接内缓存，不同生命周期的数据有各自合适的 TTL。
+- **Codex 能反向作为 MCP server**：`codex_serve()` 让 Codex 自身能被其它 AI 工具复用，拓展了生态集成场景。
+
+**风险与改进点**
+
+- **MCP 连接错误无 fallback**：MCP server 不可用时工具直接消失，模型会收到"工具不存在"错误而非降级提示。
+- **Plugin `RwLock` 阻塞读写**：并发请求场景下，force reload 会独占写锁导致所有读请求阻塞，可考虑 per-plugin 细粒度锁。
+- **Skill 文件信任边界模糊**：Skill 是 `.md` + prompt 注入，文件内容直接注入 system prompt，若 skill 文件被篡改，后果等价于 prompt injection。
+- **动态工具 schema 无版本校验**：远程 MCP 工具升级 schema 后，客户端无感知更新，可能在工具调用时才发生参数类型不兼容。

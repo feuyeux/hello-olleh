@@ -10,6 +10,24 @@ title: "OpenCode 深度专题 B11：Worktree 与 Sandbox 机制"
 
 ---
 
+
+**目录**
+
+- [1. 先把 `sandbox` 的代码语义钉住](#1-先把-sandbox-的代码语义钉住)
+- [2. 四个最容易混淆的概念](#2-四个最容易混淆的概念)
+- [3. 一个例子看懂三层路径](#3-一个例子看懂三层路径)
+- [4. `sandbox` 是怎么识别出来的](#4-sandbox-是怎么识别出来的)
+- [5. 启动时 `sandbox` 怎么进入运行时](#5-启动时-sandbox-怎么进入运行时)
+- [6. 请求执行时，OpenCode 怎么命中正确的 sandbox](#6-请求执行时opencode-怎么命中正确的-sandbox)
+- [7. 新建 sandbox 的完整流程](#7-新建-sandbox-的完整流程)
+- [8. sandbox 在运行期到底影响什么](#8-sandbox-在运行期到底影响什么)
+- [9. 非 Git 项目是个特殊分支](#9-非-git-项目是个特殊分支)
+- [10. 最容易说错的三句话](#10-最容易说错的三句话)
+- [11. 把本篇压成一句代码级结论](#11-把本篇压成一句代码级结论)
+- [12. 关键源码定位](#12-关键源码定位)
+
+---
+
 ## 1. 先把 `sandbox` 的代码语义钉住
 
 如果先看 `packages/opencode/src/project/project.ts` 的 `Project.fromDirectory()`，再看 `project/instance.ts` 里 `Instance.provide()` 如何消费结果，就会发现 `sandbox` 根本不是 Docker、VM、`firejail` 这一类“操作系统隔离沙箱”。
@@ -432,3 +450,32 @@ path.relative(Instance.worktree, target)
 - `packages/opencode/src/tool/external-directory.ts`
   sandbox 内路径不会触发 `external_directory` 权限
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| sandbox path resolver | `sandbox/sandbox.ts` | 解析 workspace 路径为沙盒挂载路径，确保文件操作在边界内 |
+| sandbox bootstrap | `sandbox/sandbox.ts` | 启动沙盒环境：初始化目录结构、设置权限、注入环境变量 |
+| `Worktree.create()` | `worktree/worktree.ts` | 基于 `git worktree add` 创建隔离工作树 |
+| `Worktree.destroy()` | `worktree/worktree.ts` | 销毁工作树：`git worktree remove` + 清理临时目录 |
+| non-git branch handler | `worktree/worktree.ts` | 非 git 项目的 worktree 降级策略：目录复制代替 git worktree |
+| source location ref table | `sandbox/refs.ts` | 维护工具到沙盒内路径的映射表，供工具执行环境查询 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **git worktree 原生隔离**：利用 git 原生 worktree 实现 per-session 分支隔离，diff 和 merge 由 git 管理，无需自实现版本控制。
+- **非 git 项目降级策略**：对无 git 仓库的项目自动降级为目录复制沙盒，兼容性好，不强制 git 依赖。
+- **路径边界显式验证**：sandbox path resolver 在每次文件操作前验证路径在沙盒边界内，防止路径穿越。
+
+**风险与改进点**
+
+- **worktree 资源泄漏风险**：session 异常终止时 `destroy()` 可能未被调用，累积大量孤立 worktree 占用磁盘。
+- **目录复制沙盒无增量更新**：非 git 项目复制整个目录，大型项目初始化沙盒耗时长且占用大量磁盘。
+- **沙盒无网络隔离**：文件系统边界有保护，但沙盒内工具执行仍可访问外部网络，恶意工具可发起出站请求。

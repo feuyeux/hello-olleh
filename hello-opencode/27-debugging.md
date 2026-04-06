@@ -8,6 +8,16 @@ title: "OpenCode 深度专题 C01：断点调试指南"
 
 B 系列前面讲的都是代码架构和执行逻辑，这篇换一个工程视角：如何在 VS Code 和 JetBrains 里对 `packages/opencode` 源码设置断点、调试具体命令、以及一边断点一边看日志。这对想深入主链路或排查运行时问题的人来说是实用工具。
 
+
+**目录**
+
+- [调试前准备](#调试前准备)
+- [VS Code](#vs-code)
+- [JetBrains](#jetbrains)
+- [最后](#最后)
+
+---
+
 ## 调试前准备
 
 1. 用 IDE 打开 `opencode` 仓库根目录。
@@ -208,3 +218,31 @@ JetBrains 如果要看同样的日志，把下面这段放到 `Arguments` / `Pro
 - VS Code：先跑 `bun run --inspect-brk=6499/opencode --cwd packages/opencode --conditions=browser src/index.ts`，再附加 `opencode (attach 6499)`
 - ###### JetBrains：直接建一个 `Bun` 运行配置，`File` 指向 `packages/opencode/src/index.ts`，`Bun parameters` 填 `--cwd packages/opencode --conditions=browser`，具体子命令和模型参数都放到 `Arguments` / `Program arguments`，然后点 `Debug`
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `--inspect-brk` flag | Bun/Node.js | 启动时暂停等待 debugger 附加，适合调试启动链路 |
+| `bun run --inspect` | Bun | Bun 内置 debugger 模式，VS Code 通过 attach 接入 |
+| `opencode (attach 6499)` | VS Code launch.json | VS Code attach 配置，调试已运行的 opencode 进程 |
+| `Log.setLevel('debug')` | `util/log.ts` | 运行时提升日志详细程度 |
+| `Bun.env.OPENCODE_DEBUG` | 环境变量 | API 调试开关，打印完整 LLM 请求/响应 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Bun 原生 debugger 集成**：不需要额外安装调试工具，`bun --inspect` 直接暴露 Chrome DevTools 协议端口，VS Code/JetBrains 均可 attach。
+- **日志级别运行时可调**：支持在不重启进程的情况下动态改变 log level，减少为了看日志而重启 session 的调试中断。
+- **短 attach 配置**：`opencode (attach 6499)` 的 VS Code 配置简洁，贡献者复盘配置成本低。
+
+**风险与改进点**
+
+- **调试文档极薄（仅 4 节）**：相比系统的功能复杂度，调试文档缺少 MCP 通信调试、Tool 执行调试、durable history 查看等常用场景的具体指引。
+- **JetBrains 调试配置依赖 Bun 插件**：JetBrains 系列 IDE 对 Bun 的支持依赖第三方插件，非 Node.js 标准 attach 方式，配置复杂度高于 VS Code。
+- **无 REPL 或热重载调试模式**：修改插件或工具逻辑后需要完整重启进程，无法在会话中即时验证代码改动，调试迭代速度较慢。

@@ -6,6 +6,26 @@ title: "Transcript 持久化、会话恢复与 resume 语义"
 
 本篇拆解会话如何写入磁盘，以及 `--resume` / `--continue` 如何把磁盘状态重新恢复为 live runtime。
 
+
+**目录**
+
+- [1. 这套系统存的不是“聊天记录”，而是 append-only 会话日志](#1-这套系统存的不是聊天记录而是-append-only-会话日志)
+- [2. transcript 路径与 sessionProjectDir 强耦合](#2-transcript-路径与-sessionprojectdir-强耦合)
+- [3. 文件是延迟 materialize 的，不是 session 一开始就创建](#3-文件是延迟-materialize-的不是-session-一开始就创建)
+- [4. parentUuid 链才是“恢复对话”的核心结构](#4-parentuuid-链才是恢复对话的核心结构)
+- [5. progress 被明确排除在持久化主链之外](#5-progress-被明确排除在持久化主链之外)
+- [6. `loadTranscriptFile()` 的复杂度来自“要在大文件上恢复正确链”](#6-loadtranscriptfile-的复杂度来自要在大文件上恢复正确链)
+- [7. metadata 不是附属品，而是 resume 体验的一部分](#7-metadata-不是附属品而是-resume-体验的一部分)
+- [8. sidechain / subagent transcript 是一级公民](#8-sidechain-subagent-transcript-是一级公民)
+- [9. `loadConversationForResume()` 才是 `resume` 的真正装配点](#9-loadconversationforresume-才是-resume-的真正装配点)
+- [10. 反序列化阶段会主动修正老数据与异常中断](#10-反序列化阶段会主动修正老数据与异常中断)
+- [11. `sessionRestore.ts` 负责把恢复结果重新注入 bootstrap 与 AppState](#11-sessionrestorets-负责把恢复结果重新注入-bootstrap-与-appstate)
+- [12. 一张总图](#12-一张总图)
+- [13. 关键源码锚点](#13-关键源码锚点)
+- [14. 总结](#14-总结)
+
+---
+
 ## 1. 这套系统存的不是“聊天记录”，而是 append-only 会话日志
 
 关键文件：
@@ -312,3 +332,19 @@ flowchart LR
 4. 用 conversationRecovery + sessionRestore 把磁盘日志重新转换回 live runtime。
 
 因此 `resume` 会跨 `sessionStorage.ts`、`conversationRecovery.ts`、`sessionRestore.ts` 三个大文件，而不是一个简单的“读取历史记录”函数。
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`parentUuid` 链实现 append-only 日志**：对话历史以链式 UUID 结构存储，恢复时只需找到链尾并重建，不依赖行号或偏移量，鲁棒性强。
+- **反序列化时主动修正**：`loadConversationForResume()` 在加载历史时自动修正老格式数据和异常中断记录，不要求历史文件格式完全一致，升级兼容性好。
+- **Subagent transcript 是一等公民**：旁链（sidechain）和子代理对话独立归档，层级结构与主对话分离，不污染主 transcript，可单独查看或重放。
+
+**风险与改进点**
+
+- **大文件上的链恢复性能**：`loadTranscriptFile()` 在大文件中恢复 `parentUuid` 链时需全文扫描，长会话对话文件可达 MB 级，加载延迟显著。
+- **`progress` 事件排除在持久化之外**：进度指示器状态不持久化，Session resume 后 UI 中的"已完成步骤"视觉反馈丢失，用户体验断层。
+- **文件延迟 materialize 引发"假空"**：transcript 文件在第一条消息写入前不存在，`--resume` 指定未写入的 session ID 时会静默失败，错误提示不够明确。

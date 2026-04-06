@@ -6,6 +6,18 @@ title: "扩展性：MCP 与扩展机制的加载与隔离"
 
 Gemini CLI 的扩展性主要体现在两方面：**MCP (Model Context Protocol)** 的集成与**内建扩展 (Extensions)** 的加载。它允许系统在不修改内核的情况下，动态获得新的工具、资源和提示词能力。
 
+
+**目录**
+
+- [1. MCP 集成机制](#1-mcp-集成机制)
+- [2. 核心函数清单 (Function List)](#2-核心函数清单-function-list)
+- [2. 内建扩展与技能 (Extensions & Skills)](#2-内建扩展与技能-extensions-skills)
+- [3. 隔离与安全性](#3-隔离与安全性)
+- [4. 如何新增一个工具：修改点指南](#4-如何新增一个工具修改点指南)
+- [5. 代码质量评估 (Code Quality Assessment)](#5-代码质量评估-code-quality-assessment)
+
+---
+
 ## 1. MCP 集成机制
 
 MCP 是 Gemini CLI 扩展能力的基石。它将外部服务的工具能力映射到本地 Agent 中。

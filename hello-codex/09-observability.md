@@ -6,6 +6,20 @@ title: "Codex 可观测性：日志、追踪与监控"
 
 本文档分析 Codex 的可观测性基础设施。
 
+
+**目录**
+
+- [1. 可观测性在 Codex 里的现状](#1-可观测性在-codex-里的现状)
+- [2. 日志系统](#2-日志系统)
+- [3. 线程状态追踪](#3-线程状态追踪)
+- [4. 日志数据库](#4-日志数据库)
+- [5. 与 OpenCode 的完整可观测性对比](#5-与-opencode-的完整可观测性对比)
+- [6. 改进建议](#6-改进建议)
+- [7. 关键源码锚点](#7-关键源码锚点)
+- [8. 总结](#8-总结)
+
+---
+
 ## 1. 可观测性在 Codex 里的现状
 
 ### 1.1 基本架构
@@ -168,3 +182,19 @@ Codex 的可观测性相比 OpenCode 较为基础：
 ---
 
 > 关联阅读：[05-state-management.md](./05-state-management.md) 了解线程状态、持久化与回放链路。
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`tracing` crate 结构化日志**：Rust 端使用 `tracing` 提供 span/event 层级日志，可接入 OpenTelemetry collector，远优于 `console.log` 型日志。
+- **日志 SQLite 持久化**：事件持久化到数据库而非纯文件，支持时间戳索引查询，长期调试可回溯历史事件。
+- **线程状态追踪内置**：`ThreadState`/`TurnState` 是核心运行时对象，状态变更路径有记录，Thread 生命周期可追踪。
+
+**风险与改进点**
+
+- **JS 层日志与 Rust 层 tracing 不统一**：JS 侧使用 `console.log`，Rust 侧使用 `tracing`，跨边界的调试需要同时看两套日志，关联困难。
+- **`tracing` 输出默认不暴露给用户**：开发者需主动配置 subscriber 才能看到 trace 输出，默认 release 构建中 trace 信息被编译优化掉，生产调试能力弱。
+- **无全局 Trace ID**：单次请求跨越 JS→Rust 边界、submission_loop、多工具并发时，没有统一的 trace_id 关联所有事件，多层调试需手动对齐时间戳。

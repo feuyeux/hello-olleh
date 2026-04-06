@@ -8,6 +8,21 @@ title: "OpenCode 错误处理与安全性：异常捕获、重试策略、认证
 
 ---
 
+
+**目录**
+
+- [1. 错误归一化](#1-错误归一化)
+- [2. 重试策略](#2-重试策略)
+- [3. 上下文溢出自愈](#3-上下文溢出自愈)
+- [4. Permission 与 Question 机制](#4-permission-与-question-机制)
+- [5. Session 并发控制](#5-session-并发控制)
+- [6. Revert 机制](#6-revert-机制)
+- [7. 认证鉴权](#7-认证鉴权)
+- [8. 敏感信息隔离](#8-敏感信息隔离)
+- [9. 关键函数清单](#9-关键函数清单)
+
+---
+
 ## 1. 错误归一化
 
 ### 1.1 错误类型映射
@@ -221,3 +236,21 @@ shell、loop、task tool 都会监听这个 abort signal。
 | `SessionPrompt.cancel()` | `prompt.ts:260-272` | 释放运行态 |
 | `Snapshot.revert()` | `snapshot/index.ts` | 文件系统回滚 |
 | `Snapshot.restore()` | `snapshot/index.ts` | 文件系统恢复 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Permission 规则声明式求值**：`Permission.evaluate()` 通过规则集求值而非硬编码判断，新增权限策略只需添加规则，不修改核心代码。
+- **Compaction 自愈路径明确**：`isOverflow()` → `SessionCompaction.process()` 是独立分支，不与正常请求路径混合，可单独测试和调试。
+- **Snapshot revert 作为最后防线**：文件修改前记录快照，`Snapshot.revert()` 提供 Git-level 回滚，显著降低工具误操作的损害。
+- **Busy 状态快速失败**：`assertNotBusy()` 在并发请求时立即抛出，避免双重 session 运行导致的状态污染。
+
+**风险与改进点**
+
+- **`Permission.evaluate()` 规则冲突处理不明确**：当多条规则同时匹配时的优先级（deny-overrides vs. permit-overrides）未在文档或代码中显式说明，安全策略的可预测性存疑。
+- **Compaction 触发阈值硬编码**：`isOverflow()` 的 token 阈值通常是魔法数字，不同模型的上下文窗口差异大，静态阈值可能过早或过晚触发。
+- **`SessionRevert.cleanup()` 异步异常静默**：cleanup 若在会话关闭时失败，清理残留状态可能在下次启动时引发难以追踪的问题。
+- **Snapshot 存储无大小上限**：长时间运行的会话会积累大量文件快照，缺少 GC 策略，可能导致磁盘持续膨胀。

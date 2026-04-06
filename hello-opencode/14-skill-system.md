@@ -12,6 +12,21 @@ title: "OpenCode 深度专题 B10：SKILL，技能是怎样被发现、授权、
 
 ---
 
+
+**目录**
+
+- [1. Skill 不是单个文件，而是五层结构](#1-skill-不是单个文件而是五层结构)
+- [2. 技能发现不是一条路径，而是五条来源叠加](#2-技能发现不是一条路径而是五条来源叠加)
+- [3. `Skill` service 的核心不是扫描，而是 lazy ensure](#3-skill-service-的核心不是扫描而是-lazy-ensure)
+- [4. Skill 的最小 schema 很薄，但约束很硬](#4-skill-的最小-schema-很薄但约束很硬)
+- [5. 权限不是“加载以后再拦”，而是从可见性开始就生效](#5-权限不是加载以后再拦而是从可见性开始就生效)
+- [6. Skill 有三个对外投影面，不是只有 `skill` tool](#6-skill-有三个对外投影面不是只有-skill-tool)
+- [7. 远端 Skill pack 的设计，说明它被当成可分发资产](#7-远端-skill-pack-的设计说明它被当成可分发资产)
+- [8. 为什么要把 Skill 做成独立系统，而不是塞进普通 prompt 模板](#8-为什么要把-skill-做成独立系统而不是塞进普通-prompt-模板)
+- [9. 把 B10 压成一句代码级结论](#9-把-b10-压成一句代码级结论)
+
+---
+
 ## 1. Skill 不是单个文件，而是五层结构
 
 | 层 | 代码坐标 | 角色 |
@@ -286,3 +301,32 @@ OpenCode 当前的 Skill 系统可以压成四句话：
 
 > 在 OpenCode 里，Skill 不是“提示词附件”，而是被发现、授权、注入并再次投影到主链路上的技能包系统。
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Skill.all()` | `skill/index.ts:168-226` | 返回所有可用技能列表，触发 lazy ensure 确保远端 skill 已缓存 |
+| `Skill.discover()` | `skill/discovery.ts:11-100` | 从远端 `index.json` 下载 skill pack 到本地 cache |
+| `skill` tool | `tool/skill.ts:8-90` | 按需加载具体 skill 的完整指令并注入 context |
+| `Skill.dirs()` | `skill/index.ts` | 返回当前配置的所有 skill 发现目录（global/project/.opencode/remote）|
+| `Skill.available()` | `skill/index.ts` | 返回权限过滤后用户可见的 skill 集合 |
+| `system.ts` skill 注入 | `session/system.ts:55-65` | 将"可用技能列表"编进 system prompt（不是 skill 全文，只是摘要）|
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **五层发现来源严格隔离**：global/project/.opencode/remote/explicit path 五类来源独立处理，发现失败只影响该来源，不连锁阻塞其他来源。
+- **Lazy ensure 远端拉取**：首次使用时才从远端下载 skill pack，不在启动时阻塞，减少冷启动延迟。
+- **权限从可见性层面开始生效**：`Skill.available()` 在权限检查前就过滤不可见技能，不是等到执行阶段才拒绝，RBAC 前移。
+
+**风险与改进点**
+
+- **远端 skill 无签名验证**：从 URL 下载的 skill pack 没有签名校验，存在供应链攻击风险，恶意 index 可以注入任意 skill 指令。
+- **`skill` tool 无 token 预算检查**：加载完整 skill 文件注入 context 时无大小限制，超大 skill 指令文件会显著压缩可用 context 窗口。
+- **Skill 缓存无过期机制**：远端 skill 下载后无 TTL 或版本校验，缓存内容不会自动更新除非手动清理。

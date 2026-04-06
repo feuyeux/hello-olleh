@@ -10,6 +10,19 @@ title: "OpenCode 深度专题 B03：高级编排，Subagent、Command、Compacti
 
 ---
 
+
+**目录**
+
+- [1. 编排层的真正核心还是 `loop()`](#1-编排层的真正核心还是-loop)
+- [2. Subagent 的本体不是线程，而是 child session](#2-subagent-的本体不是线程而是-child-session)
+- [3. 父 session 如何感知 subagent 结果](#3-父-session-如何感知-subagent-结果)
+- [4. `command` 是编排语法糖，不是另一条执行通道](#4-command-是编排语法糖不是另一条执行通道)
+- [5. Compaction 也是显式编排任务，而不是偷偷裁历史](#5-compaction-也是显式编排任务而不是偷偷裁历史)
+- [6. 隐藏 agent 是 orchestration 的内部角色](#6-隐藏-agent-是-orchestration-的内部角色)
+- [7. 为什么这些能力都能共存而不把状态机搞炸](#7-为什么这些能力都能共存而不把状态机搞炸)
+
+---
+
 ## 1. 编排层的真正核心还是 `loop()`
 
 先明确一点：高级编排没有绕开 `SessionPrompt.loop()`。
@@ -188,3 +201,32 @@ Subagent、command、compaction 看起来是高级能力，但在实现上都被
 
 这就是 OpenCode 当前编排层的核心风格：**扩展能力很多，但骨架只有一条。**
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `loop()` | `session/prompt.ts` | session 编排核心：while 循环处理 subtask/compaction/overflow/推理分支 |
+| `Session.create(parentId)` | `session/index.ts` | 创建 child session（subagent 本体），关联父 session |
+| `task` tool | `tool/task.ts` | 触发子代理执行的工具，loop 感知 subtask part 后调用 |
+| `compactMessages()` | `session/compact.ts` | 显式编排的 compaction 任务——作为 orchestration 步骤而非隐式裁剪 |
+| `hiddenAgent` | `session/prompt.ts` | 内部隐藏代理角色，用于 orchestration 内部步骤（如 summarization） |
+| `Bus.publish(SessionStatus.*)` | — | 子 session 状态变化通知父 session |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`loop()` 骨架扩展性强**：subtask/compaction/overflow/推理四条分支共享同一个 while 循环和 durable history，新增分支只需增加 durable 类型，不需要新的执行骨架。
+- **Subagent 是 child session**：子代理是完整的独立 session 对象，拥有独立的 durable history 和 `SessionStatus`，父代理不需要管理子代理内部状态。
+- **Compaction 显式化**：compaction 不是偷偷裁历史，而是作为显式编排任务被 `loop()` 感知和调度，可追踪、可记录、可重放。
+
+**风险与改进点**
+
+- **`loop()` 函数体庞大（500+ 行）**：四条主分支和所有边界处理集中在单函数中，嵌套层级深，修改某条分支时容易引入边界效应。
+- **父 session 感知子 session 结果依赖 Bus 事件**：若 Bus 事件因进程异常丢失，父 session 可能永远等待不到子 session 完成通知，无超时机制。
+- **`hiddenAgent` 语义不透明**：内部隐藏角色的触发条件和行为未在公开文档中说明，外部 plugin 难以预测其与 `loop()` 的交互。

@@ -10,6 +10,20 @@ title: "OpenCode 深度专题 B05：基础设施，SQLite、Storage、Bus、Inst
 
 ---
 
+
+**目录**
+
+- [1. 当前基础设施不是单一存储，而是两层](#1-当前基础设施不是单一存储而是两层)
+- [2. 哪些表真正决定系统行为](#2-哪些表真正决定系统行为)
+- [3. `Database.use()` / `transaction()` / `effect()` 才是“一致性基石”](#3-databaseuse-transaction-effect-才是一致性基石)
+- [4. `Bus` 和 `GlobalBus` 是两级事件投影，不是一个 EventEmitter 就完事](#4-bus-和-globalbus-是两级事件投影不是一个-eventemitter-就完事)
+- [5. `SessionStatus` 是基础设施层里的“非 durable 运行态”](#5-sessionstatus-是基础设施层里的非-durable-运行态)
+- [6. `Instance` / `WorkspaceContext` 决定请求落在哪份 runtime 上](#6-instance-workspacecontext-决定请求落在哪份-runtime-上)
+- [7. `Storage` 还承担着派生数据和迁移职责](#7-storage-还承担着派生数据和迁移职责)
+- [8. 为什么这套基础设施天然支持“恢复现场”](#8-为什么这套基础设施天然支持恢复现场)
+
+---
+
 ## 1. 当前基础设施不是单一存储，而是两层
 
 | 层 | 代码坐标 | 存什么 |
@@ -215,3 +229,32 @@ Storage.write(["session_diff", sessionID], diffs)
 
 这就是 OpenCode 当前 durable runtime 能成立的基础设施前提。
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Database.use()` | `storage/database.ts` | 获取当前 workspace 的 SQLite 连接，带连接池管理 |
+| `Database.transaction()` | `storage/database.ts` | 包裹多个写操作为原子事务 |
+| `Database.effect()` | `storage/database.ts` | 将 SQLite 操作提升为 Effect，集成错误类型系统 |
+| `Bus` / `GlobalBus` | `bus/bus.ts` | 内存 pub/sub：`Bus` 为 session 级、`GlobalBus` 跨 session 级 |
+| `SessionStatus` | `session/session.ts` | session 状态枚举：idle/running/waiting/completed/error |
+| `Instance` / `WorkspaceContext` | `server/context.ts` | 请求 scope 上下文：绑定 workspace 路径和 runtime 实例 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Effect 集成 Database 层**：SQLite 操作包裹在 Effect 中，错误类型在编译期可见，不会被 `try/catch` 吞掉。
+- **双级 Bus 设计**：session 级 Bus 隔离 session 事件，GlobalBus 允许跨 session 订阅全局状态，粒度恰当。
+- **`Instance` context 绑定**：每个 HTTP 请求都绑定 workspace context，保证操作不会跨 workspace，天然多工作区隔离。
+
+**风险与改进点**
+
+- **SQLite 单文件写锁**：多 session 并发写入时，SQLite WAL 可缓解但高并发场景仍存在锁竞争，事务窗口长时影响吞吐。
+- **Bus 无持久化**：Bus 事件仅存在于内存，进程崩溃后 SSE 客户端重连无法回放历史事件，需轮询 HTTP 接口补偿。
+- **GlobalBus 无细粒度订阅**：GlobalBus 是全局广播，客户端需在本地过滤无关 session 事件，无法服务端按需过滤。

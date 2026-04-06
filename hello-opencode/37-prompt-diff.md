@@ -4,6 +4,24 @@ title: "OpenCode 提示词三文件对比分析"
 ---
 # OpenCode 提示词三文件对比分析
 
+
+**目录**
+
+- [概述](#概述)
+- [一、回复风格与长度](#一回复风格与长度)
+- [二、代码相关政策](#二代码相关政策)
+- [三、任务管理](#三任务管理)
+- [四、前端设计能力](#四前端设计能力)
+- [五、外部知识与通信](#五外部知识与通信)
+- [六、格式与输出规范](#六格式与输出规范)
+- [七、专业性与客观性](#七专业性与客观性)
+- [八、安全与约束](#八安全与约束)
+- [九、工具使用哲学](#九工具使用哲学)
+- [十、总结：设计意图与适用场景](#十总结设计意图与适用场景)
+- [十一、背后的核心原因](#十一背后的核心原因)
+
+---
+
 ## 概述
 
 OpenCode 为不同模型配置了三个独立的提示词文件，分别用于不同的模型提供商：
@@ -362,3 +380,32 @@ without any unnecessary superlatives, praise, or emotional validation.
 
 *分析基于 packages/opencode/src/session/prompt/ 目录下的三个提示词文件*
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| system prompt assembler | `llm/prompt.ts` | 四层 prompt 组装：base+env+agent+skill，是 opencode 差异化的核心 |
+| tool schema serializer | `mcp/tool.ts` | 将工具 schema 序列化为 prompt 可读格式，供对比分析 |
+| agent rule injector | `session/agent.ts` | 将 Agent 定义的 rules 注入 system prompt 的 agent 层 |
+| `Skill.all()` | `skill/skill.ts` | 聚合所有激活 skill 的 prompt fragment，追加到四层结构末尾 |
+| context window calculator | `llm/budget.ts` | 在不同提供商间统一 context window 估算，是跨模型差异的关键调节点 |
+| tool_choice normalizer | `llm/compat.ts` | 标准化不同提供商的 tool_choice 参数差异，保证一致的工具调用行为 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **对比视角揭示设计取舍**：通过横向对比（vs Claude Code / Gemini / Codex）清晰展示 opencode 在 prompt 组织上的特有选择和理由。
+- **四层结构便于 diff 定位**：base/env/agent/skill 四层分离使得"哪一层导致行为差异"的调试路径明确，不需全文 grep。
+- **工具 schema 统一入口**：所有工具（built-in + MCP）通过同一序列化路径注入 prompt，保证格式一致性。
+
+**风险与改进点**
+
+- **跨工具 prompt 设计缺乏实测数据支撑**：对比分析多为结构层面，缺少不同 prompt 策略对实际 LLM 行为影响的量化数据。
+- **四层顺序固定可能次优**：base → env → agent → skill 的拼接顺序对注意力机制有影响，但未提供实验分析说明顺序设计依据。
+- **跨模型 compat 层随提供商增加膨胀**：每次新增提供商都需在 compat 层手动注册差异，缺乏自动发现机制。

@@ -6,6 +6,22 @@ title: "启动链路：入口点、CLI 参数解析、初始化顺序与 Subcomm
 
 主向导对应章节：`启动链路`
 
+
+**目录**
+
+- [1. 总体流程图](#1-总体流程图)
+- [2. 双层入口](#2-双层入口)
+- [3. JavaScript 启动器](#3-javascript-启动器)
+- [4. 从 `spawn()` 到 Rust `main()` 的交接层](#4-从-spawn-到-rust-main-的交接层)
+- [5. `main()` 之后的第一站：`arg0` 多工具分发](#5-main-之后的第一站arg0-多工具分发)
+- [6. CLI 参数解析与分支决策](#6-cli-参数解析与分支决策)
+- [7. 默认路径：无子命令进入交互式 TUI](#7-默认路径无子命令进入交互式-tui)
+- [8. 非交互分支：Exec 模式](#8-非交互分支exec-模式)
+- [9. 服务分支：App Server 模式](#9-服务分支app-server-模式)
+- [10. 关键初始化不变量](#10-关键初始化不变量)
+
+---
+
 ## 1. 总体流程图
 
 先看整条启动链，再看每一段细节。下面各节按这个顺序展开：
@@ -336,3 +352,35 @@ sequenceDiagram
 | Onboarding 在事件循环**之前** | 认证状态在启动前锁定 |
 | App server 在 config 加载**之后** | 使用最终 config |
 | Restore guard 尽早创建 | 保证 panic/exit 时清理终端 |
+
+---
+
+## 关键函数清单
+
+| 函数/符号 | 文件 | 职责 |
+|----------|------|------|
+| `main()` (JS) | `codex-cli/src/cli.ts` | node 入口：设置 PATH，spawn Rust binary |
+| `cli_main()` | `codex-rs/cli/src/main.rs:88` | Rust 入口：argv[0] 多工具分发 |
+| `Subcommand` 枚举 | `codex-rs/cli/src/main.rs:590` | 所有 CLI 子命令路由表 |
+| `load_dotenv()` | — | 在 Tokio 启动前加载 `.env`，保证 Config 能读到覆盖值 |
+| `create_restore_guard()` | — | 尽早注册 panic/exit 时的终端恢复 guard |
+| `check_terminal()` | — | 检测 dumb/非 TTY 终端，决定是否进入 alt-screen |
+| `CodexTui::run()` | `codex-rs/tui/src/...` | TUI 事件循环入口 |
+| `Config::load()` | `codex-rs/core/src/config/...` | 加载配置（env override 已先到位）|
+| `AppServer::start()` | `codex-rs/app-server/src/...` | 启动 HTTP app server（服务分支）|
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **顺序不变量明确**：env 加载 → Config 构建 → Tokio 启动的顺序严格保证，消除了 Config 读到旧环境变量的竞态。
+- **argv[0] 多工具分发**：通过 symlink 直接分发子命令，避免了安装多个独立二进制的包体积开销。
+- **Restore guard 提前注册**：panic 或 exit 时终端清理有保障，不会出现用户终端被锁在 alt-screen 的体验问题。
+
+**风险与改进点**
+
+- **JS/Rust 双启动层**：用户运行 `codex` 触发 Node 脚本再 spawn Rust binary，调试启动问题时有两层进程需要追踪。
+- **`set_var()` 在多线程限制前调用**：PATH 和 dotenv 必须在 Tokio 启动前完成，若后续重构引入提前的异步初始化，会破坏此不变量。
+- **Onboarding 在事件循环前阻塞**：认证/首次设置若响应慢，整个启动流程会挂起，当前无超时保护。
