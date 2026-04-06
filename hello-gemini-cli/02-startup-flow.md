@@ -213,6 +213,119 @@ GEMINI_SANDBOX=docker
 - **交互模式**：`config.initialize()` 在 `AppContainer.tsx` 的 `useEffect` 中被调用，UI 先挂起再后台完成工具/MCP 初始化
 - **非交互模式**：`config.initialize()` 在 `gemini.tsx:627` 同步调用，必须等待初始化完成后才执行
 
+### 3.4 启动流程如何影响后续请求流程
+
+启动阶段不是“只做一次准备”，它会直接决定后续每一轮请求能不能发、带什么 prompt、能调什么工具、以及这些工具在什么权限边界内运行。
+
+#### 影响 1：是否允许用户请求立刻进入 agent loop
+
+交互模式下，`AppContainer` 会先挂载 UI，再异步做运行时初始化：
+
+1. `AppContainer.useEffect()`  
+   文件：`packages/cli/src/ui/AppContainer.tsx:398-427`  
+   调用点：`404` 调 `config.initialize()`；`406` 初始化完成后置 `setConfigInitialized(true)`。
+2. `Config.initialize()` / `Config._initialize()`  
+   文件：`packages/core/src/config/config.ts:1289-1397`
+3. `useMcpStatus()`  
+   文件：`packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`  
+   职责：把 MCP discovery 状态折叠成 `isMcpReady`。
+4. `AppContainer.handleFinalSubmit()`  
+   文件：`packages/cli/src/ui/AppContainer.tsx:1262-1333`  
+   调用点：`1298-1329` 只有在 `isConfigInitialized && isMcpReady` 时才真正放行普通 prompt；否则只入队。
+5. `useMessageQueue()`  
+   文件：`packages/cli/src/ui/hooks/useMessageQueue.ts:30-96`  
+   调用点：`68-80` 当 `isConfigInitialized && isMcpReady && streamingState === Idle` 时，才自动冲刷排队消息。
+
+这意味着启动阶段直接塑造了请求入口语义：
+
+- **Config 未初始化完成**：普通 prompt 不能进入 `submitQuery()`，只会排队。
+- **MCP 尚未完成 discovery**：slash command 还能用，但普通 prompt 仍然排队。
+- **Config + MCP 都就绪**：请求才真正进入 `AppContainer.handleFinalSubmit()` -> `submitQuery()` 主链。
+
+#### 影响 2：首轮请求看到的 system prompt 是启动阶段生成的
+
+1. `Config._initialize()`  
+   文件：`packages/core/src/config/config.ts:1395`  
+   调用点：`await this._geminiClient.initialize()`。
+2. `GeminiClient.initialize()`  
+   文件：`packages/core/src/core/client.ts:245-248`  
+   调用点：`246` 调 `this.startChat()`。
+3. `GeminiClient.startChat()`  
+   文件：`packages/core/src/core/client.ts:358-388`  
+   调用点：`373-375` 调 `getCoreSystemPrompt(this.config, systemMemory)`，把结果作为 `systemInstruction` 注入 `GeminiChat`。
+
+所以**第一轮请求并不是在提交时才“临时生成上下文”**，而是继承启动阶段已经构建好的 `GeminiChat` 会话壳：
+
+- 启动时已发现的 skills
+- 启动时已注册的 tools
+- 启动时的 trust / approval mode / settings
+- 启动时的 memory / GEMINI.md 内容
+
+这些都会体现在首轮请求使用的 system prompt 和 tool declarations 里。
+
+#### 影响 3：启动阶段注册的工具，决定了请求期 `setTools()` 能下发什么函数声明
+
+1. `Config._initialize()`  
+   文件：`packages/core/src/config/config.ts:1335`  
+   调用点：创建 `this._toolRegistry = await this.createToolRegistry()`。
+2. `Config.createToolRegistry()`  
+   文件：`packages/core/src/config/config.ts:3391-3393`  
+   调用点：`3391` 执行 `registry.discoverAllTools()`，之后 `sortTools()`。
+3. `GeminiClient.setTools()`  
+   文件：`packages/core/src/core/client.ts:288-302`  
+   调用点：`298-301` 从 `toolRegistry.getFunctionDeclarations(modelId)` 取出函数声明并写入 chat。
+4. `GeminiClient.processTurn()`  
+   文件：`packages/core/src/core/client.ts:585-865`  
+   调用点：`726-727` 在每轮请求前执行 `await this.setTools(modelToUse)`。
+
+这条链说明：**请求阶段虽然每轮都会调用 `setTools()`，但它使用的是启动阶段构建好的 `ToolRegistry`。**  
+如果某个工具在启动时没有被发现或注册，模型在请求阶段就根本拿不到对应的 function declaration。
+
+#### 影响 4：MCP 初始化时机决定请求期是否能调用 MCP 工具
+
+1. `Config._initialize()`  
+   文件：`packages/core/src/config/config.ts:1337-1362`  
+   调用点：`1349-1352` 异步启动 `startConfiguredMcpServers()` 和 `extensionLoader.start(this)`。
+2. 在交互模式下  
+   调用点：`1347-1358` 不阻塞 UI；`1360-1362` 只在非交互/ACP 模式才 `await this.mcpInitializationPromise`。
+3. `useMcpStatus()`  
+   文件：`packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`  
+   调用点：`42-44` 只有 `discoveryState === COMPLETED` 才算 `isMcpReady`。
+
+因此请求流程会受到两层影响：
+
+- **入口层影响**：普通 prompt 在 `isMcpReady === false` 时会被 `AppContainer.handleFinalSubmit()` 排队。
+- **能力层影响**：只有完成 MCP discovery 后，MCP tools 才会进入主 `ToolRegistry`，继而在后续 `GeminiClient.setTools()` 里暴露给模型。
+
+#### 影响 5：启动时的 trust / sandbox / approval 约束会延续到每一轮工具调用
+
+1. `Config.isTrustedFolder()`  
+   文件：`packages/core/src/config/config.ts:2742-2749`  
+   职责：给出当前工作区是否 trusted。
+2. `Config.setApprovalMode()`  
+   文件：`packages/core/src/config/config.ts:2389-2394`  
+   约束：untrusted folder 下不能启用 `DEFAULT` 之外的特权 approval mode。
+3. `Config._initialize()`  
+   文件：`packages/core/src/config/config.ts:1367-1371`  
+   调用点：`discoverSkills(..., this.isTrustedFolder())`，trust 状态直接影响 skill 发现。
+4. 沙箱阶段  
+   文档前文已描述 `start_sandbox()` 的文件系统/网络/环境变量过滤。
+
+这些启动约束会一路延续到请求期的工具调度：
+
+- `Scheduler._processToolCall()` 里的 policy / confirmation 判断，建立在启动阶段确定的 approval mode 之上。
+- 模型能看到哪些 skill、哪些工具、哪些文件路径、能否联网，都继承启动时确定的 trust / sandbox / MCP / settings 状态。
+
+#### 总结：启动流程不是前置知识，而是请求流程的“地基”
+
+可以把它压缩成一条依赖链：
+
+`main()` / `loadCliConfig()` / `initializeApp()` / `Config._initialize()`  
+-> 生成 `GeminiClient + GeminiChat + ToolRegistry + MCP + Skills + Trust/Sandbox/Approval`  
+-> `AppContainer.handleFinalSubmit()` 决定是否允许提交  
+-> `useGeminiStream.submitQuery()` 进入 agent loop  
+-> `GeminiClient.processTurn()` 在每轮里消费这些启动产物
+
 ## 4. 运行模式分发
 
 Gemini CLI 支持两种主要的运行模式，它们共享相同的 `packages/core` 核心，但外壳协议不同：

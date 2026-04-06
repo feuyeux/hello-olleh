@@ -1,0 +1,441 @@
+---
+layout: content
+title: "Codex 的 MCP/RMCP 系统"
+---
+# Codex 的 MCP/RMCP 系统
+
+本篇讨论 Codex 的 MCP 客户端实现、RMCP 远程协议、工具调用审批流程和 OAuth 认证。
+
+## 1. MCP 系统概述
+
+```mermaid
+---
+config:
+  theme: neutral
+---
+flowchart TB
+    subgraph CodexCore["Codex Core"]
+        A[McpConnectionManager]
+        B[McpToolCall]
+        C[ToolHandler]
+    end
+
+    subgraph RMCP["RMCP Client"]
+        D[RmcpClient]
+        E[Transport Recipe]
+        F[OAuth]
+    end
+
+    subgraph Transport["传输层"]
+        G[StdioTransport]
+        H[StreamableHttp]
+    end
+
+    subgraph MCPServer["MCP Server"]
+        I[本地进程]
+        J[远程服务]
+    end
+
+    A --> D
+    D --> E
+    E --> G
+    E --> H
+    G --> I
+    H --> J
+```
+
+## 2. 核心组件
+
+| 组件 | 路径 | 职责 |
+|------|------|------|
+| McpConnectionManager | `codex-rs/core/src/mcp_connection_manager.rs` | MCP 连接生命周期管理 |
+| RmcpClient | `codex-rs/rmcp-client/src/rmcp_client.rs` | 远程 MCP 客户端实现 |
+| McpToolCall | `codex-rs/core/src/mcp_tool_call.rs` | 工具调用处理器 |
+| ToolHandler | `codex-rs/core/src/tools/handlers/mcp.rs` | MCP 工具入口 |
+| OAuth | `codex-rs/rmcp-client/src/oauth.rs` | OAuth token 管理 |
+| Protocol Types | `codex-rs/protocol/src/mcp.rs` | MCP 协议类型 |
+
+## 3. RMCP 客户端架构
+
+### 3.1 客户端结构
+
+```rust
+// codex-rs/rmcp-client/src/rmcp_client.rs:470-475
+
+pub struct RmcpClient {
+    state: Mutex<ClientState>,
+    transport_recipe: TransportRecipe,
+    initialize_context: Mutex<Option<InitializeContext>>,
+    session_recovery_lock: Mutex<()>,
+}
+
+enum ClientState {
+    Uninitialized,
+    Initializing,
+    Ready,
+    Error(String),
+}
+```
+
+### 3.2 传输类型
+
+```rust
+// codex-rs/rmcp-client/src/rmcp_client.rs:389-405
+
+enum TransportRecipe {
+    Stdio {
+        program: String,
+        args: Vec<String>,
+        env: HashMap<String, String>,
+        env_vars: Vec<String>,
+        cwd: Option<PathBuf>,
+    },
+    StreamableHttp {
+        server_name: String,
+        url: Url,
+        bearer_token: Option<String>,
+        http_headers: HashMap<String, String>,
+        store_mode: bool,
+    },
+}
+```
+
+## 4. 连接管理
+
+### 4.1 McpConnectionManager
+
+```rust
+// codex-rs/core/src/mcp_connection_manager.rs:579-583
+
+pub(crate) struct McpConnectionManager {
+    clients: HashMap<String, AsyncManagedClient>,
+    server_origins: HashMap<String, String>,
+    elicitation_requests: ElicitationRequestManager,
+}
+
+struct AsyncManagedClient {
+    client: RmcpClient,
+    state: ConnectionState,
+    tools: Vec<ToolInfo>,
+}
+```
+
+### 4.2 连接流程
+
+```mermaid
+---
+config:
+  theme: neutral
+---
+sequenceDiagram
+    participant MCM as McpConnectionManager
+    participant RMCP as RmcpClient
+    participant Server as MCP Server
+
+    MCM->>RMCP: new(transport_recipe)
+    RMCP->>Server: initialize (protocol 2025-06-18)
+    Server-->>RMCP: capabilities
+    RMCP->>Server: tools/list
+    Server-->>RMCP: tools[]
+    RMCP-->>MCM: tools cached
+    MCM->>MCM: cache Codex Apps tools
+```
+
+## 5. 工具管理
+
+### 5.1 ToolInfo 结构
+
+```rust
+// codex-rs/core/src/mcp_connection_manager.rs:183-193
+
+pub(crate) struct ToolInfo {
+    pub(crate) server_name: String,
+    pub(crate) tool_name: String,
+    pub(crate) tool_namespace: String,
+    pub(crate) tool: Tool,
+    pub(crate) connector_id: Option<String>,
+    pub(crate) description: Option<String>,
+    input_schema: serde_json::Value,
+}
+```
+
+### 5.2 工具名称限定
+
+MCP 工具名用 `__` 分隔符限定：
+
+```rust
+const MCP_TOOL_NAME_DELIMITER: &str = "__";
+
+// 工具名: <server>__<tool>
+// 例如: "filesystem__read_file"
+```
+
+### 5.3 工具发现
+
+```rust
+pub async fn list_tools_with_connector_ids(
+    &self,
+) -> Result<Vec<ToolInfo>> {
+    let response = self.client
+        .send_request::<(), ListToolsRequest>("tools/list", None)
+        .await?;
+
+    let tools = response.tools.into_iter().map(|t| {
+        ToolInfo {
+            server_name: self.server_name.clone(),
+            tool_name: t.name.clone(),
+            tool_namespace: format!("{}{}{}",
+                self.server_name,
+                MCP_TOOL_NAME_DELIMITER,
+                t.name),
+            tool: Tool { name: t.name, description: t.description },
+            connector_id: None,
+            // ...
+        }
+    }).collect();
+
+    Ok(tools)
+}
+```
+
+## 6. 工具调用与审批
+
+### 6.1 调用流程
+
+```mermaid
+---
+config:
+  theme: neutral
+---
+flowchart LR
+    A[Codex] --> B[McpToolCall]
+    B --> C{MCP Tool?}
+    C -->|是| D[McpConnectionManager]
+    D --> E[RmcpClient]
+    E --> F[MCP Server]
+    F --> G[CallToolResult]
+    G --> H{Elicitation?}
+    H -->|需要| I[AskForApproval]
+    H -->|不需要| J[返回结果]
+    I --> K[用户批准/拒绝]
+```
+
+### 6.2 McpToolCall
+
+```rust
+// codex-rs/core/src/mcp_tool_call.rs
+
+pub async fn call_mcp_tool(
+    call: &ToolCall,
+    context: &dyn ToolCallContext,
+) -> Result<CallToolResult> {
+    let (server_name, tool_name) = split_tool_name(&call.name)?;
+
+    let client = connection_manager.get_client(&server_name)?;
+    let result = client.call_tool(&tool_name, &call.arguments).await?;
+
+    Ok(CallToolResult {
+        content: vec![Content::Text(result)],
+        is_error: false,
+    })
+}
+```
+
+### 6.3 审批策略
+
+```rust
+// codex-rs/core/src/mcp_tool_call.rs
+
+enum AskForApproval {
+    Never,
+    OnFailure,
+    OnRequest,
+    UnlessTrusted,
+}
+
+// Elicitation 请求处理
+struct ElicitationRequestManager {
+    pending: HashMap<String, ElicitationRequest>,
+}
+```
+
+## 7. OAuth 认证
+
+### 7.1 Token 持久化
+
+```rust
+// codex-rs/rmcp-client/src/oauth.rs
+
+pub struct OAuthTokenStorage {
+    store: dyn SecretStore,
+    keychain_prefix: String,
+}
+
+impl OAuthTokenStorage {
+    pub async fn get(&self, server_name: &str) -> Result<Option<OAuthToken>> {
+        let key = format!("{}:{}", self.keychain_prefix, server_name);
+        self.store.get(&key).await
+    }
+
+    pub async fn set(&self, server_name: &str, token: &OAuthToken) -> Result<()> {
+        let key = format!("{}:{}", self.keychain_prefix, server_name);
+        self.store.set(&key, token).await
+    }
+}
+```
+
+### 7.2 OAuth 流程
+
+```mermaid
+---
+config:
+  theme: neutral
+---
+sequenceDiagram
+    participant Client as RmcpClient
+    participant OAuth as OAuthTokenStorage
+    participant Store as Keyring
+    participant Server as MCP Server
+
+    Client->>OAuth: get_token(server)
+    OAuth->>Store: get(key)
+    Store-->>OAuth: token?
+    OAuth-->>Client: token or None
+
+    alt token expired
+        Client->>Server: refresh token
+        Server-->>Client: new token
+        Client->>OAuth: store token
+        OAuth->>Store: set key, value
+    end
+```
+
+## 8. MCP 协议类型
+
+### 8.1 核心类型
+
+```rust
+// codex-rs/protocol/src/mcp.rs
+
+pub struct CallToolResult {
+    pub content: Vec<Content>,
+    pub is_error: Option<bool>,
+}
+
+pub struct ListToolsResult {
+    pub tools: Vec<Tool>,
+}
+
+pub struct Tool {
+    pub name: String,
+    pub description: Option<String>,
+    pub input_schema: serde_json::Value,
+}
+
+pub struct Content {
+    type: String,  // "text", "image", "resource"
+    // ...
+}
+```
+
+### 8.2 协议版本
+
+```rust
+const MCP_PROTOCOL_VERSION: &str = "2025-06-18";
+```
+
+## 9. 沙箱状态能力
+
+### 9.1 能力声明
+
+```rust
+const MCP_SANDBOX_STATE_CAPABILITY: &str = "codex/sandbox-state";
+const MCP_SANDBOX_STATE_METHOD: &str = "codex/sandbox-state/update";
+```
+
+### 9.2 沙箱更新通知
+
+```rust
+// MCP 服务器可发送此通知更新沙箱状态
+struct SandboxStateUpdate {
+    sandbox_id: String,
+    state: SandboxState,
+}
+```
+
+## 10. 超时配置
+
+```rust
+// codex-rs/core/src/mcp_connection_manager.rs
+
+const DEFAULT_STARTUP_TIMEOUT: Duration = Duration::from_secs(30);
+const DEFAULT_TOOL_TIMEOUT: Duration = Duration::from_secs(120);
+```
+
+## 11. Codex Apps 集成
+
+### 11.1 工具缓存
+
+Codex Apps MCP 服务器的工具会被缓存：
+
+```rust
+const CODEX_APPS_MCP_SERVER_NAME: &str = "codex_apps";
+const TOOLS_CACHE_DIR: &str = "cache/codex_apps_tools/";
+```
+
+### 11.2 连接流程
+
+```mermaid
+---
+config:
+  theme: neutral
+---
+flowchart TB
+    A[启动] --> B[检查缓存]
+    B --> C{缓存存在?}
+    C -->|是| D[加载缓存工具]
+    C -->|否| E[连接 Codex Apps MCP]
+    E --> F[list_tools]
+    F --> G[缓存工具]
+    G --> D
+```
+
+## 12. 与 Claude Code 的差异
+
+| 特性 | Claude Code | Codex |
+|------|-------------|-------|
+| 客户端实现 | TypeScript `@modelcontextprotocol/sdk` | Rust `rmcp-client` |
+| 传输类型 | Stdio, SSE, HTTP, WebSocket, in-process | Stdio, StreamableHttp |
+| 认证 | XAA, OAuth, Bearer Token | OAuth + Keyring |
+| 工具名限定 | 无 | `__` 分隔符 |
+| 审批 | `AskForApproval` 枚举 | 同上 |
+| 沙箱集成 | 沙箱状态通知 | 沙箱能力声明 |
+| 协议版本 | JSON-RPC 2.0 | `2025-06-18` |
+
+## 13. 关键源码锚点
+
+| 主题 | 代码锚点 | 说明 |
+|------|----------|------|
+| 连接管理 | `codex-rs/core/src/mcp_connection_manager.rs` | 生命周期管理 |
+| RMCP 客户端 | `codex-rs/rmcp-client/src/rmcp_client.rs` | 核心客户端 |
+| 工具调用 | `codex-rs/core/src/mcp_tool_call.rs` | 调用与审批 |
+| 工具处理器 | `codex-rs/core/src/tools/handlers/mcp.rs` | 入口点 |
+| OAuth | `codex-rs/rmcp-client/src/oauth.rs` | Token 管理 |
+| 协议类型 | `codex-rs/protocol/src/mcp.rs` | 类型定义 |
+| MCP Server | `codex-rs/mcp-server/` | MCP 服务器实现 |
+
+## 14. 总结
+
+Codex 的 MCP 系统特点：
+
+1. **Rust-native 实现**：性能与内存安全
+2. **RMCP 远程协议**：支持 stdio 和 StreamableHTTP 两种传输
+3. **OAuth 集成**：Keyring 安全存储 token
+4. **工具名称限定**：避免命名冲突
+5. **审批策略**：灵活的批准触发条件
+6. **沙箱集成**：通过能力声明支持沙箱状态同步
+
+---
+
+*文档版本: 1.0*
+*分析日期: 2026-04-06*
