@@ -13,11 +13,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Path | Purpose |
 |------|---------|
-| `pages/` | Jekyll site source (layouts, CSS, pages) |
 | `claude-code/`, `codex/`, `gemini-cli/`, `opencode/` | Upstream source code (read-only) |
 | `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/` | Analysis output |
 | `hello-harness/` | Harness Engineering framework analysis |
 | `prompts/` | Generator/evaluator prompts |
+| `scripts/` | Build and PDF generation scripts |
+| `_layouts/`, `style.css`, `404.html` | Jekyll site templates and assets |
+| `.github/workflows/` | GitHub Actions workflows |
 
 ## Jekyll/GitHub Pages Commands
 
@@ -40,13 +42,13 @@ Base URL: `/hello-olleh`
 
 ## GitHub Pages Configuration
 
-- Layouts: `pages/_layouts/`
-- CSS: `pages/style.css`
-- Index: `pages/index.md`
-- 404: `pages/404.html`
+- Layouts: `_layouts/`
+- CSS: `style.css`
+- Index: `index.md`
+- 404: `404.html`
 - Config: `_config.yml`
 
-CSS links use `{{ 'pages/style.css' | relative_url }}` for correct base URL resolution.
+CSS links use `{{ 'style.css' | relative_url }}` for correct base URL resolution.
 
 ## Analysis Workflow
 
