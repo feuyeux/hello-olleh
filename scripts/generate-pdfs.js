@@ -6,14 +6,13 @@
 
 const fs = require('fs');
 const path = require('path');
-const puppeteer = require('puppeteer-core');
 
 // Find Chrome/Chromium executable
-function findChrome() {
+async function findChrome() {
   // In CI, use @sparticuz/chromium
   if (process.env.CI) {
     const chromium = require('@sparticuz/chromium');
-    return chromium.executablePath();
+    return await chromium.executablePath();
   }
 
   // Local development
@@ -33,11 +32,9 @@ function findChrome() {
 
 // Natural sort for chapter files
 function naturalSort(files) {
-  return files.sort((a, b) => {
-    const numA = parseInt(a.match(/^\d+/)?.[0] || '0');
-    const numB = parseInt(b.match(/^\d+/)?.[0] || '0');
-    return numA - numB;
-  });
+  return files.sort((a, b) =>
+    a.localeCompare(b, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' })
+  );
 }
 
 // Extract body content from HTML
@@ -51,14 +48,37 @@ function extractBody(htmlPath) {
   }
 }
 
-// Get chapter files from a directory
-function getChapterFiles(dir) {
+// Get chapter HTML paths from a rendered Jekyll section directory.
+// Supports both flat output (`01.html`) and pretty permalinks (`01/index.html`).
+function getChapterPaths(dir) {
   try {
-    const files = fs.readdirSync(dir);
-    return files.filter(f => f.endsWith('.html') && f !== 'index.html');
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    const chapterPaths = [];
+
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name.endsWith('.html') && entry.name !== 'index.html') {
+        chapterPaths.push(path.join(dir, entry.name));
+      }
+
+      if (entry.isDirectory()) {
+        const prettyIndexPath = path.join(dir, entry.name, 'index.html');
+        if (fs.existsSync(prettyIndexPath)) {
+          chapterPaths.push(prettyIndexPath);
+        }
+      }
+    }
+
+    return naturalSort(chapterPaths);
   } catch {
     return [];
   }
+}
+
+function getSiteIndexPath(siteDir, section) {
+  if (section.isIndex) {
+    return path.join(siteDir, 'index.html');
+  }
+  return path.join(siteDir, section.name, 'index.html');
 }
 
 // Create combined HTML ebook with all content
@@ -215,14 +235,14 @@ async function generatePDF(inputPath, outputPath) {
     console.log('Using @sparticuz/chromium in CI');
     const chromium = require('@sparticuz/chromium');
     browser = await puppeteer.launch({
-      executablePath: chromium.executablePath(),
+      executablePath: await chromium.executablePath(),
       headless: 'new',
       args: chromium.args,
       defaultViewport: chromium.defaultViewport
     });
   } else {
     console.log('Using local Chrome');
-    const chromePath = findChrome();
+    const chromePath = await findChrome();
     if (!chromePath) {
       throw new Error('Chrome/Chromium not found');
     }
@@ -282,14 +302,8 @@ async function main() {
   let totalChapters = 0;
 
   for (const section of sections) {
-    const sectionDir = path.join(siteDir, section.name);
-    if (!fs.existsSync(sectionDir)) {
-      console.log(`Skipping ${section.name}: directory not found`);
-      continue;
-    }
-
     if (section.isIndex) {
-      const indexPath = path.join(sectionDir, 'index.html');
+      const indexPath = getSiteIndexPath(siteDir, section);
       if (!fs.existsSync(indexPath)) {
         console.log(`Skipping ${section.name}: index.html not found`);
         continue;
@@ -298,21 +312,27 @@ async function main() {
       allSections.push(`<div class="section"><h1>${section.title}</h1>${content}</div>`);
       console.log(`Added ${section.name} (index)`);
     } else {
-      const files = naturalSort(getChapterFiles(sectionDir));
-      if (files.length === 0) {
+      const sectionDir = path.join(siteDir, section.name);
+      if (!fs.existsSync(sectionDir)) {
+        console.log(`Skipping ${section.name}: directory not found`);
+        continue;
+      }
+
+      const chapterPaths = getChapterPaths(sectionDir);
+      if (chapterPaths.length === 0) {
         console.log(`Skipping ${section.name}: no chapter files found`);
         continue;
       }
 
-      totalChapters += files.length;
-      console.log(`Added ${section.name} (${files.length} chapters)`);
+      totalChapters += chapterPaths.length;
+      console.log(`Added ${section.name} (${chapterPaths.length} chapters)`);
 
       // Add section header
       let sectionHtml = `<div class="section"><h1>${section.title}</h1>`;
 
       // Add all chapters
-      for (const f of files) {
-        const content = extractBody(path.join(sectionDir, f));
+      for (const chapterPath of chapterPaths) {
+        const content = extractBody(chapterPath);
         sectionHtml += `<div class="chapter">${content}</div>`;
       }
 
@@ -345,4 +365,15 @@ async function main() {
   console.log('\nDone! Generated: hello-olleh-complete.pdf');
 }
 
-main().catch(console.error);
+if (require.main === module) {
+  main().catch(console.error);
+}
+
+module.exports = {
+  findChrome,
+  naturalSort,
+  getChapterPaths,
+  getSiteIndexPath,
+  extractBody,
+  createCompleteEbookHtml
+};
