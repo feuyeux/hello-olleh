@@ -10,6 +10,7 @@ This workspace is a meta-repository dedicated to the source-backed analysis and 
     - **OpenAI Codex:** `codex/` (Source) | `hello-codex/` (Analysis)
     - **Gemini CLI:** `gemini-cli/` (Source) | `hello-gemini-cli/` (Analysis)
     - **OpenCode:** `opencode/` (Source) | `hello-opencode/` (Analysis)
+    - **Harness Framework:** `hello-harness/` (Analysis)
 
 ## Workspace Structure
 
