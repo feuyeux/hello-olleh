@@ -10,6 +10,13 @@ const puppeteer = require('puppeteer-core');
 
 // Find Chrome/Chromium executable
 function findChrome() {
+  // In CI, use @sparticuz/chromium
+  if (process.env.CI) {
+    const chromium = require('@sparticuz/chromium');
+    return chromium.executablePath();
+  }
+
+  // Local development
   const chromePaths = [
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
@@ -201,16 +208,27 @@ ${sections}
 
 // Generate PDF from HTML
 async function generatePDF(inputPath, outputPath) {
-  const chrome = findChrome();
-  if (!chrome) {
-    throw new Error('Chrome/Chromium not found');
-  }
+  const puppeteer = require('puppeteer-core');
 
-  const browser = await puppeteer.launch({
-    executablePath: chrome,
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
-  });
+  let browser;
+  if (process.env.CI) {
+    const chromium = require('@sparticuz/chromium');
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport
+    });
+  } else {
+    const chromePath = findChrome();
+    if (!chromePath) {
+      throw new Error('Chrome/Chromium not found');
+    }
+    browser = await puppeteer.launch({
+      executablePath: chromePath,
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+    });
+  }
 
   try {
     const page = await browser.newPage();

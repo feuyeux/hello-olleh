@@ -5,9 +5,10 @@
   "scripts": {
     "build": "bundle exec jekyll build",
     "serve": "bundle exec jekyll serve",
-    "pdf": "node scripts/generate-ebooks.js"
+    "pdf": "node scripts/generate-pdfs.js"
   },
   "devDependencies": {
-    "puppeteer-core": "^21.0.0"
+    "puppeteer-core": "^21.0.0",
+    "@sparticuz/chromium": "^119.0.2"
   }
 }

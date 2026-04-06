@@ -35,11 +35,6 @@ jobs:
         env:
           JEKYLL_ENV: production
 
-      - name: Install Chromium
-        run: |
-          apt-get update && apt-get install -y chromium-browser chromium-sandbox
-          ln -sf /usr/bin/chromium-browser /usr/bin/chromium
-
       - name: Generate PDF ebooks
         run: node scripts/generate-pdfs.js
 
