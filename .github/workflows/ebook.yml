@@ -22,6 +22,9 @@ jobs:
           bundler-cache: true
           cache-version: '1'
 
+      - name: Install Ruby gems
+        run: bundle install
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -34,6 +37,9 @@ jobs:
         run: bundle exec jekyll build --trace
         env:
           JEKYLL_ENV: production
+
+      - name: Check build output
+        run: ls -la _site/ && ls -la _site/hello-claude-code/ 2>/dev/null | head -10
 
       - name: Generate PDF ebooks
         run: node scripts/generate-pdfs.js
