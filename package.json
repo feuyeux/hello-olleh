@@ -1,0 +1,13 @@
+{
+  "name": "hello-olleh",
+  "version": "1.0.0",
+  "description": "AI Coding CLI 源码分析工作区",
+  "scripts": {
+    "build": "bundle exec jekyll build",
+    "serve": "bundle exec jekyll serve",
+    "pdf": "node scripts/generate-ebooks.js"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^21.0.0"
+  }
+}
