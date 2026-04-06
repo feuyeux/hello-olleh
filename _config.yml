@@ -29,7 +29,6 @@ exclude:
   - openclaw
   - prompts
   - scripts
-  - hello-harness
   - vendor/bundle
   - node_modules
   - .git

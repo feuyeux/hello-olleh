@@ -49,6 +49,31 @@ function extractBody(htmlPath) {
   }
 }
 
+function extractTitle(htmlPath, fallbackTitle = '') {
+  try {
+    const content = fs.readFileSync(htmlPath, 'utf-8');
+    const titleMatch = content.match(/<title>([^<]+)<\/title>/i);
+    if (titleMatch?.[1]) {
+      return titleMatch[1].trim();
+    }
+
+    const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const body = bodyMatch ? bodyMatch[1] : content;
+    const headingMatch = body.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if (headingMatch?.[1]) {
+      return stripTags(headingMatch[1]);
+    }
+  } catch {
+    // Fall through to fallback title.
+  }
+
+  return fallbackTitle;
+}
+
+function stripTags(html) {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 // Get chapter HTML paths from a rendered Jekyll section directory.
 // Supports both flat output (`01.html`) and pretty permalinks (`01/index.html`).
 function getChapterPaths(dir) {
@@ -98,37 +123,161 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function slugify(value) {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function makeAnchorId(prefix, value) {
+  const slug = slugify(value);
+  return slug ? `${prefix}-${slug}` : prefix;
+}
+
+function normalizeSitePath(sitePath) {
+  if (!sitePath || sitePath === '/') return '';
+
+  let normalized = sitePath.trim();
+  normalized = normalized.split('#')[0].split('?')[0];
+  normalized = normalized.replace(/^\/+/, '');
+  normalized = normalized.replace(/\/index\.html$/i, '');
+  normalized = normalized.replace(/\.html$/i, '');
+  normalized = normalized.replace(/\/+$/, '');
+
+  return normalized;
+}
+
+function resolveRelativeSitePath(currentDir, relativePath) {
+  const [pathPart] = relativePath.split('#');
+  const resolved = path.posix.normalize(path.posix.join(`/${currentDir || ''}`, pathPart));
+  return normalizeSitePath(resolved);
+}
+
 function toSiteFileUrl(siteDir, sitePath) {
-  const normalizedPath = sitePath.replace(/^\/+/, '');
+  const normalizedPath = normalizeSitePath(sitePath);
   let resolvedPath = path.join(siteDir, normalizedPath);
 
   if (sitePath.endsWith('/')) {
     resolvedPath = path.join(resolvedPath, 'index.html');
   } else if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
     resolvedPath = path.join(resolvedPath, 'index.html');
+  } else if (!path.extname(resolvedPath)) {
+    const htmlPath = `${resolvedPath}.html`;
+    if (fs.existsSync(htmlPath)) {
+      resolvedPath = htmlPath;
+    }
   }
 
   return pathToFileURL(resolvedPath).href;
 }
 
-function rewriteSiteRelativeUrls(html, siteDir, baseUrl) {
-  if (!baseUrl) return html;
+function rewriteDocumentUrls(html, {
+  currentDir = '',
+  siteDir,
+  baseUrl,
+  internalLinkMap
+}) {
+  return html.replace(/\b(href|src)=("|\')([^"\']+)\2/g, (match, attr, quote, value) => {
+    if (
+      value.startsWith('#') ||
+      value.startsWith('http://') ||
+      value.startsWith('https://') ||
+      value.startsWith('mailto:') ||
+      value.startsWith('tel:') ||
+      value.startsWith('data:')
+    ) {
+      return match;
+    }
 
-  const attrPattern = new RegExp(
-    `\\b(href|src)=("|\')${escapeRegExp(baseUrl)}/([^"\']*)\\2`,
-    'g'
-  );
+    let sitePath = null;
 
-  return html.replace(attrPattern, (_match, attr, quote, sitePath) => {
-    const fileUrl = toSiteFileUrl(siteDir, sitePath);
-    return `${attr}=${quote}${fileUrl}${quote}`;
+    if (baseUrl && (value === baseUrl || value === `${baseUrl}/`)) {
+      sitePath = '';
+    } else if (baseUrl && value.startsWith(`${baseUrl}/`)) {
+      sitePath = normalizeSitePath(value.slice(baseUrl.length));
+    } else if (value.startsWith('/')) {
+      sitePath = normalizeSitePath(value);
+    } else {
+      sitePath = resolveRelativeSitePath(currentDir, value);
+    }
+
+    if (attr === 'href') {
+      const anchorId = internalLinkMap.get(sitePath);
+      if (anchorId) {
+        return `${attr}=${quote}#${anchorId}${quote}`;
+      }
+    }
+
+    return `${attr}=${quote}${toSiteFileUrl(siteDir, sitePath || '/')}${quote}`;
   });
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function buildTocHtml(book) {
+  const sectionItems = book.sections.map(section => {
+    const chapterItems = section.chapters.length
+      ? `<ul class="ebook-toc-children">
+${section.chapters.map(chapter =>
+  `<li><a href="#${chapter.id}">${chapter.title}</a></li>`
+).join('\n')}
+</ul>`
+      : '';
+
+    return `<li>
+  <a href="#${section.id}">${section.tocTitle}</a>
+  ${chapterItems}
+</li>`;
+  }).join('\n');
+
+  return `<section class="section ebook-toc-section" id="ebook-toc">
+  <div class="ebook-nav-backdrop">
+    <p class="hero-kicker">Navigation</p>
+    <h1>目录树</h1>
+    <p>点击章节可在 PDF 内跳转。</p>
+    <ul class="ebook-toc-root">
+${sectionItems}
+    </ul>
+  </div>
+</section>`;
+}
+
 // Create combined HTML ebook with all content
-function createCompleteEbookHtml(sections, cssPath, siteDir, baseUrl) {
+function createCompleteEbookHtml(book, cssPath, siteDir, baseUrl) {
   const css = fs.readFileSync(cssPath, 'utf-8');
-  const rewrittenSections = rewriteSiteRelativeUrls(sections, siteDir, baseUrl);
+  const tocHtml = buildTocHtml(book);
+  const renderedSections = book.sections.map(section => {
+    const introHtml = rewriteDocumentUrls(section.introHtml, {
+      currentDir: section.sitePath,
+      siteDir,
+      baseUrl,
+      internalLinkMap: book.internalLinkMap
+    });
+
+    const renderedChapters = section.chapters.map(chapter => {
+      const chapterHtml = rewriteDocumentUrls(chapter.html, {
+        currentDir: chapter.sitePath,
+        siteDir,
+        baseUrl,
+        internalLinkMap: book.internalLinkMap
+      });
+
+      return `<article class="chapter" id="${chapter.id}">
+  <div class="ebook-local-nav"><a href="#ebook-toc">目录</a><a href="#${section.id}">${section.tocTitle}</a></div>
+  ${chapterHtml}
+</article>`;
+    }).join('\n');
+
+    return `<section class="section" id="${section.id}">
+  <div class="ebook-local-nav"><a href="#ebook-toc">目录</a></div>
+  ${introHtml}
+  ${renderedChapters}
+</section>`;
+  }).join('\n');
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -145,6 +294,11 @@ ${css}
       font-size: 14px;
       line-height: 1.8;
     }
+    a {
+      color: #2e6f64;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
     .section {
       page-break-before: always;
       padding: 20px 0;
@@ -158,6 +312,38 @@ ${css}
     }
     .chapter:first-of-type {
       page-break-before: avoid;
+    }
+    .ebook-toc-section {
+      page-break-before: avoid;
+    }
+    .ebook-nav-backdrop {
+      background: linear-gradient(180deg, #fffef9 0%, #f5f0e6 100%);
+      border: 1px solid #d4cfc4;
+      border-radius: 14px;
+      padding: 28px 32px;
+    }
+    .ebook-toc-root,
+    .ebook-toc-children {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+    .ebook-toc-root > li {
+      margin: 14px 0;
+    }
+    .ebook-toc-children > li {
+      margin: 6px 0;
+    }
+    .ebook-local-nav {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      margin-bottom: 18px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #d4cfc4;
+    }
+    .ebook-local-nav a {
+      color: #5c564f;
+      text-decoration: none;
     }
     h1 {
       color: #2d2a26;
@@ -266,7 +452,8 @@ ${css}
   </style>
 </head>
 <body>
-${rewrittenSections}
+${tocHtml}
+${renderedSections}
 </body>
 </html>`;
 }
@@ -304,7 +491,7 @@ async function generatePDF(inputPath, outputPath) {
 
     console.log(`Loading: ${fileUrl}`);
     await page.goto(fileUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
-    await page.waitForTimeout(1000);
+    await delay(1000);
     await page.emulateMediaType('screen');
 
     await page.pdf({
@@ -346,7 +533,10 @@ async function main() {
     fs.mkdirSync(tmpDir, { recursive: true });
   }
 
-  const allSections = [];
+  const book = {
+    sections: [],
+    internalLinkMap: new Map()
+  };
   let totalChapters = 0;
 
   for (const section of sections) {
@@ -356,8 +546,17 @@ async function main() {
         console.log(`Skipping ${section.name}: index.html not found`);
         continue;
       }
-      const content = extractBody(indexPath);
-      allSections.push(`<div class="section"><h1>${section.title}</h1>${content}</div>`);
+      const sitePath = '';
+      const sectionEntry = {
+        id: makeAnchorId('section', section.name),
+        tocTitle: section.title,
+        sitePath,
+        introHtml: extractBody(indexPath),
+        chapters: []
+      };
+
+      book.sections.push(sectionEntry);
+      book.internalLinkMap.set(sitePath, sectionEntry.id);
       console.log(`Added ${section.name} (index)`);
     } else {
       const sectionDir = path.join(siteDir, section.name);
@@ -375,25 +574,42 @@ async function main() {
       totalChapters += chapterPaths.length;
       console.log(`Added ${section.name} (${chapterPaths.length} chapters)`);
 
-      // Add section header
-      let sectionHtml = `<div class="section"><h1>${section.title}</h1>`;
+      const sectionIndexPath = path.join(sectionDir, 'index.html');
+      const sectionSitePath = section.name;
+      const sectionEntry = {
+        id: makeAnchorId('section', section.name),
+        tocTitle: section.title,
+        sitePath: sectionSitePath,
+        introHtml: fs.existsSync(sectionIndexPath)
+          ? extractBody(sectionIndexPath)
+          : `<h1>${section.title}</h1>`,
+        chapters: []
+      };
 
-      // Add all chapters
+      book.sections.push(sectionEntry);
+      book.internalLinkMap.set(sectionSitePath, sectionEntry.id);
+
       for (const chapterPath of chapterPaths) {
-        const content = extractBody(chapterPath);
-        sectionHtml += `<div class="chapter">${content}</div>`;
-      }
+        const chapterSlug = normalizeSitePath(path.relative(sectionDir, chapterPath)).replace(/^index$/i, '');
+        const chapterSitePath = normalizeSitePath(path.posix.join(section.name, chapterSlug));
+        const chapterEntry = {
+          id: makeAnchorId('chapter', chapterSitePath),
+          sitePath: chapterSitePath,
+          title: extractTitle(chapterPath, chapterSlug || section.title),
+          html: extractBody(chapterPath)
+        };
 
-      sectionHtml += '</div>';
-      allSections.push(sectionHtml);
+        sectionEntry.chapters.push(chapterEntry);
+        book.internalLinkMap.set(chapterSitePath, chapterEntry.id);
+      }
     }
   }
 
-  console.log(`\nTotal: ${totalChapters} chapters from ${allSections.length} sections`);
+  console.log(`\nTotal: ${totalChapters} chapters from ${book.sections.length} sections`);
 
   // Create combined HTML
   const baseUrl = getBaseUrl(configPath);
-  const combinedHtml = createCompleteEbookHtml(allSections.join('\n'), cssPath, siteDir, baseUrl);
+  const combinedHtml = createCompleteEbookHtml(book, cssPath, siteDir, baseUrl);
   const tmpHtmlPath = path.join(tmpDir, 'hello-olleh-complete.html');
   fs.writeFileSync(tmpHtmlPath, combinedHtml, 'utf-8');
 
@@ -424,7 +640,12 @@ module.exports = {
   getChapterPaths,
   getSiteIndexPath,
   getBaseUrl,
-  rewriteSiteRelativeUrls,
+  rewriteDocumentUrls,
+  buildTocHtml,
+  extractTitle,
+  normalizeSitePath,
+  resolveRelativeSitePath,
+  delay,
   extractBody,
   createCompleteEbookHtml
 };
