@@ -498,6 +498,7 @@ async function generatePDF(inputPath, outputPath) {
       path: path.resolve(outputPath),
       format: 'A4',
       printBackground: true,
+      outline: true,
       timeout: 0,
       margin: { top: '20mm', bottom: '25mm', left: '15mm', right: '15mm' },
       displayHeaderFooter: true,
