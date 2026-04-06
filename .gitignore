@@ -39,7 +39,7 @@ nul
 
 # Scripts
 *.ps1
-*.js
+!scripts/*.js
 
 # Backup
 *.drawio.bkp

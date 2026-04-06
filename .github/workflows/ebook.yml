@@ -1,0 +1,52 @@
+name: Generate PDF Ebooks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  generate-pdfs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          cache-version: '1'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Jekyll site
+        run: bundle exec jekyll build --trace
+        env:
+          JEKYLL_ENV: production
+
+      - name: Install Chromium
+        run: |
+          apt-get update && apt-get install -y chromium-browser chromium-sandbox
+          ln -sf /usr/bin/chromium-browser /usr/bin/chromium
+
+      - name: Generate PDF ebooks
+        run: node scripts/generate-pdfs.js
+
+      - name: Upload PDF artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ebooks
+          path: _site/*.pdf
+          retention-days: 30
