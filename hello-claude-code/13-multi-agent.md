@@ -8,6 +8,44 @@ title: "多代理、后台任务与远程会话"
 
 如果重点关注远程通信与桥接底座，可先读 [17-sdk-transport.md](./17-sdk-transport.md) 与 [23-bridge-system.md](./23-bridge-system.md)。
 
+
+**目录**
+
+- [1. Agent 在这套系统里的真实地位](#1-agent-在这套系统里的真实地位)
+- [2. `AgentTool`：把“启动子代理”包装成一个工具](#2-agenttool把启动子代理包装成一个工具)
+- [2.1 prompt 与 description](#21-prompt-与-description)
+- [2.2 输入参数透露了能力范围](#22-输入参数透露了能力范围)
+- [3. AgentTool 先做的是策略判定](#3-agenttool-先做的是策略判定)
+- [4. AgentTool 有三条主要分支](#4-agenttool-有三条主要分支)
+- [4.1 teammate spawn](#41-teammate-spawn)
+- [4.2 本地/普通 subagent](#42-本地普通-subagent)
+- [4.3 远程隔离 agent](#43-远程隔离-agent)
+- [5. fork path 为什么特别重要](#5-fork-path-为什么特别重要)
+- [6. worktree 隔离在 AgentTool 里是一等能力](#6-worktree-隔离在-agenttool-里是一等能力)
+- [7. async agent 与 foreground agent 的差异](#7-async-agent-与-foreground-agent-的差异)
+- [8. `registerAsyncAgent()`：后台 agent 任务注册](#8-registerasyncagent后台-agent-任务注册)
+- [9. foreground agent 也能被后台化](#9-foreground-agent-也能被后台化)
+- [10. `runAgent()`：真正的子代理执行器](#10-runagent真正的子代理执行器)
+- [10.1 先构造 agent 专属权限与工具视图](#101-先构造-agent-专属权限与工具视图)
+- [10.2 再生成 agent system prompt](#102-再生成-agent-system-prompt)
+- [10.3 SubagentStart hooks 与 frontmatter hooks](#103-subagentstart-hooks-与-frontmatter-hooks)
+- [10.4 预加载技能与 agent-specific MCP](#104-预加载技能与-agent-specific-mcp)
+- [10.5 最终还是调用 `query()`](#105-最终还是调用-query)
+- [10.6 cleanup 做得很彻底](#106-cleanup-做得很彻底)
+- [11. 远程会话管理：`RemoteSessionManager`](#11-远程会话管理remotesessionmanager)
+- [11.1 它为什么重要](#111-它为什么重要)
+- [12. `0402.md` 里那批隐藏能力在多代理链路里的真实落点](#12-0402md-里那批隐藏能力在多代理链路里的真实落点)
+- [13. 多代理体系总图](#13-多代理体系总图)
+- [14. 架构观察](#14-架构观察)
+- [14.1 Agent 是“工具化的工作单元”](#141-agent-是工具化的工作单元)
+- [14.2 背景任务是 agent 生命周期的可视化投影](#142-背景任务是-agent-生命周期的可视化投影)
+- [14.3 远程会话是同协议延伸](#143-远程会话是同协议延伸)
+- [15. `Cross-Agent Communication` 的源码归类](#15-cross-agent-communication-的源码归类)
+- [16. 关键源码锚点](#16-关键源码锚点)
+- [17. 总结](#17-总结)
+
+---
+
 ## 1. Agent 在这套系统里的真实地位
 
 在源码中，子代理不是一个平行子系统，而是工具系统的一部分。
@@ -583,3 +621,19 @@ flowchart TB
 - 用 `LocalAgentTask` / `RemoteSessionManager` 把 agent 生命周期投影到 UI 与远程连接层。
 
 因此这套系统并不是“主线程 + 若干脚本 worker”，而是一个可统一调度、可追踪、可恢复的多代理运行时。
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`AgentTool` 使子代理看起来像工具**：主循环的 `runTools()` 无需区分"普通工具调用"和"子代理调用"，统一处理路径降低代码复杂度。
+- **Worktree 隔离是一等能力**：每个子代理可以在独立 git worktree 中操作，父子代理文件修改物理隔离，不会相互覆盖，是复杂重构任务的可靠基础。
+- **Async/foreground 双模式并存**：后台 agent (`registerAsyncAgent`) 支持不阻塞主会话的并发子任务，foreground agent 支持需要即时结果的串行子任务，两种模式按需选择。
+
+**风险与改进点**
+
+- **`runAgent()` 是超 400 行的单函数**：子代理执行器包含了 fork 路径、worktree 路径、async 路径、foreground 路径等多条分支逻辑，复杂度集中，维护风险高。
+- **多代理无全局 context 共享**：子代理独立启动，主代理已知的工作区信息（如已读文件、已做分析）不自动共享给子代理，导致子代理可能重复探索。
+- **后台 agent 完成时无通知机制**：`registerAsyncAgent()` 注册的后台任务结束后，无 push 事件通知主会话，用户需要主动询问或轮询结果。

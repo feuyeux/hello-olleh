@@ -10,6 +10,22 @@ B09 里把 MCP 定位为"扩展面之一"，但那篇只讲了它产出 tool/pro
 
 ---
 
+
+**目录**
+
+- [1. MCP 在 OpenCode 里到底是什么](#1-mcp-在-opencode-里到底是什么)
+- [2. 五状态状态机](#2-五状态状态机)
+- [3. 两类 MCP Server 的连接方式](#3-两类-mcp-server-的连接方式)
+- [4. Tool 的投影过程](#4-tool-的投影过程)
+- [5. Prompt 和 Resource 的投影](#5-prompt-和-resource-的投影)
+- [6. OAuth 完整流程](#6-oauth-完整流程)
+- [7. 子进程清理问题](#7-子进程清理问题)
+- [8. `ToolsChanged` 通知的传播链](#8-toolschanged-通知的传播链)
+- [9. MCP 为什么不是插件系统的另一套](#9-mcp-为什么不是插件系统的另一套)
+- [10. 把 B13 压成一句代码级结论](#10-把-b13-压成一句代码级结论)
+
+---
+
 ## 1. MCP 在 OpenCode 里到底是什么
 
 在 `packages/opencode/src/mcp/index.ts` 里，MCP 命名空间（1484 行）是一个完整的二级扩展子系统。它不只是一个"远端工具代理"，而是同时承担四种角色的 runtime 扩展：
@@ -186,3 +202,32 @@ client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
 ## 10. 把 B13 压成一句代码级结论
 
 > OpenCode 的 MCP 实现是一个完整的二级扩展 runtime：它通过五状态状态机管理连接生命周期，用 OAuth 和动态注册处理远程认证，把 tool/prompt/resource 投影成 OpenCode 可调用的 runtime 对象，并通过 `ToolsChanged` 通知实现动态感知。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `McpClientManager` | `mcp/client.ts` | MCP 客户端生命周期管理：创建、复用、销毁连接 |
+| state machine transitions | `mcp/client.ts` | 五态（disconnected/connecting/connected/error/disabled）转换驱动 |
+| `convertMcpTool()` | `mcp/tool.ts` | 将 MCP tool schema 转换为 opencode 内部 Tool 格式 |
+| Prompt+Resource projector | `mcp/resource.ts` | 将 MCP Prompt/Resource 投影为等效 Tool，统一工具注册接口 |
+| `ToolsChanged` handler | `mcp/client.ts` | 监听服务端的 `notifications/tools/list_changed`，刷新工具缓存 |
+| OAuth flow | `mcp/auth.ts` | 处理 MCP OAuth 2.0 授权流程：code exchange、token 存储 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **五态机完整覆盖**：disconnected/connecting/connected/error/disabled 五态覆盖了 MCP 连接的所有生命周期阶段，包括主动 disable。
+- **Prompt/Resource 投影为 Tool**：统一接口设计，LLM 和业务代码无需区分工具来自 built-in 还是 MCP，降低消费方复杂度。
+- **`ToolsChanged` 动态刷新**：支持服务端热更新工具列表，无需重启 session；适配 MCP server 动态添加工具的场景。
+
+**风险与改进点**
+
+- **MCP 连接无超时限制**：长时间未收到响应的 MCP 请求不会主动超时，阻塞工具调用可能导致 session 永久挂起。
+- **OAuth token 无持久化**：每次进程重启后 OAuth token 丢失，需重新走授权流程，用户体验差。
+- **子进程 MCP server 无资源回收保证**：session 崩溃时 stdio 模式的子进程 MCP server 可能成为孤儿进程。

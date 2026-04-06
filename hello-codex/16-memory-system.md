@@ -6,6 +6,20 @@ title: "Memory 系统：轻量记忆管道与 AGENTS.md 的长期记忆"
 
 本文分析 Codex 的 Memory 机制，涵盖会话内轻量记忆（memories pipeline）和跨会话长期记忆（`AGENTS.md` + 人工维护）。
 
+
+**目录**
+
+- [1. Memory 在 Codex 中的两种形式](#1-memory-在-codex-中的两种形式)
+- [2. 会话内记忆管道（memories pipeline）](#2-会话内记忆管道memories-pipeline)
+- [3. 跨会话长期记忆：AGENTS.md](#3-跨会话长期记忆agentsmd)
+- [项目约定](#项目约定)
+- [已知问题](#已知问题)
+- [重要路径](#重要路径)
+- [4. 与其他系统的对比](#4-与其他系统的对比)
+- [5. 设计权衡](#5-设计权衡)
+
+---
+
 ## 1. Memory 在 Codex 中的两种形式
 
 | 类型 | 实现 | 生命周期 | 控制方式 |
@@ -112,3 +126,32 @@ Codex 没有自动化的跨会话 Memory 存储。长期记忆由用户通过 `A
 - 缺乏自动跨会话 Memory（需用户手动维护 `AGENTS.md`）
 - 会话内 memories 消耗额外 LLM 调用
 - 大规模项目的 `AGENTS.md` 可能变得难以维护
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `RollingWindowContext` | `codex-rs/core/src/context.rs` | 滚动窗口上下文：限制消息历史到最近 N 条 |
+| `TokenBudgetManager` | `codex-rs/core/src/context.rs` | token budget 管理：根据模型限制截断历史 |
+| `context_trim()` | `codex-rs/core/src/context.rs` | 触发历史消息裁剪，保留最新消息优先 |
+| `ConversationHistory` | `codex-rs/core/src/conversation.rs` | 内存中的完整消息历史，有序追加 |
+| `write_history_file()` | `codex-rs/core/src/persist.rs` | 将对话历史序列化写入 `~/.codex/history/` |
+| `load_history_file()` | `codex-rs/core/src/persist.rs` | 从磁盘加载历史文件，用于 `--resume` 场景 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **滚动窗口保证实时性**：RollingWindowContext 保留最新 N 条消息，LLM 始终能看到最新上下文，不会因历史过长遗漏最近指令。
+- **磁盘持久化支持恢复**：对话历史写入本地文件，`--resume` 标志可续接上次会话，无需依赖服务端状态。
+- **token budget 自适应**：TokenBudgetManager 根据当前模型的 context window 动态调整裁剪阈值，兼容不同容量模型。
+
+**风险与改进点**
+
+- **纯内存历史无对话隔离**：多个并发 shell 实例共享同一历史文件，并发写入可能导致历史文件损坏。
+- **trim 策略不可配置**：`context_trim()` 固定截取最旧消息，无法配置为"保留工具调用对""保留重要标记消息"等策略。
+- **历史文件无加密**：`~/.codex/history/` 中以明文存储对话历史，包含的代码片段和指令无访问控制保护。

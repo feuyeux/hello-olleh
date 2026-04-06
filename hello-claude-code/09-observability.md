@@ -6,6 +6,19 @@ title: "可观测性：日志、遥测与运行时状态追踪"
 
 本文分析 Claude Code 的可观测性基础设施，包括结构化日志、遥测数据采集、用户隐私控制，以及调试模式下的运行时状态追踪。
 
+
+**目录**
+
+- [1. 可观测性在 Claude Code 中的定位](#1-可观测性在-claude-code-中的定位)
+- [2. 日志系统](#2-日志系统)
+- [3. 遥测系统](#3-遥测系统)
+- [4. `--debug` 模式](#4-debug-模式)
+- [5. 性能追踪](#5-性能追踪)
+- [6. 运行时状态追踪](#6-运行时状态追踪)
+- [7. 与其他系统的对比](#7-与其他系统的对比)
+
+---
+
 ## 1. 可观测性在 Claude Code 中的定位
 
 Claude Code 的可观测性服务于两类目标：
@@ -158,3 +171,32 @@ Claude Code 将完整会话 Transcript 持久化到本地：
 | **Codex** | `RUST_LOG` | 无公开遥测 | `--verbose` | Thread 持久化 |
 | **Gemini CLI** | `DEBUG` env var | 无公开遥测 | 无专门模式 | Session JSON |
 | **OpenCode** | Effect-ts 日志 | 无公开遥测 | 调试 TUI | SQLite |
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Logger` | `src/utils/log.ts` | 结构化日志：按 level 过滤，`--debug` 模式下输出详细请求/响应 |
+| `setupTelemetry()` | `src/services/telemetry/` | 初始化 telemetry sinks：本地 + 远端 (StatsD/OTel) |
+| `recordUsage()` | `src/services/telemetry/` | 记录 token 用量、工具调用次数等关键指标 |
+| `SessionStatus` | `src/utils/sessionStatus.ts` | 运行时状态枚举：idle/running/waiting-for-user/error |
+| `--debug` flag handler | CLI 入口 | 开启 debug 模式：打印 API 请求参数、响应体、工具调用详情 |
+| `performanceObserver` | `src/utils/performance.ts` | 记录关键操作延迟（模型首字节、工具执行时间）|
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **遥测与核心路径解耦**：`setupTelemetry()` 初始化独立的 sink，核心循环不直接依赖遥测，sink 挂掉不影响主流程。
+- **`--debug` 模式全面**：开启后可看到完整 API 请求参数和响应体，比大多数 CLI 工具的调试模式信息量更丰富。
+- **多系统对比清晰**：文档中有四系统（Claude Code/Codex/OpenCode/Gemini CLI）可观测性对比表，便于理解各系统的能力差距。
+
+**风险与改进点**
+
+- **遥测数据无本地持久化**：telemetry 以 in-process sink 发送，进程崩溃时在途数据丢失，历史指标无本地存储可供事后分析。
+- **`Logger` 无日志文件轮转**：debug 日志输出到文件时，无自动轮转和清理机制，长期运行的 Claude Code Server 模式下日志文件会无限增长。
+- **`SessionStatus` 枚举粒度粗**：当前状态只区分 4 种大状态，无法区分"等待工具审批"、"等待 MCP 响应"、"暂停等待人工干预"等细粒度状态，监控报警精度受限。

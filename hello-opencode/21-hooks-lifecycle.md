@@ -6,6 +6,17 @@ title: "Hooks 与生命周期：Effect-ts 驱动的事件流与扩展点"
 
 本文分析 OpenCode 基于 Effect-ts 的生命周期管理与事件扩展机制。
 
+
+**目录**
+
+- [1. OpenCode 生命周期概览](#1-opencode-生命周期概览)
+- [2. Effect-ts Layer 作为生命周期边界](#2-effect-ts-layer-作为生命周期边界)
+- [3. Bus 事件系统](#3-bus-事件系统)
+- [4. 工具调用生命周期 Hook](#4-工具调用生命周期-hook)
+- [5. 与 Claude Code Hooks 的对比](#5-与-claude-code-hooks-的对比)
+
+---
+
 ## 1. OpenCode 生命周期概览
 
 ```
@@ -100,3 +111,32 @@ const executeWithHooks = (tool: Tool, input: unknown) =>
 | **错误传播** | Effect 类型安全传播 | Shell 退出码 |
 
 OpenCode 的生命周期完全由 Effect-ts 类型系统保证，资源泄漏在编译期即可发现；Claude Code 的 Hooks 则面向用户配置，更易扩展但运行时保证较弱。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Effect.Service` | Effect-ts | 声明式服务定义，类型系统保证 service 在 scope 内有效 |
+| `Bus.subscribe()` | — | 订阅 instance 内 typed 事件，绑定生命周期到当前 scope |
+| `GlobalBus.subscribe()` | — | 订阅全局 typed 事件，跨 instance 协调 |
+| `Plugin.trigger('tool.execute.before')` | `plugin/index.ts` | 工具执行前 hook：插件改写 tool args |
+| `Plugin.trigger('tool.execute.after')` | `plugin/index.ts` | 工具执行后 hook：插件改写 tool output/metadata |
+| `Permission.check()` | `session/index.ts` | 工具调用审批门控：返回 allow/deny/pending_user |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Effect-ts Layer 作为声明式生命周期边界**：Service 的获取、使用、释放由类型系统管理，不需要手写 try/finally 清理，生命周期泄漏在编译期可发现。
+- **Bus 强类型事件**：`BusEvent` 联合类型保证事件发布和订阅之间的类型一致，新增事件类型时编译器会提示所有未处理的消费者。
+- **Plugin hook 覆盖工具执行全周期**：`tool.execute.before/after` hook 让第三方 plugin 可以透明地修改工具行为，而不需要 fork 工具实现。
+
+**风险与改进点**
+
+- **Effect-ts 学习曲线陡峭**：`Layer/Effect/Scope` 的心智模型与传统 OOP 差异大，贡献者上手成本高，生命周期 debug 信息可读性差。
+- **生命周期 hook 无标准顺序文档**：`InstanceBootstrap()` 中各 service 的注册顺序隐式决定了生命周期启动/关闭顺序，无公开的依赖图文档。
+- **Bus 事件无优先级**：订阅者接收同一事件的顺序依赖注册顺序，若两个 subscriber 修改同一状态，后注册者静默覆盖前者，无冲突检测。

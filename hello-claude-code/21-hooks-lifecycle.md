@@ -6,6 +6,29 @@ title: "Hooks 生命周期与运行时语义"
 
 本篇梳理 hooks 的来源、执行方式以及独立的安全和运行时约束。
 
+
+**目录**
+
+- [1. 为什么 hooks 需要单独成篇](#1-为什么-hooks-需要单独成篇)
+- [2. Hook 事件模型非常宽](#2-hook-事件模型非常宽)
+- [3. hook 来源不是一处，而是三路汇聚](#3-hook-来源不是一处而是三路汇聚)
+- [4. hooks 可见性先经过 policy snapshot 过滤](#4-hooks-可见性先经过-policy-snapshot-过滤)
+- [5. startup 为什么要 capture hook snapshot](#5-startup-为什么要-capture-hook-snapshot)
+- [6. trust 是所有 hooks 的统一硬门槛](#6-trust-是所有-hooks-的统一硬门槛)
+- [7. `executeHooks()` 与 `executeHooksOutsideREPL()` 代表两种消费方式](#7-executehooks-与-executehooksoutsiderepl-代表两种消费方式)
+- [8. hook 输出协议已经远超 stdout/stderr](#8-hook-输出协议已经远超-stdoutstderr)
+- [9. 执行器支持多种 hook 形态](#9-执行器支持多种-hook-形态)
+- [10. HTTP hooks 有独立安全模型](#10-http-hooks-有独立安全模型)
+- [11. session hooks 与 function hooks 是运行时内存结构，不写磁盘](#11-session-hooks-与-function-hooks-是运行时内存结构不写磁盘)
+- [12. 技能与代理的 frontmatter hooks 会被“翻译”成 session hooks](#12-技能与代理的-frontmatter-hooks-会被翻译成-session-hooks)
+- [13. async hooks 有独立 registry 与进度事件](#13-async-hooks-有独立-registry-与进度事件)
+- [14. `ConfigChange`、`CwdChanged`、`FileChanged` 说明 hooks 还能反过来塑造运行环境](#14-configchangecwdchangedfilechanged-说明-hooks-还能反过来塑造运行环境)
+- [15. 一张总图](#15-一张总图)
+- [16. 关键源码锚点](#16-关键源码锚点)
+- [17. 总结](#17-总结)
+
+---
+
 ## 1. 为什么 hooks 需要单独成篇
 
 现有文档已经多次提到 hooks：
@@ -344,3 +367,32 @@ flowchart LR
 4. 用 session hooks、frontmatter hooks、async registry 扩展成一个真正的事件总线。
 
 如果忽略这条主线，就很难解释为什么启动顺序、query 结束条件、子代理行为和配置变更都与 hooks 深度耦合。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `HookRunner.runPreTool()` | `src/hooks/hookRunner.ts` | 前置钩子执行器：工具调用前运行，可修改参数或中止调用 |
+| `HookRunner.runPostTool()` | `src/hooks/hookRunner.ts` | 后置钩子执行器：工具调用后运行，可审计或转换结果 |
+| `LifecycleEvent` enum | `src/hooks/types.ts` | 生命周期事件类型：PreToolUse / PostToolUse / Stop / SubagentStop |
+| `HookConfig` | `src/config/types.ts` | settings.json 中 hooks 配置：event type → command 映射 |
+| `SessionLifecycle.start()` | `src/agent/sessionLifecycle.ts` | session 启动钩子：初始化内存、MCP、LSP 按序 |
+| `SessionLifecycle.stop()` | `src/agent/sessionLifecycle.ts` | session 终止钩子：持久化状态、关闭 MCP 连接 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Stop/SubagentStop 分级钩子**：区分顶层 agent 停止和子 agent 停止，允许父子 agent 独立触发不同的收尾逻辑。
+- **配置驱动钩子注册**：钩子通过 settings.json 注册而非代码，非开发者用户也可配置，无需 fork 代码。
+- **串行执行保证顺序**：多个同类钩子串行执行，结果可预期，不会因并行执行顺序不确定导致审计日志乱序。
+
+**风险与改进点**
+
+- **前置钩子中止语义不明确**：钩子退出非零码时是否中止工具调用未在文档中明确说明，用户需实验确认行为。
+- **钩子无沙盒隔离**：钩子以宿主进程权限执行外部命令，恶意项目 settings.json 注入的钩子可执行任意本地命令。
+- **生命周期事件无顺序保证文档化**：多个钩子注册同一事件时，执行顺序依赖注册顺序，但顺序规则未公开文档化。

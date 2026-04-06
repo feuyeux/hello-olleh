@@ -8,6 +8,38 @@ title: "扩展体系：技能、插件与 MCP"
 
 这里重点放在“扩展如何并入主系统”。若要继续看 MCP client、传输、资源与提示接口的协议层细节，请继续看 [26-mcp-system.md](./26-mcp-system.md)。
 
+
+**目录**
+
+- [1. 这套工程为什么扩展能力这么强](#1-这套工程为什么扩展能力这么强)
+- [2. 命令装配总入口：`commands.ts`](#2-命令装配总入口commandsts)
+- [2.1 `COMMANDS()` 是内建命令表](#21-commands-是内建命令表)
+- [2.2 `getCommands(cwd)` 不是简单返回内建列表](#22-getcommandscwd-不是简单返回内建列表)
+- [3. 技能系统：`loadSkillsDir.ts`](#3-技能系统loadskillsdirts)
+- [3.1 技能本质上会被编译成 `Command`](#31-技能本质上会被编译成-command)
+- [3.2 技能 prompt 生成时做了哪些事](#32-技能-prompt-生成时做了哪些事)
+- [3.3 为什么 MCP 技能被特别防护](#33-为什么-mcp-技能被特别防护)
+- [4. 动态技能发现不是启动时一次性完成](#4-动态技能发现不是启动时一次性完成)
+- [5. 条件技能：按文件路径激活](#5-条件技能按文件路径激活)
+- [6. 插件系统：`loadPluginCommands.ts`](#6-插件系统loadplugincommandsts)
+- [6.1 插件命令与插件技能都归一成 Markdown -> Command](#61-插件命令与插件技能都归一成-markdown-command)
+- [6.2 命名空间设计](#62-命名空间设计)
+- [6.3 插件 prompt 在生成时会做变量替换](#63-插件-prompt-在生成时会做变量替换)
+- [6.4 插件命令也支持 shell 注入](#64-插件命令也支持-shell-注入)
+- [7. MCP 客户端：把外部能力接入工具系统](#7-mcp-客户端把外部能力接入工具系统)
+- [8. MCP 工具调用如何处理复杂异常](#8-mcp-工具调用如何处理复杂异常)
+- [8.2 普通 MCP tool call 还带 timeout、progress、auth/session 恢复](#82-普通-mcp-tool-call-还带-timeoutprogressauthsession-恢复)
+- [9. SDK 模式下还支持 in-process MCP](#9-sdk-模式下还支持-in-process-mcp)
+- [10. 扩展体系总图](#10-扩展体系总图)
+- [11. 这套扩展体系的设计优点](#11-这套扩展体系的设计优点)
+- [11.1 协议统一](#111-协议统一)
+- [11.2 来源隔离](#112-来源隔离)
+- [11.3 运行期可增量变化](#113-运行期可增量变化)
+- [12. 关键源码锚点](#12-关键源码锚点)
+- [13. 总结](#13-总结)
+
+---
+
 ## 1. 这套工程为什么扩展能力这么强
 
 因为它没有把“扩展”做成边缘插件，而是把扩展直接接进了两条核心总线：
@@ -352,3 +384,33 @@ flowchart TB
 - 而是把技能、插件、MCP 直接并入命令表、工具池和主循环。
 
 因此扩展能力并不是“锦上添花”，而是这套 Agent Runtime 的组成部分。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `COMMANDS()` | `src/commands.ts` | 内建 slash command 注册表（静态部分）|
+| `getCommands(cwd)` | `src/commands.ts` | 动态命令列表：内建 + Skills + MCP |
+| `loadSkillsDir()` | `src/utils/loadSkillsDir.ts` | 扫描目录，加载 `.md` 技能文件 |
+| `getMcpTools()` | — | 从已连接 MCP server 获取工具声明列表 |
+| `connectMcpServer()` | — | 连接单个 MCP server（stdio/SSE）|
+| `processSkillPrompt()` | — | 将 skill `.md` 内容注入 system prompt |
+| `registerPlugin()` | — | 注册第三方 plugin（工具/命令/hook） |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **命令统一入口 `getCommands()`**：内建命令、Skills、Plugin、MCP 工具全部汇聚成同一 `Command[]`，调用层无须区分来源，扩展接入不改核心分发逻辑。
+- **技能文件即 Markdown**：`.md` 文件即技能，降低贡献门槛，版本管理友好，CI 可以 lint Markdown 而非检查代码。
+- **MCP 协议标准化**：外部能力通过 MCP stdio/SSE 接入，与内建工具在权限模型和参数 Schema 上完全对等，工具替换无需改查询层。
+
+**风险与改进点**
+
+- **`loadSkillsDir()` 无并发保护**：扫描目录时若被多个 session 并发调用，在文件系统侧无锁机制，可能读取到部分写入的 skill 文件。
+- **MCP server 连接无全局超时限制**：`connectMcpServer()` 等待外部进程 stdio 握手，若 server 启动慢，启动时会无限等待，影响整体启动延迟。
+- **`processSkillPrompt()` 无 token 预算**：skill 注入到 system prompt 不检查 total token，大量 skill 激活时可能超出 context 限制，导致静默截断。

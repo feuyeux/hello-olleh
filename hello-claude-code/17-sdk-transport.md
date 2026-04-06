@@ -4,6 +4,45 @@ title: "Claude Code 的传输系统"
 ---
 # Claude Code 的传输系统
 
+
+**目录**
+
+- [1. 传输系统概述](#1-传输系统概述)
+- [2. 传输接口定义](#2-传输接口定义)
+- [3. WebSocket 传输](#3-websocket-传输)
+- [4. SSE 传输](#4-sse-传输)
+- [5. 混合传输 (HybridTransport)](#5-混合传输-hybridtransport)
+- [6. 批量事件上传器](#6-批量事件上传器)
+- [7. CCR 客户端](#7-ccr-客户端)
+- [8. Worker 状态上传器](#8-worker-状态上传器)
+- [9. 传输工厂](#9-传输工厂)
+- [10. 错误处理与恢复](#10-错误处理与恢复)
+- [10. 补充：关键实现细节](#10-补充关键实现细节)
+- [附录：QueryEngine 与非交互路径（原 17-queryengine-sdk）](#附录queryengine-与非交互路径原-17-queryengine-sdk)
+- [1. 为什么还要专门讲 `QueryEngine`](#1-为什么还要专门讲-queryengine)
+- [2. `QueryEngine` 的角色](#2-queryengine-的角色)
+- [3. `submitMessage()` 是非交互模式的总入口](#3-submitmessage-是非交互模式的总入口)
+- [4. `submitMessage()` 前半段：构造本次 headless turn](#4-submitmessage-前半段构造本次-headless-turn)
+- [4.1 先拉配置并固定 cwd](#41-先拉配置并固定-cwd)
+- [4.2 包装 `canUseTool` 以跟踪 permission denials](#42-包装-canusetool-以跟踪-permission-denials)
+- [4.3 预取 system prompt parts](#43-预取-system-prompt-parts)
+- [5. structured output 在这里被专门接管](#5-structured-output-在这里被专门接管)
+- [6. `processUserInputContext`：在 headless 环境里重建 ToolUseContext 近似物](#6-processuserinputcontext在-headless-环境里重建-toolusecontext-近似物)
+- [7. orphaned permission 在 QueryEngine 里有专门恢复逻辑](#7-orphaned-permission-在-queryengine-里有专门恢复逻辑)
+- [8. 然后它也会走 `processUserInput(...)`](#8-然后它也会走-processuserinput)
+- [9. transcript 持久化在 QueryEngine 里被非常认真地处理](#9-transcript-持久化在-queryengine-里被非常认真地处理)
+- [10. 然后发一个 `system_init` 给 SDK 消费方](#10-然后发一个-system_init-给-sdk-消费方)
+- [11. 如果本次输入不需要 query，会直接产出本地结果](#11-如果本次输入不需要-query会直接产出本地结果)
+- [12. 真正进入 query 后，它主要做三类工作](#12-真正进入-query-后它主要做三类工作)
+- [13. 为什么 `mutableMessages` 与 `messages` 要并存](#13-为什么-mutablemessages-与-messages-要并存)
+- [14. QueryEngine 与 REPL 的差异总结](#14-queryengine-与-repl-的差异总结)
+- [15. QueryEngine 与 `query()` 的关系](#15-queryengine-与-query-的关系)
+- [16. 非交互路径总体图](#16-非交互路径总体图)
+- [17. 关键源码锚点](#17-关键源码锚点)
+- [18. 总结](#18-总结)
+
+---
+
 ## 1. 传输系统概述
 
 本篇讨论 WebSocket、SSE、HybridTransport 与批量上传器如何构成 Claude Code 的网络传输层。
@@ -764,3 +803,32 @@ flowchart LR
 - 两者共用同一个输入语义层、同一个 query 内核、同一套工具与权限机制。
 
 从架构质量上看，这是一种很强的分层：UI 可以换，协议可以换，但对话执行内核仍然稳定复用。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Anthropic` client | `@anthropic-ai/sdk` | 官方 SDK client：管理 API key、base URL、重试策略 |
+| `client.messages.stream()` | `@anthropic-ai/sdk` | 流式消息接口：返回 async iterable 事件流 |
+| `ApiStream` | `src/api/stream.ts` | 对 SDK stream 的封装：标准化事件格式，支持取消和超时 |
+| `withExponentialBackoff()` | `src/utils/retry.ts` | 指数退避重试：处理 429/529/5xx 响应 |
+| `ApiKeyManager` | `src/auth/apiKey.ts` | API key 来源链：env `ANTHROPIC_API_KEY` → config file |
+| `BaseURLConfig` | `src/config/types.ts` | base URL 配置：支持 custom endpoint（企业代理/本地测试） |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **官方 SDK 保证兼容性**：`@anthropic-ai/sdk` 由 Anthropic 官方维护，协议变更时随 SDK 升级自动适配，无需手写 HTTP 层。
+- **流式 API 原生支持**：SDK 提供 async iterable 流式接口，TypeScript 类型安全，event 类型完整覆盖（text/tool/usage）。
+- **custom base URL 支持**：允许配置代理 endpoint，适配企业内网 API 网关和本地开发测试环境。
+
+**风险与改进点**
+
+- **SDK 版本升级可能引入 breaking change**：`@anthropic-ai/sdk` 未锁定 patch 版本，次版本升级可能导致流事件格式变化。
+- **重试逻辑依赖 SDK 内置策略**：SDK 内置重试参数（maxRetries）固定，高延迟/高波动环境可能需要更激进的退避策略，但无法从外部覆盖。
+- **stream 取消信号不统一**：ApiStream 的取消机制（AbortController）与 SDK 内部重试的取消时机存在竞态，可能导致取消后仍有 event 流出。

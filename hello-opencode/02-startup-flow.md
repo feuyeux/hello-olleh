@@ -8,6 +8,22 @@ title: "OpenCode 启动链路：入口点、CLI/TUI/Web 多表面初始化、Ser
 
 ---
 
+
+**目录**
+
+- [1. 多端入口总览](#1-多端入口总览)
+- [2. 四段启动链路](#2-四段启动链路)
+- [3. import 阶段](#3-import-阶段)
+- [4. CLI middleware 阶段](#4-cli-middleware-阶段)
+- [5. 默认 TUI 入口](#5-默认-tui-入口)
+- [6. `run` 命令：两条 transport 路径](#6-run-命令两条-transport-路径)
+- [7. Server 启动顺序](#7-server-启动顺序)
+- [8. `InstanceBootstrap()` 固定服务装配](#8-instancebootstrap-固定服务装配)
+- [9. 事件流：SSE 与 Bus](#9-事件流sse-与-bus)
+- [10. 关键源码定位](#10-关键源码定位)
+
+---
+
 ## 1. 多端入口总览
 
 | 入口 | 代码坐标 | 传输方式 | 最后进入哪里 |
@@ -208,3 +224,36 @@ sequenceDiagram
 | Config 编译 | `config/config.ts` |
 | XDG 目录 | `global/index.ts` |
 | SQLite 封装 | `storage/db.ts` |
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `cli()` | `cli/cmd/run.ts` | CLI 顶层入口，解析子命令和参数 |
+| `run` 命令处理 | `cli/cmd/run.ts` | 默认路径：HTTP+SSE server + TUI |
+| `Server.start()` | `server/server.ts` | Bun HTTP server 启动入口 |
+| `InstanceBootstrap()` | `project/bootstrap.ts` | 固定服务装配：注册 tools、MCP、LSP、store 等 |
+| `Config.compile()` | `config/config.ts` | 读取并编译配置文件（global + project）|
+| `Storage.open()` | `storage/db.ts` | 打开 SQLite DB，运行 migrations |
+| `Bus.subscribe()` | — | 全局事件总线订阅，连接 session 和 SSE 推送 |
+| `Session.create()` | `session/index.ts` | 创建新会话：初始化 state、绑定 Instance |
+| `session.ts` route handler | `server/routes/session.ts` | REST/SSE 混合会话路由 |
+| `global.ts` route handler | `server/routes/global.ts` | 全局 SSE 事件流端点 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **多端入口统一 server**：TUI、web、ACP 都接入同一个 Bun HTTP server，不同表面共享同一套 session/event 体系，无重复代码。
+- **`InstanceBootstrap()` 固定骨架**：所有服务（tools、MCP、LSP、session store）在同一个函数内按确定顺序装配，启动顺序有保证，依赖缺失会明确报错。
+- **SSE 作为唯一 push 通道**：不用 WebSocket，所有实时 UI 更新通过 SSE 推送，客户端实现更简单。
+
+**风险与改进点**
+
+- **import 阶段副作用不可见**：Effect service 注册在 module 加载时发生，若某个 service 抛错，错误位置在调用栈中不如显式 `bootstrap()` 调用直观。
+- **`InstanceBootstrap()` 串行装配**：所有服务顺序初始化，若某个 MCP server 响应慢，整个启动会等待，无超时或并行优化。
+- **SSE 连接无限重连保护**：客户端 SSE 断连后自动重连，若 server 过载，大量重连可能形成惊群效应。

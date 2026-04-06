@@ -6,6 +6,18 @@ title: "LSP 集成：代码理解能力的现状与设计取向"
 
 本文档分析 Gemini CLI 在 Language Server Protocol（LSP）方向的能力现状，以及其代码理解的实现路径。
 
+
+**目录**
+
+- [1. Gemini CLI 的代码理解策略](#1-gemini-cli-的代码理解策略)
+- [2. 工具层面的代码理解](#2-工具层面的代码理解)
+- [3. 与支持 LSP 系统的对比](#3-与支持-lsp-系统的对比)
+- [4. MCP 作为桥接路径](#4-mcp-作为桥接路径)
+- [5. 现状评估](#5-现状评估)
+- [6. 小结](#6-小结)
+
+---
+
 ## 1. Gemini CLI 的代码理解策略
 
 与 Claude Code 和 OpenCode 通过原生 LSP 客户端获取语义信息不同，**Gemini CLI 目前不内置 LSP 客户端**。其代码理解能力通过以下路径实现：
@@ -96,3 +108,30 @@ gemini-cli
 ## 6. 小结
 
 Gemini CLI 选择以**工具组合 + 大上下文**的方式处理代码理解任务，而非集成 LSP。这是一种务实的工程取舍：实现简单、依赖少，但在精确符号导航和实时诊断方面存在明显短板。对于需要 LSP 级别代码智能的场景，推荐通过 MCP 扩展桥接。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `grep_search` tool | `packages/core/src/tools/grep.ts` | 代码搜索工具：通过正则在工作区文件中查找符号/文本 |
+| `read_file` tool | `packages/core/src/tools/read-file.ts` | 文件读取工具：支持按行范围读取代码上下文 |
+| `McpClientManager` | `packages/core/src/mcp/` | MCP 接入桥接：第三方 LSP/代码分析 server 通过 MCP 接入 |
+| `ContextManager.discoverContext()` | `packages/core/src/services/contextManager.ts` | 按需发现文件上下文，补充代码理解能力 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **工具型代码理解轻量易扩展**：无需集成 Language Server 协议栈，通过 `grep_search`/`read_file` 组合即可完成大多数代码查找任务，实现简单，维护成本低。
+- **MCP 桥接可接入外部 LSP**：第三方语言服务器（如 `pylsp`、`typescript-language-server`）可以通过 MCP 适配器接入，框架不需要改动。
+- **与其他 AI 工具相比部署更简单**：不需要本地运行 LSP daemon，适合 CI/CD 环境和快速上手场景。
+
+**风险与改进点**
+
+- **缺少语义感知能力**：基于文本的 `grep_search` 无法解析符号引用（如跨文件函数调用、接口实现），复杂重构和依赖分析能力弱于真正集成 LSP 的系统（如 OpenCode/Claude Code）。
+- **MCP LSP 适配门槛高**：要将 LSP server 包装成 MCP 工具，需要手写适配代码，目前没有官方 LSP-to-MCP 适配器，社区生态不成熟。
+- **无 diagnostics 实时推送**：不支持 LSP `textDocument/publishDiagnostics`，错误和警告需要显式执行 lint 工具才能获取，不是实时的。

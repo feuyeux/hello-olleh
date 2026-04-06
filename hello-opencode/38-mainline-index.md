@@ -14,6 +14,18 @@ title: "执行主线索引：OpenCode 运行主线深度解析"
 
 ---
 
+
+**目录**
+
+- [1. 当前主线文档分别卡在哪一跳](#1-当前主线文档分别卡在哪一跳)
+- [2. 默认执行链的 10 步](#2-默认执行链的-10-步)
+- [3. 产物怎样逐跳变化](#3-产物怎样逐跳变化)
+- [4. 为什么主线必须和专题稿一起读](#4-为什么主线必须和专题稿一起读)
+- [5. 读主线时先立住 4 个判断](#5-读主线时先立住-4-个判断)
+- [6. 推荐阅读顺序](#6-推荐阅读顺序)
+
+---
+
 ## 1. 当前主线文档分别卡在哪一跳
 
 | 文件 | 主文件 | 核心交接点 | 这一跳回答什么 |
@@ -122,3 +134,32 @@ sequenceDiagram
 2. 再读 [12-prompt-system.md](./12-prompt-system.md) 到 [28-stream-processor.md](./28-stream-processor.md)，把 `prompt -> loop -> processor` 的交接链吃透。
 3. 接着看 [29-llm-request.md](./29-llm-request.md) 和 [10-session-resume.md](./10-session-resume.md)，理解“请求怎样发出去、结果怎样落回来”。
 4. 最后回看 [30-model.md](./30-model.md)、[11-context-management.md](./11-context-management.md)、[13-multi-agent.md](./13-multi-agent.md)、[18-resilience.md](./18-resilience.md)、[31-infra.md](./31-infra.md)、[19-settings-config.md](./19-settings-config.md) 和 [23-bridge-system.md](./23-bridge-system.md)，补对象模型、上下文工程、韧性、基础设施，以及启动配置和扩展系统。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `cli/index.ts` entry | `cli/index.ts` | CLI 入口：解析参数，根据 `--tui`/`--http` 分发到不同 transport |
+| `server/server.ts` | `server/server.ts` | HTTP server 主文件：路由注册、中间件挂载、Bun.serve 启动 |
+| `session/loop.ts` | `session/loop.ts` | 核心主循环：驱动 session 状态机，是系统最重要的文件 |
+| `session/processor.ts` | `session/processor.ts` | 单轮 LLM 处理：stream 事件消费、工具分发、持久化 |
+| `storage/database.ts` | `storage/database.ts` | SQLite 封装：事务、Effect 集成、连接池 |
+| `plugin/plugin.ts` | `plugin/plugin.ts` | 插件入口：所有 built-in plugin 的注册和 pipeline 编排 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **索引文档完整覆盖全部 38 个专题**：从架构全景到调试指南，每个关键子系统均有独立章节，阅读路径清晰。
+- **提供最短源码阅读路线**：按依赖顺序推荐阅读顺序（cli → server → loop → processor → storage），降低新阅读者认知负担。
+- **横向对比章节增值显著**：37-prompt-diff 等对比章节揭示了与其他 CLI 工具的设计差异，为学习者提供额外参考维度。
+
+**风险与改进点**
+
+- **索引文档与实际文件数量需保持同步**：随后续分析章节增删，索引中的链接和章节描述需手动维护，易产生漂移。
+- **部分深度分析章节依赖推断而非实际源码验证**：某些内部实现细节（如 processor 重试逻辑）基于架构推断，需定期与源码对比校验。
+- **文档系列缺乏版本标注**：opencode v1.3.2 分析文档未在索引中注明版本号，未来版本升级时难以判断哪些章节需要更新。

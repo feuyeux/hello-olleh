@@ -10,6 +10,20 @@ title: "OpenCode 深度专题 B12：Memory，Session 级别文件变更追踪与
 
 ---
 
+
+**目录**
+
+- [1. 为什么需要"记忆"模块](#1-为什么需要记忆模块)
+- [2. SessionSummary 的三个导出函数](#2-sessionsummary-的三个导出函数)
+- [3. `summarize` 的完整流程](#3-summarize-的完整流程)
+- [4. Diff 的计算起点与终点](#4-diff-的计算起点与终点)
+- [5. `diff` 函数：读取端](#5-diff-函数读取端)
+- [6. 为什么说这是"记忆"而不是"摘要"](#6-为什么说这是记忆而不是摘要)
+- [7. 和 Compaction 的关系](#7-和-compaction-的关系)
+- [8. 把 B12 压成一句代码级结论](#8-把-b12-压成一句代码级结论)
+
+---
+
 ## 1. 为什么需要"记忆"模块
 
 如果只看 B01 的对象模型，`Session.Info.summary` 只是一个包含 `additions/deletions/files` 计数的聚合字段。但实际内容来自哪里？
@@ -127,3 +141,30 @@ CompactionTask → summary agent → SessionProcessor.process() → 生成 summa
 ## 8. 把 B12 压成一句代码级结论
 
 > `SessionSummary` 是 OpenCode 当前实现里的"agent 记忆"引擎：它从 step-start/step-finish 快照边界中提取文件 diff，写成 session 级和 message 级两份 durable 记录，并通过 Bus 实时广播给前端。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `SessionSummary.summarize()` | `session/summary.ts` | 主 summary 生成入口：调用 LLM 对历史 session 生成结构化摘要 |
+| `SessionSummary.diff()` | `session/summary.ts` | 计算两个 summary 之间的增量差异（从哪里读到哪里结束）|
+| `Compaction.compact()` | `session/compact.ts` | 将旧历史压缩为 compact session，以 summary 替换原始消息 |
+| `Session.messages()` (compacted filter) | `session/index.ts` | 过滤已 compact 消息，仅返回仍活跃的 durable 历史 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Summary 是 durable 对象而非元数据**：`SessionSummary` 本身写入 durable history，可重放、可 fork，不依赖内存中的临时状态。
+- **Diff 功能支持增量摘要**：不需要每次重新 summarize 全量历史，从上次 summary 位置继续 diff，降低 LLM 调用成本。
+- **Compaction 与 summarize 职责分离**：`summarize()` 生成记忆内容，`compact()` 负责历史裁剪和替换，两者独立可测。
+
+**风险与改进点**
+
+- **Summarize 结果依赖 LLM 语义理解**：摘要质量完全依赖模型，LLM 可能遗漏关键技术细节（如具体文件修改、工具调用结果），导致 resumed session 丢失重要上下文。
+- **Compact 不可逆**：历史一旦被 summary 替换，原始消息从活跃 durable 中移除，无法在当前 session 中恢复原始 turn 级别的工具调用详情。
+- **Diff 计算起点依赖上次 summary 的精确 message_id**：若 summary 写入失败或被删除，diff 的起点会退化为全量重计算，LLM 调用成本急剧上升。

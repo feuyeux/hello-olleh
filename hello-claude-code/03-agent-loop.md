@@ -6,6 +6,38 @@ title: "query() 主循环与请求构造"
 
 本篇将 `query()` 视为多轮状态机来拆解，覆盖请求前上下文治理、流式模型调用、工具回流与错误恢复。
 
+
+**目录**
+
+- [1. 定义](#1-定义)
+- [2. 高层流程图](#2-高层流程图)
+- [3. `query()` 与 `queryLoop()` 的关系](#3-query-与-queryloop-的关系)
+- [4. `queryLoop()` 的 state 说明它是一个“多轮状态机”](#4-queryloop-的-state-说明它是一个多轮状态机)
+- [5. 每一轮开始前先做哪些事](#5-每一轮开始前先做哪些事)
+- [5.1 发 `stream_request_start`](#51-发-stream_request_start)
+- [5.2 生成 query chain tracking](#52-生成-query-chain-tracking)
+- [5.3 请求前的上下文治理入口](#53-请求前的上下文治理入口)
+- [6. 请求前的系统提示词是最后拼出来的](#6-请求前的系统提示词是最后拼出来的)
+- [7. 进入 API 调用前的 setup](#7-进入-api-调用前的-setup)
+- [8. `callModel` 如何真正构造请求](#8-callmodel-如何真正构造请求)
+- [8.1 系统提示词拼装](#81-系统提示词拼装)
+- [8.2 请求参数不只是 model/messages/system](#82-请求参数不只是-modelmessagessystem)
+- [8.3 streaming 请求是通过 `anthropic.beta.messages.create(...).withResponse()`](#83-streaming-请求是通过-anthropicbetamessagescreatewithresponse)
+- [9. streaming 过程中 query 在干什么](#9-streaming-过程中-query-在干什么)
+- [9.1 每条 message 先决定“要不要立即 yield”](#91-每条-message-先决定要不要立即-yield)
+- [9.2 assistant 消息里的 `tool_use` 会被提取出来](#92-assistant-消息里的-tool_use-会被提取出来)
+- [9.3 流式工具执行可以边收边跑](#93-流式工具执行可以边收边跑)
+- [10. 如果没有 `tool_use`，query 怎么结束](#10-如果没有-tool_usequery-怎么结束)
+- [11. 如果有 `tool_use`，如何进入下一轮](#11-如果有-tool_use如何进入下一轮)
+- [12. `runTools()` 为何还要分并发安全批次](#12-runtools-为何还要分并发安全批次)
+- [13. Query 与请求构造之间的边界](#13-query-与请求构造之间的边界)
+- [14. `fetchSystemPromptParts()` 的位置很关键](#14-fetchsystempromptparts-的位置很关键)
+- [15. 关键源码锚点](#15-关键源码锚点)
+- [16. 一段伪代码复原](#16-一段伪代码复原)
+- [17. 总结](#17-总结)
+
+---
+
 ## 1. 定义
 
 `src/query.ts` 里的 `query()` 不是“调用一次模型 API”的薄包装，而是整个系统的对话执行状态机。
@@ -445,3 +477,36 @@ while (true) {
 统一到一个 generator 状态机中。
 
 REPL 负责交互控制，`query.ts` 负责会话执行，`services/api/claude.ts` 负责模型协议组装与调用。
+
+---
+
+## 关键函数清单
+
+| 函数 | 文件 | 行号 | 职责 |
+|------|------|------|------|
+| `query()` | `src/query.ts` | — | 单次用户 turn 的状态机入口：上下文治理、模型调用、工具执行 |
+| `queryLoop()` | `src/query.ts` | 241 | 内层无限循环：每轮推理 + tool_use 批处理 |
+| `callModel()` | `src/services/api/claude.ts` | — | 发出流式模型请求，yield 流事件 |
+| `runTools()` | `src/query.ts` | — | 批量工具执行入口 |
+| `runToolUse()` | `src/query.ts` | — | 单工具执行：权限检查 + 调用 `tool.call()` |
+| `getMessagesAfterCompactBoundary()` | `src/query.ts` | — | 获取 compact 边界后的有效历史消息 |
+| `paramsFromContext()` | `src/services/api/claude.ts` | — | 将 ToolUseContext 折叠为 API 请求参数（cache/thinking/betas）|
+| `withRetry()` | `src/services/api/claude.ts` | — | 重试 + fallback + auth refresh + context overflow 状态机 |
+| `asSystemPrompt()` | `src/query.ts` | 449 | 组装最终 system prompt |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **async generator 状态机**：`queryLoop()` 用 generator 表达单轮推理状态，状态流转在函数体内可线性阅读，比事件 callback 链更直观。
+- **tool_use 批处理**：一次模型响应可能包含多个 tool_use，`runTools()` 批量并发执行后统一回注 `tool_result`，减少来回轮次。
+- **两层循环职责分离**：`query()` 管理会话级别的前置/收尾工作，`queryLoop()` 只负责单轮推理循环，职责边界清晰。
+- **`withRetry()` 显式状态机**：重试逻辑不是靠 try/catch 堆叠，而是编码为显式状态（正常、可重试、auth 刷新、上下文溢出），可预测性高。
+
+**风险与改进点**
+
+- **`queryLoop()` 内联多条分支**：stop hook、compact、工具批处理、消息追加都在同一个大循环里，测试分支需要 mock 大量上下文。
+- **工具结果回注顺序无保证**：`runTools()` 并发执行后 `Promise.allSettled()` 按照 resolve 顺序，若工具间有隐式依赖则可能产生顺序问题。
+- **`query.ts` 文件体量**：函数定义超过 4000 行，找到一个具体的工具回注路径需要大量滚屏或全局搜索。

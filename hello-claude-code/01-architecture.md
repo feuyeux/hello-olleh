@@ -6,6 +6,34 @@ title: "src 工程架构全景"
 
 本篇给出 `src/` 目录的分层结构、主执行链路和核心抽象，用于建立整套源码的总地图。
 
+
+**目录**
+
+- [1. 架构分层图](#1-架构分层图)
+- [2. 架构主线](#2-架构主线)
+- [3. 目录结构](#3-目录结构)
+- [4. 为什么 `main.tsx`、`REPL.tsx`、`query.ts` 特别大](#4-为什么-maintsxrepltsxqueryts-特别大)
+- [5. 工程中的四个统一抽象](#5-工程中的四个统一抽象)
+- [5.1 `Message`](#51-message)
+- [5.2 `Tool`](#52-tool)
+- [5.3 `Command`](#53-command)
+- [5.4 `ToolUseContext`](#54-toolusecontext)
+- [6. 架构上最关键的三条主线](#6-架构上最关键的三条主线)
+- [6.1 启动主线](#61-启动主线)
+- [6.2 输入主线](#62-输入主线)
+- [6.3 请求主线](#63-请求主线)
+- [7. 分层间依赖关系的设计特点](#7-分层间依赖关系的设计特点)
+- [7.1 不是“严格单向依赖”，而是“受控汇聚”](#71-不是严格单向依赖而是受控汇聚)
+- [7.2 大量 feature flag 参与了架构成形](#72-大量-feature-flag-参与了架构成形)
+- [7.3 工程非常在意缓存稳定性](#73-工程非常在意缓存稳定性)
+- [7.4 `0402.md` 里的规模数字应按运行时口径理解](#74-0402md-里的规模数字应按运行时口径理解)
+- [7.5 “三层门控”在代码里就是注册表层裁剪](#75-三层门控在代码里就是注册表层裁剪)
+- [8. 关键源码锚点](#8-关键源码锚点)
+- [9. 源码阅读顺序](#9-源码阅读顺序)
+- [10. 总结](#10-总结)
+
+---
+
 ## 1. 架构分层图
 
 ```mermaid
@@ -507,3 +535,38 @@ flowchart LR
 - `Tool / Command / AppState / Message / ToolUseContext` 则构成了整个系统共享的协议层。
 
 后续的启动、请求、工具、Agent 与 MCP 机制都围绕这组主线展开。
+
+---
+
+## 关键类与函数清单
+
+| 符号 | 文件 | 职责 |
+|------|------|------|
+| `main()` | `src/entrypoints/main.tsx` | 进程入口，分发 CLI 子命令 |
+| `REPL()` | `src/REPL.tsx` | 交互式 TUI 主组件：持有 AppState、订阅事件、渲染 UI |
+| `query()` | `src/query.ts` | 会话执行状态机：管理多轮模型调用、工具执行、上下文治理 |
+| `queryLoop()` | `src/query.ts:241` | query() 的内层循环：单轮推理 + 工具批处理 + 状态更新 |
+| `ToolUseContext` | `src/Tool.ts:158` | 工具执行上下文：持有 permContext、abortController、tool 引用等 |
+| `AppState` | `src/AppState.ts` | 全局可观测状态：消息、连接状态、工具调用状态 |
+| `getAnthropicClient()` | `src/services/api/claude.ts` | API client 工厂 + provider 路由器 |
+| `callModel()` | `src/services/api/claude.ts` | 实际发出模型请求，消费流式响应 |
+| `runTools()` / `runToolUse()` | `src/query.ts` | 批量工具执行入口，含权限检查 |
+| `COMMANDS()` | `src/commands.ts` | 所有内建 slash command 注册表 |
+| `loadSkillsDir()` | `src/utils/loadSkillsDir.ts` | 发现并加载 `.md` 技能文件 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **职责分工清晰的三层主线**：`REPL.tsx`（交互控制）→ `query.ts`（会话执行）→ `services/api/claude.ts`（模型协议），每层只对上下相邻层负责。
+- **工具作为一等公民**：`ToolUseContext` + `runTools()` 的设计将工具执行与 query 主循环解耦，新增工具只需实现 `Tool` 接口。
+- **Generator 状态机**：`queryLoop()` 用 async generator 表达多轮推理状态，比回调链更易追踪状态流转。
+- **`AppState` 单向数据流**：全局状态通过 observable store 分发，UI 只读取不写入，降低状态并发风险。
+
+**风险与改进点**
+
+- **三个超大文件**：`main.tsx`（>5K 行）、`REPL.tsx`（>5K 行）、`query.ts`（>4K 行）承载了核心逻辑，局部修改影响面大，测试边界模糊。
+- **provider 耦合痕迹明显**：部分 Anthropic API 特有字段（`betas`、`thinking` 等）直接出现在 `paramsFromContext()` 的核心逻辑中，切换 provider 改动量较大。
+- **缺乏全局错误边界**：`REPL.tsx` 作为根组件，当 `query()` 抛出未捕获异常时，UI 可能整体崩溃而非局部降级。

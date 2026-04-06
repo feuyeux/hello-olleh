@@ -6,6 +6,18 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 这一层在当前仓库里其实分成三套机制：`HookSystem`、`coreEvents`、`MessageBus`。旧版把它们混成一个“内部事件总线”，容易把职责写乱。
 
+
+**目录**
+
+- [1. 进程主链路上的关键阶段](#1-进程主链路上的关键阶段)
+- [2. HookSystem 是显式的生命周期扩展点](#2-hooksystem-是显式的生命周期扩展点)
+- [3. `coreEvents` 负责全局可观察性](#3-coreevents-负责全局可观察性)
+- [4. `MessageBus` 负责确认与策略闭环](#4-messagebus-负责确认与策略闭环)
+- [5. 工具执行生命周期在调度器里闭合](#5-工具执行生命周期在调度器里闭合)
+- [6. 关键源码锚点](#6-关键源码锚点)
+
+---
+
 ## 1. 进程主链路上的关键阶段
 
 按当前代码，更接近真实的主流程是：
@@ -110,3 +122,19 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 | 工具确认总线 | `packages/core/src/confirmation-bus/message-bus.ts` | 策略检查、确认请求、子代理作用域 |
 | 调度器 | `packages/core/src/scheduler/scheduler.ts` | 工具执行主编排 |
 | 工具执行器 | `packages/core/src/scheduler/tool-executor.ts` | 单次工具调用执行 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`HookSystem` 显式生命周期钩子**：不依赖 EventEmitter 的匿名监听，钩子通过命名函数注册，位置可追踪，副作用可预测。
+- **`coreEvents` 全局可观测**：将 `beforeToolCall`/`afterToolCall` 等关键事件作为可订阅流暴露，外部监控工具无需侵入核心代码。
+- **`MessageBus` 将审批决策与执行解耦**：工具是否执行的决策通过 MessageBus 事件传播，而不是函数返回值，Scheduler 无需直接持有 UI 状态。
+
+**风险与改进点**
+
+- **Hook 执行顺序依赖注册顺序**：多个 hook 监听同一阶段时，执行顺序由注册时序决定，无显式优先级控制，重构时容易引入顺序敏感 bug。
+- **生命周期事件无完整文档态**：哪些 hook 属于"稳定 API"、哪些是"内部实现细节"没有明确界定，extension 开发者可能依赖不稳定 hook 点。
+- **`coreEvents` 无背压保护**：若事件消费者处理慢，事件可能在内存中积压，高频工具调用场景（如多工具并发）存在性能风险。

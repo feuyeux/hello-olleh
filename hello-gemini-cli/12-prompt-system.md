@@ -6,6 +6,20 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 
 当前 Gemini CLI 的 Prompt 系统，核心不是一组静态模板文件，而是 `PromptProvider` 按运行时配置拼出最终 system prompt，再把记忆与模式相关内容附到末尾。
 
+
+**目录**
+
+- [1. 入口只有一个：`PromptProvider`](#1-入口只有一个promptprovider)
+- [2. Prompt 是按运行时状态动态拼出来的](#2-prompt-是按运行时状态动态拼出来的)
+- [3. `snippets.ts` 才是主模板来源](#3-snippetsts-才是主模板来源)
+- [4. 记忆、技能、子代理如何进入 Prompt](#4-记忆技能子代理如何进入-prompt)
+- [5. Plan mode 会切换一整套提示词片段](#5-plan-mode-会切换一整套提示词片段)
+- [6. 支持用环境变量覆盖系统 Prompt](#6-支持用环境变量覆盖系统-prompt)
+- [7. 不要把它和 `PromptRegistry` 混淆](#7-不要把它和-promptregistry-混淆)
+- [8. 关键源码锚点](#8-关键源码锚点)
+
+---
+
 ## 1. 入口只有一个：`PromptProvider`
 
 `packages/core/src/core/prompts.ts` 本身非常薄，真正的工作都在 `packages/core/src/prompts/promptProvider.ts`：
@@ -116,3 +130,33 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 | 旧模型模板片段 | `packages/core/src/prompts/snippets.legacy.ts` | 兼容旧能力模型 |
 | Skill 激活 | `packages/core/src/tools/activate-skill.ts` | 把 skill 指令显式注入上下文 |
 | 记忆结构 | `packages/core/src/config/memory.ts` | `HierarchicalMemory` 与 flatten 逻辑 |
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `PromptProvider.getCoreSystemPrompt()` | `packages/core/src/prompts/promptProvider.ts` | 按运行态（模式/skill/subagent/memory）动态拼装 system prompt |
+| `PromptProvider.getCompressionPrompt()` | `packages/core/src/prompts/promptProvider.ts` | 生成上下文压缩专用 prompt（独立于主 system prompt）|
+| `renderFinalShell()` | `packages/core/src/prompts/snippets.ts` | 将 userMemory 追加到 system prompt 末尾 |
+| `renderSubAgents()` | `packages/core/src/prompts/snippets.ts` | 将可用子代理定义写入 system prompt |
+| `renderAgentSkills()` | `packages/core/src/prompts/snippets.ts` | 将 skill 名称、描述、激活位置写入 system prompt |
+| `ActivateSkillTool` | `packages/core/src/tools/activate-skill.ts` | 将具体 skill 的指令以 `<activated_skill>` 形式注入对话上下文 |
+| `supportsModernFeatures()` | `packages/core/src/prompts/` | 判断当前模型是否使用现代模板集（snippets vs snippets.legacy）|
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **片段级动态拼装**：`snippets.ts` 将 system prompt 分解为多个 renderer（preamble、mandates、subagents、skills、workflows 等），各片段可独立修改和测试，无单块静态字符串难维护的问题。
+- **新旧模型模板分离**：根据 `supportsModernFeatures()` 选择 `snippets.ts` 或 `snippets.legacy.ts`，不同模型能力不影响彼此逻辑。
+- **Skill 两步激活**：先在 system prompt 中列出可用 skill，再通过 `activate_skill` 工具精确激活，避免全量 skill 指令一次性注入导致 token 浪费。
+
+**风险与改进点**
+
+- **`PromptProvider` 依赖 `Config`/`ToolRegistry`/`AgentRegistry`/`SkillManager` 四个外部依赖**：测试时需要 mock 大量外部状态，单元测试复杂度较高。
+- **`renderFinalShell()` 中 memory 直接字符串拼接**：HierarchicalMemory 展平后直接拼进 system prompt，没有 token 预算保护，记忆文件过大时可能推低可用 context 窗口。
+- **Plan mode prompt 切换缺乏中间态**：plan mode 和普通模式是两条完全不同的 snippet 分支，若用户在会话中途手动切换 approval mode，prompt 与历史对话可能出现语义不连贯。

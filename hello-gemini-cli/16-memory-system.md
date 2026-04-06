@@ -6,6 +6,20 @@ title: "Gemini CLI Memory 系统：`GEMINI.md` 分层记忆与 `save_memory` 工
 
 当前 Gemini CLI 的 memory 机制，核心并不是一个通用的 JSON KV 存储，而是围绕 `GEMINI.md` 体系、层级发现和显式记忆写入工具展开。
 
+
+**目录**
+
+- [1. 记忆的主载体是 `GEMINI.md`](#1-记忆的主载体是-geminimd)
+- [2. 当前 memory 是分层的](#2-当前-memory-是分层的)
+- [3. 记忆是怎么被发现的](#3-记忆是怎么被发现的)
+- [4. Memory 如何进入对话](#4-memory-如何进入对话)
+- [5. `save_memory` 不是抽象数据库写入，而是改文件](#5-save_memory-不是抽象数据库写入而是改文件)
+- [6. `/memory` 命令只是对底层能力的包装](#6-memory-命令只是对底层能力的包装)
+- [7. 当前没有的能力](#7-当前没有的能力)
+- [8. 关键源码锚点](#8-关键源码锚点)
+
+---
+
 ## 1. 记忆的主载体是 `GEMINI.md`
 
 从 `packages/core/src/tools/memoryTool.ts` 可以看到，默认上下文文件名是：
@@ -114,3 +128,19 @@ title: "Gemini CLI Memory 系统：`GEMINI.md` 分层记忆与 `save_memory` 工
 | 配置侧注入 | `packages/core/src/config/config.ts` | system memory 与 session memory 分流 |
 | 记忆写入工具 | `packages/core/src/tools/memoryTool.ts` | `save_memory` 的真实实现 |
 | Slash 命令包装 | `packages/core/src/commands/memory.ts` | `/memory` 系列命令 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`GEMINI.md` 是主载体**：记忆直接存入 Markdown 文件，版本控制友好，human-readable，无需专用数据库。
+- **分层记忆优先级可控**：global → extension → project 三层，项目记忆可覆盖全局记忆，开发者可针对项目定制 AI 行为。
+- **`save_memory` 工具语义透明**：Agent 调用 `save_memory` 本质是修改 `GEMINI.md` 文件，用户可直接读写该文件，无"隐藏"状态。
+
+**风险与改进点**
+
+- **无长期记忆归纳机制**：`GEMINI.md` 会随使用不断增长，无自动归纳/压缩旧记忆的机制，长期使用会形成 token 消耗日益增大的问题。
+- **记忆写操作无冲突检测**：多个并发会话同时修改同一个 `GEMINI.md` 时，无文件锁或合并机制，可能产生写覆盖。
+- **记忆与对话历史是两套存储**：`GEMINI.md` 记忆和 `ChatRecordingService` 的 conversation JSON 互不感知，记忆召回完全依赖 system prompt 注入，不能按 session 作用域隔离。

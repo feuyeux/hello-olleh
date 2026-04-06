@@ -6,6 +6,20 @@ title: "桥接与集成：CLI、SDK、IDE Companion 与 A2A 接口"
 
 把 Gemini CLI 说成“没有 Bridge”只说对了一半。它确实没有 Claude Code 那种单一、专有的 IDE Bridge 子系统，但仓库里已经形成了多条明确的桥接面：CLI 宿主、SDK、VS Code Companion、MCP 扩展和实验性的 A2A 服务。
 
+
+**目录**
+
+- [1. 当前仓库里的主要桥接面](#1-当前仓库里的主要桥接面)
+- [2. CLI 本身就是第一层桥接协议](#2-cli-本身就是第一层桥接协议)
+- [3. 程序化桥接：SDK](#3-程序化桥接sdk)
+- [4. IDE 桥接：VS Code Companion](#4-ide-桥接vs-code-companion)
+- [5. 外部系统桥接：MCP 与 Extension](#5-外部系统桥接mcp-与-extension)
+- [6. 远程桥接：实验性的 A2A Server](#6-远程桥接实验性的-a2a-server)
+- [7. 与 Claude Code Bridge 的差异](#7-与-claude-code-bridge-的差异)
+- [8. 一句话总结](#8-一句话总结)
+
+---
+
 ## 1. 当前仓库里的主要桥接面
 
 | 桥接面 | 代码锚点 | 作用 |
@@ -131,3 +145,32 @@ Gemini CLI 的优势是边界比较清楚、协议更分散也更可替换；代
 ## 8. 一句话总结
 
 当前源码里，Gemini CLI 的桥接不是缺失，而是被拆成了多条真实可用的接入面：CLI、SDK、IDE Companion、MCP/Extensions 和实验性的 A2A Server。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `startInteractiveUI()` | `packages/cli/src/gemini.tsx` | 交互模式 CLI 桥接入口 |
+| `nonInteractiveMode()` | `packages/cli/src/gemini.tsx` | Headless / pipe 模式桥接入口 |
+| `GeminiClient` (`@google/gemini-cli-core`) | `packages/core/src/core/client.ts` | SDK 桥接层：对外暴露 `sendMessageStream()` 供程序化调用 |
+| `A2AServer` (实验性) | `packages/core/src/agents/a2a-server.ts` | A2A 远程代理服务器：HTTP 端点供外部 agent 调用 |
+| `McpClientManager` | `packages/core/src/mcp/` | 外部系统桥接：将 MCP server 能力引入运行时 |
+| `ExtensionManager` | `packages/core/src/config/extension-manager.ts` | IDE/VS Code Companion 桥接接入点 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **SDK 模式复用同一核心层**：程序化调用和 CLI 交互使用相同的 `GeminiClient`，无双重实现负担。
+- **MCP 作为外部系统标准接口**：任何实现了 MCP 的系统都可以与 Gemini CLI 互联，不需要专用适配器。
+- **A2A 远程 agent 遵循业界协议**：基于 A2A 标准协议，而不是私有 RPC，有利于跨团队/跨厂商 agent 协作。
+
+**风险与改进点**
+
+- **A2A 仍处于实验状态**：`a2a-server.ts` 无稳定 API 保证，依赖其做生产集成风险较高。
+- **SDK 桥接无 Rate Limit 感知**：程序化调用时若外层频繁调用 `sendMessageStream()`，没有内建速率控制，会直接向 Gemini API 发送过多请求。
+- **IDE 桥接依赖 VS Code Companion extension**：非 VS Code 的 IDE 集成（如 JetBrains、Neovim）无官方支持，需要社区自行开发 MCP 适配器。

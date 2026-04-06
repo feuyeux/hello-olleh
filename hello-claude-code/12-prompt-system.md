@@ -6,6 +6,78 @@ title: "Claude Code 的提示词系统"
 
 本篇梳理 Claude Code 中各类提示词资产的类型、注入时机和运行时装配方式。
 
+
+**目录**
+
+- [1. 定义](#1-定义)
+- [2. 先划清边界：什么算“提示词”](#2-先划清边界什么算提示词)
+- [3. 全局地图](#3-全局地图)
+- [4. 主链路：一次请求如何把提示词真正装进模型](#4-主链路一次请求如何把提示词真正装进模型)
+- [4.1 基础 system prompt 从 `getSystemPrompt()` 开始](#41-基础-system-prompt-从-getsystemprompt-开始)
+- [4.2 `QueryEngine` 和 `query()` 并不会直接把它原样发出去](#42-queryengine-和-query-并不会直接把它原样发出去)
+- [4.3 到了 API 层，还会再 prepend 一次](#43-到了-api-层还会再-prepend-一次)
+- [5. 主系统提示的内部结构](#5-主系统提示的内部结构)
+- [5.1 这段 prompt 不是“教模型做事”，而是“定义产品人格”](#51-这段-prompt-不是教模型做事而是定义产品人格)
+- [5.2 静态 section 的设计意图](#52-静态-section-的设计意图)
+- [5.3 动态 section 的设计意图](#53-动态-section-的设计意图)
+- [6. 这套系统为什么如此在意 prompt cache](#6-这套系统为什么如此在意-prompt-cache)
+- [6.1 `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` 是全篇最关键的 prompt 工程技巧之一](#61-system_prompt_dynamic_boundary-是全篇最关键的-prompt-工程技巧之一)
+- [6.2 很多 prompt 设计都服务于 cache 稳定性](#62-很多-prompt-设计都服务于-cache-稳定性)
+- [7. 用户上下文和系统上下文其实是两条侧通道](#7-用户上下文和系统上下文其实是两条侧通道)
+- [7.1 `getUserContext()`：把 `CLAUDE.md` 当成 meta user message 注入](#71-getusercontext把-claudemd-当成-meta-user-message-注入)
+- [7.2 `getSystemContext()`：把 git status 等系统状态追加到 system prompt 尾部](#72-getsystemcontext把-git-status-等系统状态追加到-system-prompt-尾部)
+- [7.3 自定义 system prompt 会跳过一部分默认注入](#73-自定义-system-prompt-会跳过一部分默认注入)
+- [8. 工具提示词系统：Claude Code 其实把工具当成“微 prompt”](#8-工具提示词系统claude-code-其实把工具当成微-prompt)
+- [8.1 这些 `prompt.ts` 不是注释，而是模型可见协议](#81-这些-promptts-不是注释而是模型可见协议)
+- [8.2 文件工具：最强的约束在这里](#82-文件工具最强的约束在这里)
+- [8.3 搜索与外部信息工具](#83-搜索与外部信息工具)
+- [8.4 执行与协作工具](#84-执行与协作工具)
+- [8.5 扩展与配置类工具](#85-扩展与配置类工具)
+- [8.6 这批 prompt 文件里有不少镜像和 stub](#86-这批-prompt-文件里有不少镜像和-stub)
+- [9. slash command 提示词：把高层工作流编译成 prompt 模板](#9-slash-command-提示词把高层工作流编译成-prompt-模板)
+- [9.1 `type: 'prompt'` 命令本质上就是 prompt asset](#91-type-prompt-命令本质上就是-prompt-asset)
+- [9.2 它们不是“快捷按钮”，而是整套任务脚本](#92-它们不是快捷按钮而是整套任务脚本)
+- [9.3 技能和插件进一步把这套机制泛化了](#93-技能和插件进一步把这套机制泛化了)
+- [9.4 shell 插值让命令 prompt 变成“半动态脚本”](#94-shell-插值让命令-prompt-变成半动态脚本)
+- [10. 子代理 system prompt：Claude Code 的“人格分裂层”](#10-子代理-system-promptclaude-code-的人格分裂层)
+- [10.1 默认 agent prompt 很薄](#101-默认-agent-prompt-很薄)
+- [10.2 真正重要的是 built-in 专用 agent](#102-真正重要的是-built-in-专用-agent)
+- [10.3 Agent 生成器本身也有自己的 meta prompt](#103-agent-生成器本身也有自己的-meta-prompt)
+- [11. Memory 系统是主系统提示里最重的一块附加 prompt](#11-memory-系统是主系统提示里最重的一块附加-prompt)
+- [11.1 auto-memory 不是附属功能，而是主 prompt 的一个 section](#111-auto-memory-不是附属功能而是主-prompt-的一个-section)
+- [11.2 它最重要的设计不是“记住”，而是“限制记什么”](#112-它最重要的设计不是记住而是限制记什么)
+- [11.3 它还专门处理了“记忆漂移”](#113-它还专门处理了记忆漂移)
+- [11.4 team memory 把 prompt 从“个人记忆”升级成“组织记忆”](#114-team-memory-把-prompt-从个人记忆升级成组织记忆)
+- [11.5 KAIROS 模式会切换成 daily log prompt](#115-kairos-模式会切换成-daily-log-prompt)
+- [11.6 Session Memory 是另一套“对当前会话做持久摘要”的 prompt](#116-session-memory-是另一套对当前会话做持久摘要的-prompt)
+- [11.7 extractMemories 是后台 memory 提取子代理的 prompt](#117-extractmemories-是后台-memory-提取子代理的-prompt)
+- [11.8 `remember` skill 是 memory 体系上的人工审阅层](#118-remember-skill-是-memory-体系上的人工审阅层)
+- [11.9 prompt 层定义的是 memory policy，不等于整个 memory runtime](#119-prompt-层定义的是-memory-policy不等于整个-memory-runtime)
+- [11.10 Prompt 架构与缓存稳定性的源码关系](#1110-prompt-架构与缓存稳定性的源码关系)
+- [12. compact、summary、title 这些二级 prompt 说明了什么](#12-compactsummarytitle-这些二级-prompt-说明了什么)
+- [12.1 compact prompt 其实是“上下文编译器”](#121-compact-prompt-其实是上下文编译器)
+- [12.2 `awaySummary` 是为回到会话的用户写的](#122-awaysummary-是为回到会话的用户写的)
+- [12.3 `toolUseSummary` 是给移动端/时间线用的](#123-toolusesummary-是给移动端时间线用的)
+- [12.4 命名类 prompt 很小，但很产品化](#124-命名类-prompt-很小但很产品化)
+- [13. 还有几类容易漏掉的隐藏 prompt](#13-还有几类容易漏掉的隐藏-prompt)
+- [13.1 Web 工具内部的二级 prompt](#131-web-工具内部的二级-prompt)
+- [13.2 Prompt Suggestion](#132-prompt-suggestion)
+- [13.3 自然语言日期解析](#133-自然语言日期解析)
+- [13.4 shell prefix 分类器](#134-shell-prefix-分类器)
+- [13.5 hook prompt / hook agent](#135-hook-prompt-hook-agent)
+- [13.6 浏览器扩展与 companion 这种“产品边角 prompt”](#136-浏览器扩展与-companion-这种产品边角-prompt)
+- [14. 从这些 prompt 里能总结出哪些设计原则](#14-从这些-prompt-里能总结出哪些设计原则)
+- [14.1 分层，而不是堆叠](#141-分层而不是堆叠)
+- [14.2 把“软规则”下沉到离动作最近的地方](#142-把软规则下沉到离动作最近的地方)
+- [14.3 用 prompt 处理协议，而不是只处理语言](#143-用-prompt-处理协议而不是只处理语言)
+- [14.4 大量 prompt 的真实目标是抑制 LLM 坏习惯](#144-大量-prompt-的真实目标是抑制-llm-坏习惯)
+- [14.5 prompt 设计始终受 cache 成本约束](#145-prompt-设计始终受-cache-成本约束)
+- [15. 这套提示词系统反映了怎样的 Claude Code 产品哲学](#15-这套提示词系统反映了怎样的-claude-code-产品哲学)
+- [16. 源码锚点索引](#16-源码锚点索引)
+- [17. 总结](#17-总结)
+
+---
+
 ## 1. 定义
 
 Claude Code 的“提示词系统”不是单个 `systemPrompt` 文件，而是一个由多层文本资产共同组成的运行时装配体系：
@@ -1169,3 +1241,33 @@ Claude Code 反复把 prompt 设计成“弱结构化协议”。
 ## 17. 总结
 
 Claude Code 的提示词系统将产品人格、工具协议、工作流模板、协作机制、记忆系统与缓存策略统一装配成一个可组合的 prompt runtime。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `asSystemPrompt()` | `src/query.ts` | 将 ToolUseContext 转换为最终 system prompt 字符串 |
+| `getCoreSystemPrompt()` | `src/prompts/system.ts` | 组装主 system prompt：角色定义 + 工作流 + 工具说明 + 记忆 |
+| `getToolDescription()` | `src/tools/` | 从 ToolSchema 生成工具描述文本（含 input_schema）|
+| `buildCompactPrompt()` | `src/prompts/compact.ts` | 生成上下文压缩请求 prompt，驱动 compact summary 生成 |
+| `renderMemorySection()` | `src/prompts/memory.ts` | 将加载的记忆文件列表格式化为 prompt 片段 |
+| `buildSlashCommandPrompt()` | `src/commands/` | 将 slash command 关联的 Markdown 模板转换为 prompt |
+| `buildSubagentPrompt()` | `src/query.ts` | 为子代理 (`AgentTool`) 生成独立的 system prompt |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Prompt 分层清晰，职责专一**：system prompt / compact prompt / subagent prompt / slash command prompt 各自独立函数生成，互不耦合，单独修改不影响其他路径。
+- **Prompt cache 优化内置**：`cache_control` 标签在请求构造层就已附加，无需调用方额外配置，多轮会话自动从 Anthropic 侧获益于前缀缓存。
+- **Thinking/extended output 在 prompt 级别落地**：thinking token 配置和 extended output 标记直接写入 request params 而非 system prompt，模型感知即为实际行为，无歧义。
+
+**风险与改进点**
+
+- **`getCoreSystemPrompt()` 单函数职责过重**：包含角色定义、工作流指令、记忆注入、工具说明等多段逻辑，随功能演进容易成为"God Function"，当前已经相当复杂。
+- **记忆注入无 token 预算控制**：所有加载的记忆文件直接拼入 system prompt，记忆文件多或大时无截断保护，可能显著压缩剩余 context 窗口。
+- **Subagent prompt 与主 prompt 完全独立**：子代理使用独立的 system prompt，主代理和子代理之间无共享的"共识上下文"，某些任务可能需要子代理重复接收大量已知信息。

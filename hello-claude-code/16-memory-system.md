@@ -14,6 +14,21 @@ title: "Claude Code 的记忆系统"
 
 ---
 
+
+**目录**
+
+- [1. 先建立总图](#1-先建立总图)
+- [2. durable memory 的主线：auto-memory 与 team memory](#2-durable-memory-的主线auto-memory-与-team-memory)
+- [3. 查询时如何读取 durable memory](#3-查询时如何读取-durable-memory)
+- [4. KAIROS：把长期写入改成 daily log 模式](#4-kairos把长期写入改成-daily-log-模式)
+- [5. dream / consolidation：把日志蒸馏回 durable memory](#5-dream-consolidation把日志蒸馏回-durable-memory)
+- [6. 与 durable memory 相邻、但不是同一层的机制](#6-与-durable-memory-相邻但不是同一层的机制)
+- [7. 怎样把常见“7 层记忆”图映射回源码](#7-怎样把常见7-层记忆图映射回源码)
+- [8. 关键源码锚点](#8-关键源码锚点)
+- [9. 总结](#9-总结)
+
+---
+
 ## 1. 先建立总图
 
 Claude Code 的 memory 相关能力可以先按职责分成八类：
@@ -586,3 +601,32 @@ Claude Code 的记忆系统可以收敛为一条非常清楚的主线：
 如果只保留一个判断标准，那么它应当是：
 
 > 先区分“长期 durable memory”和“当前会话连续性”，再区分“主回合直接写入”和“后台/人工治理”，整套系统的边界就会立刻清晰起来。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `MemoryManager` | `src/services/memory/memoryManager.ts` | 内存系统核心：管理 user/session/repo 三层内存文件 |
+| `MemoryManager.readAll()` | `src/services/memory/memoryManager.ts` | 读取所有激活内存文件，合并为 context 注入 prompt |
+| `MemoryManager.write()` | `src/services/memory/memoryManager.ts` | 将新记忆写入指定层级的内存文件 |
+| `compactMemory()` | `src/services/memory/memoryManager.ts` | 超出大小限制时裁剪旧内存条目，保留最近/重要条目 |
+| memory scope resolver | `src/services/memory/memoryManager.ts` | 解析 user/session/repo 三级作用域路径 |
+| conversation compaction | `src/agent/conversationManager.ts` | 对话历史压缩：调用 LLM 总结长历史为短摘要 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **三层内存作用域精细化**：user（持久全局）/ session（会话临时）/ repo（项目范围）三层分离，记忆不同重要性信息时有明确归属。
+- **对话压缩延长有效上下文**：通过 LLM 摘要压缩历史，在 context window 限制内尽可能保留更长的有效对话信息。
+- **内存文件可直接编辑**：内存存储为 Markdown 文件，用户可直接用文本编辑器查看和修改，无 lock-in。
+
+**风险与改进点**
+
+- **compactMemory 策略不可配置**：内存裁剪逻辑固定按时间顺序删除，无法配置"保留特定标签的条目"等语义化保留策略。
+- **对话压缩引入 LLM 调用**：压缩本身消耗 token 和延迟，在网络条件差或 quota 紧张时，压缩操作可能失败导致 context 截断。
+- **repo 内存无 gitignore 协调**：repo scope 内存文件存储在项目目录，若未加入 .gitignore 可能被误提交，暴露调试内容或 API key。

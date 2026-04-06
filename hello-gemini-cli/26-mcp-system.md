@@ -6,6 +6,23 @@ title: "Gemini CLI 的 MCP 系统"
 
 本篇讨论 MCP 客户端、传输层、认证体系、工具/提示词发现，以及与 Gemini CLI 工具总线的集成。
 
+
+**目录**
+
+- [1. MCP 系统概述](#1-mcp-系统概述)
+- [2. 核心组件](#2-核心组件)
+- [3. 传输层实现](#3-传输层实现)
+- [4. 认证体系](#4-认证体系)
+- [5. 工具发现与注册](#5-工具发现与注册)
+- [6. 提示词发现](#6-提示词发现)
+- [7. 动态更新处理](#7-动态更新处理)
+- [8. 配置格式](#8-配置格式)
+- [9. MCP 状态机](#9-mcp-状态机)
+- [10. 与 Claude Code 的差异](#10-与-claude-code-的差异)
+- [11. 关键源码锚点](#11-关键源码锚点)
+
+---
+
 ## 1. MCP 系统概述
 
 ```mermaid
@@ -375,3 +392,19 @@ stateDiagram-v2
 
 *文档版本: 1.0*
 *分析日期: 2026-04-06*
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **5 状态机清晰**：`connected/disabled/failed/needs_auth/needs_client_registration` 状态转移有完整定义，auth flow 与连接 flow 解耦，错误处理分支明确。
+- **MCP prompt 与 slash command 统一**：MCP server 的 prompt 模板被自动投影为 slash command，用户无需区分"MCP prompt"和"内建命令"。
+- **动态工具更新支持热刷新**：`ToolsChanged` 事件驱动 tool list 刷新，MCP server 添加新工具无需重启 Gemini CLI。
+
+**风险与改进点**
+
+- **MCP server 连接无全局超时**：`McpClientManager` 等待 stdio server 握手时无超时上限，MCP server 启动慢会阻塞整个 CLI 初始化。
+- **认证令牌存储在进程内存**：OAuth2 令牌由 `mcp/auth.ts` 管理，进程重启后需要重新认证，无持久化 token 缓存机制。
+- **工具名称 sanitize 后无冲突检测**：多个 MCP server 产生同名工具时，后注册的会静默覆盖前者，无冲突日志或报警。

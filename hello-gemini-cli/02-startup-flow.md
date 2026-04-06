@@ -6,6 +6,17 @@ title: "启动链路：从入口到运行模式的分发"
 
 Gemini CLI 的启动不仅仅是加载 UI，它包含了一个复杂的环境预热与权限校验链。
 
+
+**目录**
+
+- [1. 启动全景图](#1-启动全景图)
+- [2. 核心函数清单 (Function List)](#2-核心函数清单-function-list)
+- [3. 核心初始化顺序](#3-核心初始化顺序)
+- [4. 运行模式分发](#4-运行模式分发)
+- [5. 代码质量评估 (Code Quality Assessment)](#5-代码质量评估-code-quality-assessment)
+
+---
+
 ## 1. 启动全景图
 
 ```mermaid
@@ -269,8 +280,8 @@ GEMINI_SANDBOX=docker
    文件：`packages/core/src/config/config.ts:1335`  
    调用点：创建 `this._toolRegistry = await this.createToolRegistry()`。
 2. `Config.createToolRegistry()`  
-   文件：`packages/core/src/config/config.ts:3391-3393`  
-   调用点：`3391` 执行 `registry.discoverAllTools()`，之后 `sortTools()`。
+   文件：`packages/core/src/config/config.ts:3257-3259`  
+   调用点：`3257` 执行 `registry.discoverAllTools()`，之后 `sortTools()`。
 3. `GeminiClient.setTools()`  
    文件：`packages/core/src/core/client.ts:288-302`  
    调用点：`298-301` 从 `toolRegistry.getFunctionDeclarations(modelId)` 取出函数声明并写入 chat。

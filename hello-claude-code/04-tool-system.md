@@ -6,6 +6,35 @@ title: "工具系统与权限机制"
 
 本篇梳理模型如何通过工具协议、权限判定和执行编排进入持续调用工具的 Agent 运行方式。
 
+
+**目录**
+
+- [1. 为什么工具系统是这套工程的主轴](#1-为什么工具系统是这套工程的主轴)
+- [2. `Tool.ts`：工具协议层](#2-toolts工具协议层)
+- [2.1 `ToolPermissionContext`](#21-toolpermissioncontext)
+- [2.2 `ToolUseContext`](#22-toolusecontext)
+- [2.3 `buildTool()` 的意义](#23-buildtool-的意义)
+- [3. `tools.ts`：工具池装配器](#3-toolsts工具池装配器)
+- [4. REPL 中的工具池不是静态常量](#4-repl-中的工具池不是静态常量)
+- [5. 权限判定：`useCanUseTool`](#5-权限判定usecanusetool)
+- [5.1 输入输出形态](#51-输入输出形态)
+- [5.2 它不只是弹权限框](#52-它不只是弹权限框)
+- [6. 工具执行总编排：`runTools()`](#6-工具执行总编排runtools)
+- [6.1 批处理策略](#61-批处理策略)
+- [6.2 并发批与串行批的差异](#62-并发批与串行批的差异)
+- [7. `runToolUse()`：单个工具调用生命周期](#7-runtooluse单个工具调用生命周期)
+- [8. `streamedCheckPermissionsAndCallTool()`：把 progress 与结果合并成一个异步流](#8-streamedcheckpermissionsandcalltool把-progress-与结果合并成一个异步流)
+- [9. `checkPermissionsAndCallTool()`：真正的工具调用主体](#9-checkpermissionsandcalltool真正的工具调用主体)
+- [10. 流式工具执行器：`StreamingToolExecutor`](#10-流式工具执行器streamingtoolexecutor)
+- [11. 权限与工具执行的完整图](#11-权限与工具执行的完整图)
+- [12. MCP 工具与普通工具是如何统一的](#12-mcp-工具与普通工具是如何统一的)
+- [13. AgentTool 为什么也是工具系统的一部分](#13-agenttool-为什么也是工具系统的一部分)
+- [14. 工具结果为什么最终还是消息](#14-工具结果为什么最终还是消息)
+- [15. 关键源码锚点](#15-关键源码锚点)
+- [16. 总结](#16-总结)
+
+---
+
 ## 1. 为什么工具系统是这套工程的主轴
 
 在这套代码里，模型不是“只会输出文本”，而是被设计成一个会持续调用工具的 Agent。
@@ -392,3 +421,34 @@ flowchart LR
 - `tool_result` 再把执行结果送回 query。
 
 因此从架构角度看，工具不是模型的附属物，而是整个 Agent Runtime 的第一公民。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 行号 | 职责 |
+|----------|------|------|------|
+| `ToolUseContext` | `src/Tool.ts` | 158 | 工具执行上下文：绑定 permContext、abortController、tool 引用 |
+| `buildTool()` | `src/Tool.ts` | — | 工具工厂：组合 call/render/permCheck 为完整 tool 对象 |
+| `useCanUseTool()` | `src/Tool.ts` | — | 权限检查 hook：判断当前上下文是否允许执行该工具 |
+| `runToolUse()` | `src/query.ts` | — | 单工具执行：权限检查 + 调用 `tool.call()` + 包装结果 |
+| `runTools()` | `src/query.ts` | 1363 | 工具批执行入口：`Promise.allSettled()` 并发，统一收集结果 |
+| `checkPermissionsAndCallTool()` | `src/query.ts` | — | 权限校验后调用 `tool.call()`，可弹出 approval UI |
+| `TOOL_DEFINITIONS` | `src/tools/...` | — | 所有内建工具的定义注册表 |
+| `getCommands()` | `src/commands.ts` | — | 动态构建命令列表，包含内建 + skill + MCP 工具 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Tool 作为一等公民**：所有工具（内建/Skill/MCP）都实现统一的 `Tool` 接口，`runTools()` 无需区分类型，扩展新工具不修改核心 loop。
+- **权限检查与执行解耦**：`useCanUseTool()` 纯粹做权限判断，`runToolUse()` 纯粹做执行，两者分离便于独立测试。
+- **并发执行 + allSettled**：工具并发执行，`allSettled` 确保单个工具失败不影响其他工具的结果收集，容错性好。
+
+**风险与改进点**
+
+- **approval UI 与执行路径耦合**：`checkPermissionsAndCallTool()` 里既有 permission 逻辑又有 UI 弹出，难以在无 UI 场景（headless mode）中复用。
+- **工具并发结果无顺序保证**：若工具间有隐式执行依赖（如先写文件再读），并发执行可能导致竞态。
+- **`ToolUseContext` 字段过多**：随着 Claude 功能迭代，`ToolUseContext` 持续添加新字段（cache/thinking/betas），成为了变相的"上帝对象"。

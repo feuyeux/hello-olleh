@@ -6,6 +6,19 @@ title: "Gemini CLI Skill 系统：SKILL.md、加载优先级与 `activate_skill`
 
 Gemini CLI 当前的 skill 机制很明确：skill 是一个带 frontmatter 的 `SKILL.md`，先被发现，再由模型按需激活。它不是关键词自动匹配器，也不是独立的插件 DSL。
 
+
+**目录**
+
+- [1. Skill 文件的真实格式](#1-skill-文件的真实格式)
+- [2. Skill 从哪些位置被发现](#2-skill-从哪些位置被发现)
+- [3. Skill 不是自动触发，而是工具激活](#3-skill-不是自动触发而是工具激活)
+- [4. `activate_skill` 真正做了什么](#4-activate_skill-真正做了什么)
+- [5. Prompt 系统如何感知 skill](#5-prompt-系统如何感知-skill)
+- [6. 当前边界](#6-当前边界)
+- [7. 关键源码锚点](#7-关键源码锚点)
+
+---
+
 ## 1. Skill 文件的真实格式
 
 Skill 解析逻辑在 `packages/core/src/skills/skillLoader.ts`。
@@ -113,3 +126,19 @@ Gemini CLI 并没有一个“按关键词自动命中 skill”的中心注册器
 | Skill 管理 | `packages/core/src/skills/skillManager.ts` | 发现、覆盖、禁用、激活状态 |
 | 激活工具 | `packages/core/src/tools/activate-skill.ts` | 把 skill 正文与资源注入上下文 |
 | Prompt 接入 | `packages/core/src/prompts/promptProvider.ts` | 在 system prompt 中列出可用 skill |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **文件即技能**：`.md` 文件即 skill 定义，版本管理友好，任何具备 Markdown 写作能力的人都可以贡献 skill，无需编写代码。
+- **两步激活模型**：先在 system prompt 中列出所有可用 skill 名称，再通过 `activate_skill` 工具按需激活，避免全量 skill  内容一次性注入消耗 token。
+- **多级 `SKILL.md` 发现**：支持 global、extension、project 三层来源，项目级 skill 可覆盖 global skill，优先级可控。
+
+**风险与改进点**
+
+- **`activate_skill` 无 token 预算检查**：激活 skill 时会把完整 skill 指令注入 `<activated_skill>` 标签，若 skill 文件过大，可能推低当前轮可用 context 窗口。
+- **技能发现无并发保护**：多个会话同时扫描技能目录时，若目录被写入，可能读到部分更新的 skill 文件。
+- **`SKILL.md` 格式无 schema 校验**：skill 文件格式纯粹约定俗成，无 lint 工具，错误格式在运行时才被发现，调试成本高。

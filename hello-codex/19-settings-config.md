@@ -6,6 +6,19 @@ title: "配置与设置：config.toml、环境变量与运行时策略"
 
 本文分析 Codex 的配置系统，包括配置文件结构、环境变量、优先级规则和运行时策略注入。
 
+
+**目录**
+
+- [1. 配置来源与优先级](#1-配置来源与优先级)
+- [2. config.toml 完整结构](#2-configtoml-完整结构)
+- [3. 主要配置字段说明](#3-主要配置字段说明)
+- [4. 环境变量](#4-环境变量)
+- [5. 配置加载流程](#5-配置加载流程)
+- [6. 项目级配置（`.codex/` 目录）](#6-项目级配置codex-目录)
+- [7. 与其他系统的对比](#7-与其他系统的对比)
+
+---
+
 ## 1. 配置来源与优先级
 
 ```
@@ -133,3 +146,32 @@ mode = "full-auto"  # 在 CI 中使用全自动模式
 | **Claude Code** | JSON | 项目 `settings.json` | 3层 | Managed Policy |
 | **Gemini CLI** | JSON | `.gemini/settings.json` | 4层 | Trust 模型 |
 | **OpenCode** | 多格式 | `.opencode/` | 3层 | Effect-ts 驱动 |
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Config::load()` | `codex-rs/core/src/config.rs` | 配置加载入口：合并 global / project / env / CLI flags |
+| `ConfigFile` | `codex-rs/core/src/config.rs` | `config.toml` 反序列化结构体，对应所有用户可配置字段 |
+| `GlobalConfig` | `codex-rs/core/src/config.rs` | `~/.codex/config.toml` 的全局配置，最低优先级 |
+| `ProjectConfig` | `codex-rs/core/src/config.rs` | `.codex/config.toml` 的项目级配置，覆盖 global |
+| `env_override()` | `codex-rs/core/src/config.rs` | 从环境变量读取并覆盖特定配置项（如 `CODEX_MODEL`） |
+| `CliOverrides` | `codex-rs/cli/src/args.rs` | CLI flag 解析结果：优先级最高，最终覆盖所有其他配置 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **四层优先级链清晰**：global → project → env → CLI 的覆盖顺序直觉友好，与 git config 等工具一致。
+- **TOML 格式人类可读**：`config.toml` 比 JSON 更易读写，注释支持使配置自文档化。
+- **项目级配置隔离**：`.codex/config.toml` 存于项目目录，可纳入版本控制，团队共享配置无需额外工具。
+
+**风险与改进点**
+
+- **配置 schema 无版本管理**：config.toml 格式变更时无兼容性检查，旧配置文件的失效字段被静默忽略。
+- **env override 键名无前缀规范**：环境变量名不够 namespaced（如 `MODEL` 可能与其他工具冲突），建议统一 `CODEX_` 前缀。
+- **CLI flag 与配置字段无双向映射文档**：用户难以知道哪些 CLI flag 对应哪个 config.toml 键，缺少自动生成的对照表。

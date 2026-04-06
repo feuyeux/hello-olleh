@@ -11,6 +11,23 @@ title: "OpenCode A04：loop()"
 
 ---
 
+
+**目录**
+
+- [1. `loop()` 之前，先有一套 session 级并发闸门](#1-loop-之前先有一套-session-级并发闸门)
+- [2. 进入 while 之后，`loop()` 每一轮都先从 durable history 重新推导状态](#2-进入-while-之后loop-每一轮都先从-durable-history-重新推导状态)
+- [3. 退出条件由 durable 字段直接决定](#3-退出条件由-durable-字段直接决定)
+- [4. 第一步 side job 和 model 解析都发生在分支判断之前](#4-第一步-side-job-和-model-解析都发生在分支判断之前)
+- [5. 分支一：`subtask` part 一旦挂在 history 里，loop 会主动把它清成一次 task tool 调用](#5-分支一subtask-part-一旦挂在-history-里loop-会主动把它清成一次-task-tool-调用)
+- [6. 分支二：pending compaction 会被优先消费](#6-分支二pending-compaction-会被优先消费)
+- [7. 分支三：overflow 自愈通过 compaction task 完成](#7-分支三overflow-自愈通过-compaction-task-完成)
+- [8. 分支四：普通推理开始前，loop 会先把这一轮模型调用的全部上下文准备好](#8-分支四普通推理开始前loop-会先把这一轮模型调用的全部上下文准备好)
+- [9. `processor` 返回后，是否继续下一轮仍然由 loop 决定](#9-processor-返回后是否继续下一轮仍然由-loop-决定)
+- [10. 收尾阶段，loop 会重新相信 durable history，而不是内存里的局部变量](#10-收尾阶段loop-会重新相信-durable-history而不是内存里的局部变量)
+- [11. `loop()` 形成一台 session 级状态机](#11-loop-形成一台-session-级状态机)
+
+---
+
 ## 1. `loop()` 之前，先有一套 session 级并发闸门
 
 `packages/opencode/src/session/prompt.ts:242-289`
@@ -505,3 +522,32 @@ loop 最后会重新扫描 durable history：
 
 `loop()` 可以视为基于 durable history 的 session orchestration kernel。A05 接着说明 `SessionProcessor.process()` 如何把单轮 `LLM.stream()` 事件翻译成 durable parts。
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `loop()` | `session/loop.ts` | Session 核心状态机：驱动 idle/running/waiting/done 四态转换 |
+| concurrency gate | `session/loop.ts` | 并发锁：同一 session 只允许一个 loop 实例运行 |
+| exit condition check | `session/loop.ts` | 检测 `processor` 返回的 `done`/`error`/`continue` 信号决定退出 |
+| `Session.update()` | `session/session.ts` | 原子更新 session 状态并通过 Bus 广播变更事件 |
+| `Bus.publish()` | `bus/bus.ts` | 发布 loop 阶段转换事件，解耦 loop 与 UI 订阅者 |
+| `SessionProcessor.process()` | `session/processor.ts` | 单次 LLM 请求-响应处理，loop 的最小执行单元 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **状态机显式化**：loop 以四态（idle/running/waiting/done）明确管理 session 生命周期，避免隐式状态转换导致的竞争条件。
+- **并发安全设计**：concurrency gate 确保单 session 只有一个活跃 loop，多次用户输入不会产生并行 LLM 调用。
+- **信号驱动退出**：processor 返回结构化信号（done/error/continue），loop 不需要知道具体原因，解耦控制流。
+
+**风险与改进点**
+
+- **loop 无超时保护**：单次 LLM 请求超时会阻塞整个 session loop，无全局 loop 超时兜底机制。
+- **concurrency gate 实现依赖内存状态**：gate 状态存在内存中，进程重启后如有未完成的 loop，无法恢复并发锁状态。
+- **四态不可外部观测**：loop 内部状态仅通过 Bus 间接广播，外部调试工具无法直接查询当前 loop 处于哪个状态。

@@ -6,6 +6,18 @@ title: "上下文、Prompt 与轻量 Memory：AGENTS.md、ContextManager 与 mem
 
 这篇补充稿对应 Claude Code 的上下文/提示词/记忆主题，也对应 Gemini CLI 与 OpenCode 的同类专题。这里直接引用当前仓库里的实际文件名，避免继续沿用旧编号。Codex 主线文档已经把 `run_turn()`、`build_prompt()` 和线程协议讲清楚，但如果要和另外三套文档横向对照，仍然需要单独把“模型到底看到了什么”拎出来看。
 
+
+**目录**
+
+- [1. 这条链真正由哪三层组成](#1-这条链真正由哪三层组成)
+- [2. Prompt 不是大模板，而是三种输入的收束结果](#2-prompt-不是大模板而是三种输入的收束结果)
+- [3. `ContextManager` 才是模型可见历史的真正边界](#3-contextmanager-才是模型可见历史的真正边界)
+- [4. Codex 的 memory 是异步 pipeline，不是常驻 prompt runtime](#4-codex-的-memory-是异步-pipeline不是常驻-prompt-runtime)
+- [5. 横向对照下，Codex 这条主题的特点](#5-横向对照下codex-这条主题的特点)
+- [6. 对应阅读](#6-对应阅读)
+
+---
+
 ## 1. 这条链真正由哪三层组成
 
 | 层 | 关键代码 | 作用 |
@@ -91,3 +103,31 @@ Codex 也有 memory，但它的工程形态和 Claude Code、Gemini CLI、OpenCo
 - Claude Code: [11-context-management.md](../hello-claude-code/11-context-management.md), [12-prompt-system.md](../hello-claude-code/12-prompt-system.md), [16-memory-system.md](../hello-claude-code/16-memory-system.md)
 - Gemini CLI: [11-context-management.md](../hello-gemini-cli/11-context-management.md), [12-prompt-system.md](../hello-gemini-cli/12-prompt-system.md), [16-memory-system.md](../hello-gemini-cli/16-memory-system.md)
 - OpenCode: [11-context-management.md](../hello-opencode/11-context-management.md), [12-prompt-system.md](../hello-opencode/12-prompt-system.md), [16-memory-system.md](../hello-opencode/16-memory-system.md)
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `ContextManager` | `codex-rs/core/src/context_manager.rs` | 管理模型可见历史边界：决定哪些 turn/item 进入请求 |
+| `build_prompt()` | `codex-rs/core/src/codex.rs` | 三类输入收束：system message + tool descriptions + conversation history |
+| `auto_compact_limit` check | `codex-rs/core/src/codex.rs:5584` | token 预算在 `run_turn()` 入口检查，触发 compaction 或停止 |
+| `MemoryManager` (async pipeline) | `codex-rs/core/src/memory/` | 异步 memory 提取 pipeline：从历史中提取结构化记忆 |
+| `TurnContext.token_usage_at_turn_start` | `codex-rs/core/src/codex.rs:839` | 记录每轮 token 基线，用于判断本轮消耗 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **三层收束模型清晰**：system message / tool descriptions / conversation history 三类输入在 `build_prompt()` 统一汇聚，无隐式注入路径。
+- **token 预算双重保险**：`run_turn()` 入口和 `try_run_sampling_request()` 出口各有一次 token 检查，防止无限膨胀。
+- **Memory 异步管道不占用主循环**：记忆提取在独立 pipeline 中异步运行，不阻塞 submission_loop 的主请求路径。
+
+**风险与改进点**
+
+- **`ContextManager` 裁剪策略不可配置**：历史裁剪的阈值和保留策略硬编码，不同任务类型（长代码分析 vs 短对话）无法动态调整。
+- **Memory pipeline 与 submission_loop 无同步点**：异步 memory 更新可能在下一轮请求前未完成，导致该轮请求用到的是上一轮的记忆快照。
+- **`build_prompt()` 无工具声明 token 预算**：工具描述会随注册工具数量增长占用大量 token，当前无独立的工具描述 token 上限，可能挤压可用 context 窗口。

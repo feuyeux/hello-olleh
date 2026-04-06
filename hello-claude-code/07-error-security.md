@@ -6,6 +6,32 @@ title: "API Provider 选择、请求构造、重试与错误治理"
 
 本篇梳理 `query()` 如何落到不同 provider、如何构造请求、如何重试，以及如何把底层错误翻译成会话消息。
 
+
+**目录**
+
+- [1. 为什么这一块不能只看 `claude.ts`](#1-为什么这一块不能只看-claudets)
+- [2. `getAnthropicClient()` 是 provider 路由器，不只是 client factory](#2-getanthropicclient-是-provider-路由器不只是-client-factory)
+- [3. 不同 provider 的认证与构造方式完全不同](#3-不同-provider-的认证与构造方式完全不同)
+- [4. headers 与 fetch wrapper 也有 provider 语义](#4-headers-与-fetch-wrapper-也有-provider-语义)
+- [5. `paramsFromContext()` 才是请求构造的真正核心](#5-paramsfromcontext-才是请求构造的真正核心)
+- [6. beta headers 不是一次性常量，而是动态拼装](#6-beta-headers-不是一次性常量而是动态拼装)
+- [7. thinking / effort / task budget 也都在请求层统一落地](#7-thinking-effort-task-budget-也都在请求层统一落地)
+- [8. streaming 调用前后有清晰的性能观察点](#8-streaming-调用前后有清晰的性能观察点)
+- [9. `withRetry()` 是项目自己的重试状态机](#9-withretry-是项目自己的重试状态机)
+- [10. 529 重试是按 query source 分层的](#10-529-重试是按-query-source-分层的)
+- [11. fast mode 失败后不是立刻崩，而是会降级/cooldown](#11-fast-mode-失败后不是立刻崩而是会降级cooldown)
+- [12. fallback model 触发是显式事件，不是隐式黑箱](#12-fallback-model-触发是显式事件不是隐式黑箱)
+- [13. unattended/persistent retry 说明系统支持“长时间无人值守等待”](#13-unattendedpersistent-retry-说明系统支持长时间无人值守等待)
+- [14. context overflow 也在 retry 层被自动修正](#14-context-overflow-也在-retry-层被自动修正)
+- [15. `errors.ts` 把 provider/raw error 翻译成对话内语义](#15-errorsts-把-providerraw-error-翻译成对话内语义)
+- [16. 429 不是统一文案，而是会读新版 rate-limit headers](#16-429-不是统一文案而是会读新版-rate-limit-headers)
+- [17. streaming 与 non-streaming fallback 的边界被谨慎处理](#17-streaming-与-non-streaming-fallback-的边界被谨慎处理)
+- [18. 一张总图](#18-一张总图)
+- [19. 关键源码锚点](#19-关键源码锚点)
+- [20. 总结](#20-总结)
+
+---
+
 ## 1. 为什么这一块不能只看 `claude.ts`
 
 现有文档已经讲过：
@@ -385,3 +411,34 @@ flowchart LR
 4. 用 `errors.ts` 把底层 provider/raw error 翻译成会话内可消费的 assistant message。
 
 `services/api` 目录虽然位于 `query()` 之后，但实际承担了大量运行时策略。
+
+---
+
+## 关键函数清单
+
+| 函数 | 文件 | 职责 |
+|------|------|------|
+| `getAnthropicClient()` | `src/services/api/claude.ts` | API client 工厂 + provider 路由器（Anthropic/GCP/Bedrock）|
+| `paramsFromContext()` | `src/services/api/claude.ts` | 将 ToolUseContext 转换为 API 请求参数（cache/thinking/betas）|
+| `withRetry()` | `src/services/api/claude.ts` | 重试状态机：可重试错误、auth refresh、context overflow 处理 |
+| `buildApiError()` | `src/errors.ts` | 将 provider/raw 错误翻译为会话内可消费的 AssistantMessage |
+| `checkPermissionsAndCallTool()` | `src/query.ts` | 权限校验后执行工具，可弹出 approval UI |
+| `validateToolInput()` | — | Zod schema 校验工具入参 |
+| `setupTelemetry()` | — | 初始化 telemetry sinks，监控错误率和请求延迟 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **`withRetry()` 显式状态机**：重试逻辑（可重试判断、auth refresh、fallback model 降级、context overflow 修正、unattended 等待）全部在一个函数中集中处理，而非散落在各调用点，行为可预测、可测试。
+- **按 query source 分层重试**：`withRetry()` 区分 background/assistant/user source，不同来源使用不同重试窗口，避免 UI 层请求和后台任务竞争相同的重试 quota。
+- **`errors.ts` 翻译层避免 raw error 泄漏**：provider 错误在 `buildApiError()` 统一翻译为会话内可消费的 `AssistantMessage`，不直接暴露 SDK 内部结构给上层。
+- **Streaming fallback 有兜底**：streaming 失败后有非 streaming fallback 路径，生产环境网络不稳定时不会直接崩溃。
+
+**风险与改进点**
+
+- **`paramsFromContext()` 参数增长风险**：所有请求层标志（cache、thinking、betas、fast mode）都在此函数中处理，随时间参数列表可能无限增长，当前已经是高复杂度函数。
+- **`fastModeFailureCooldown` 缺乏配置化**：fast mode 失败后的 cooldown 时间硬编码在函数内，云端速率限制严格时无法外部调整，运维灵活性差。
+- **context overflow 修正逻辑与重试逻辑耦合**：`withRetry()` 同时承担了"重试"和"修正上下文"两种职责，若 context overflow 修正失败，错误路径与网络错误重试路径重叠，难以区分。

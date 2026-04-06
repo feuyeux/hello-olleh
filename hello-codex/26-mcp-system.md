@@ -6,6 +6,26 @@ title: "Codex 的 MCP/RMCP 系统"
 
 本篇讨论 Codex 的 MCP 客户端实现、RMCP 远程协议、工具调用审批流程和 OAuth 认证。
 
+
+**目录**
+
+- [1. MCP 系统概述](#1-mcp-系统概述)
+- [2. 核心组件](#2-核心组件)
+- [3. RMCP 客户端架构](#3-rmcp-客户端架构)
+- [4. 连接管理](#4-连接管理)
+- [5. 工具管理](#5-工具管理)
+- [6. 工具调用与审批](#6-工具调用与审批)
+- [7. OAuth 认证](#7-oauth-认证)
+- [8. MCP 协议类型](#8-mcp-协议类型)
+- [9. 沙箱状态能力](#9-沙箱状态能力)
+- [10. 超时配置](#10-超时配置)
+- [11. Codex Apps 集成](#11-codex-apps-集成)
+- [12. 与 Claude Code 的差异](#12-与-claude-code-的差异)
+- [13. 关键源码锚点](#13-关键源码锚点)
+- [14. 总结](#14-总结)
+
+---
+
 ## 1. MCP 系统概述
 
 ```mermaid
@@ -439,3 +459,32 @@ Codex 的 MCP 系统特点：
 
 *文档版本: 1.0*
 *分析日期: 2026-04-06*
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `McpServerManager` | `codex-rs/mcp-client/src/manager.rs` | 管理所有 MCP server 的生命周期：启动、健康检查、关闭 |
+| `McpClient::list_tools()` | `codex-rs/mcp-client/src/lib.rs` | 查询 MCP server 可用工具列表 |
+| `McpClient::call_tool()` | `codex-rs/mcp-client/src/lib.rs` | 发送 `tools/call` 请求并返回结构化结果 |
+| `McpClient::list_resources()` | `codex-rs/mcp-client/src/lib.rs` | 获取 MCP server 暴露的资源列表 |
+| `StdioTransport` | `codex-rs/mcp-client/src/transport.rs` | stdio 传输层：fork 子进程并通过 stdin/stdout 通信 |
+| `SseTransport` | `codex-rs/mcp-client/src/transport.rs` | SSE 传输层：连接远程 MCP server 的 HTTP SSE 端点 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **双传输模式统一接口**：stdio 和 SSE 两种传输实现同一 `Transport` trait，上层 `McpClient` 无需感知传输细节。
+- **Rust 实现的内存安全保证**：异步 MCP 通信无数据竞争，tokio runtime 保证并发工具调用的正确性。
+- **工具列表懒加载并缓存**：首次需要工具时才查询 MCP server，避免启动时的串行 handshake 延迟。
+
+**风险与改进点**
+
+- **MCP server 健康检查间隔过长**：server 崩溃后 codex 可能在下一个健康检查周期前仍尝试调用，导致工具调用失败。
+- **stdio 传输无消息边界处理**：依赖 newline 分隔 JSON-RPC 消息，server 输出截断时解析器行为未定义。
+- **多 MCP server 并发调用无隔离**：不同 server 的工具调用共享同一 tokio runtime，一个 server 阻塞可能影响其他 server 的响应。

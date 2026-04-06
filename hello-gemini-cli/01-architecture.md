@@ -6,6 +6,17 @@ title: "架构全景：多宿主外壳、Core 组合根与 Agent 执行闭环"
 
 > 基于 `gemini-cli` `v0.36.0` 源码校对。本文重点核对 `packages/cli`、`packages/core`、`packages/sdk`、`packages/a2a-server` 与 `packages/vscode-ide-companion` 的真实调用关系，而不是沿用其它文档里的抽象名称。
 
+
+**目录**
+
+- [1. 一句话结论](#1-一句话结论)
+- [2. 仓库拓扑与角色分工](#2-仓库拓扑与角色分工)
+- [3. 分层模型](#3-分层模型)
+- [4. 核心抽象](#4-核心抽象)
+- [5. 架构上的优点与真实代价](#5-架构上的优点与真实代价)
+
+---
+
 ## 1. 一句话结论
 
 Gemini CLI 不是“一个 TUI 外壳 + 一个模型 SDK”，也不是 Codex/OpenCode 那种“CLI 连接独立 app-server”的架构。它更接近一种以 `packages/core` 为运行时内核、由多个宿主在进程内直接装配的 agent runtime：
@@ -254,3 +265,23 @@ flowchart LR
 > - [13-multi-agent-remote.md](./13-multi-agent-remote.md)
 > - [17-sdk-transport.md](./17-sdk-transport.md)
 > - [22-repl-and-state.md](./22-repl-and-state.md)
+
+---
+
+## 关键类与函数清单
+
+| 类/函数 | 文件 | 职责 |
+|--------|------|------|
+| `Config` | `packages/core/src/config/config.ts` | 组合根 + 服务容器：持有 GeminiClient、ToolRegistry、PromptProvider、Scheduler 等所有核心依赖 |
+| `Config.initialize()` | `config.ts:1289` | 启动初始化：创建 ToolRegistry、MCP 服务器、Skills、GeminiClient |
+| `GeminiClient` | `packages/core/src/core/client.ts` | 模型调用门面：管理 GeminiChat、processTurn、工具声明刷新 |
+| `GeminiClient.sendMessageStream()` | `client.ts:868` | 对外流式请求入口，循环调用 `processTurn()` |
+| `GeminiClient.processTurn()` | `client.ts:585` | 单轮推理：上下文压缩、token 检查、loop detection、调用 `Turn.run()` |
+| `Turn` | `packages/core/src/core/turn.ts` | 将 `GeminiChat` 流拆解为高层事件（Thought/Content/ToolCallRequest/Finished） |
+| `GeminiChat` | `packages/core/src/core/geminiChat.ts` | 底层 Gemini API 调用封装，维护多轮历史 |
+| `Scheduler` | `packages/core/src/scheduler/scheduler.ts` | 工具调度状态机：安全闸门、并发控制、执行入口 |
+| `ToolExecutor` | `packages/core/src/scheduler/tool-executor.ts` | 真正执行工具，转换结果为 `functionResponse` |
+| `ToolRegistry` | `packages/core/src/tools/tool-registry.ts` | 注册和查询所有内置/MCP/discovered 工具 |
+| `PromptProvider` | `packages/core/src/prompts/promptProvider.ts` | 动态组装 system prompt 文本 |
+| `useGeminiStream` | `packages/cli/src/ui/hooks/useGeminiStream.ts` | UI hook：管理流处理、工具调度触发、工具结果回注（`handleCompletedTools()`） |
+| `AppContainer` | `packages/cli/src/ui/AppContainer.tsx` | CLI 宿主主组件：持有所有 UI Action 和初始化生命周期 |

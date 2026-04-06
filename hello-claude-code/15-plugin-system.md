@@ -8,6 +8,17 @@ title: "Plugin 系统：JS/TS 插件的加载、命令贡献与 Hooks 注册"
 
 > 另见：[06-extension-mcp](./06-extension-mcp.md) — Plugin 在整个扩展体系中的位置
 
+
+**目录**
+
+- [1. Plugin 是什么](#1-plugin-是什么)
+- [2. Plugin 文件格式](#2-plugin-文件格式)
+- [3. Plugin 加载机制](#3-plugin-加载机制)
+- [4. 插件贡献的能力](#4-插件贡献的能力)
+- [5. 与 Skill、MCP 的边界](#5-与-skillmcp-的边界)
+
+---
+
 ## 1. Plugin 是什么
 
 Claude Code 的 Plugin 是**以 JavaScript/TypeScript 编写的扩展模块**，可以贡献：
@@ -151,3 +162,32 @@ Plugin 可以在工具调用生命周期中注入逻辑：
 - 需要进程隔离（不信任代码/第三方服务）
 - 需要跨 AI 工具共享工具实现
 - 需要支持多语言实现
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `McpHub` | `src/services/mcp/mcpHub.ts` | MCP 客户端管理中心：维护所有 MCP server 连接的生命周期 |
+| `McpHub.connectToServer()` | `src/services/mcp/mcpHub.ts` | 建立单个 MCP server 连接：初始化传输、执行 handshake |
+| `McpHub.callTool()` | `src/services/mcp/mcpHub.ts` | 发起 MCP 工具调用，包含超时和重试 |
+| `ToolRegistry.registerMcp()` | `src/tools/registry.ts` | 将 MCP server 工具注册到统一工具表 |
+| `McpServerConfig` | `src/config/types.ts` | config.json 中 MCP server 配置类型：command/args/env/url |
+| `StdioClientTransport` | `@modelcontextprotocol/sdk` | MCP SDK 提供的 stdio 传输层 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **MCP SDK 官方实现**：使用 Anthropic 官方 `@modelcontextprotocol/sdk`，协议兼容性最佳，升级随 SDK 同步。
+- **McpHub 统一管理连接**：所有 MCP server 连接集中在 McpHub，连接状态监控和错误处理有统一入口。
+- **工具注册中心化**：built-in 和 MCP 工具通过同一 ToolRegistry 统一注册，LLM 看到的工具列表来源透明。
+
+**风险与改进点**
+
+- **McpHub 为单例**：单例模式下 MCP server 状态跨 session 共享，一个 session 的重置不会断开 server 连接，可能影响其他 session。
+- **子进程 MCP server 无泄漏保护**：进程异常退出时 stdio 模式的子进程 MCP server 可能成为孤儿进程，无 cleanup hook。
+- **MCP 工具 schema 无差异检测**：MCP server 更新工具 schema 后 Claude Code 无法感知变更，已缓存的旧 schema 可能导致调用失败。

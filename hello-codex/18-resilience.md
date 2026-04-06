@@ -6,6 +6,20 @@ title: "Codex 韧性机制：重试策略、错误归一化与恢复路径"
 
 本文档分析 Codex 的韧性系统，涵盖错误处理、重试策略与恢复机制。
 
+
+**目录**
+
+- [1. 韧性在 Codex 里的定位](#1-韧性在-codex-里的定位)
+- [2. 统一错误类型体系](#2-统一错误类型体系)
+- [3. 重试策略](#3-重试策略)
+- [4. Sandbox 隔离机制](#4-sandbox-隔离机制)
+- [5. 与 OpenCode 的韧性对比](#5-与-opencode-的韧性对比)
+- [6. 当前限制](#6-当前限制)
+- [7. 关键源码锚点](#7-关键源码锚点)
+- [8. 总结](#8-总结)
+
+---
+
 ## 1. 韧性在 Codex 里的定位
 
 Codex 的韧性机制可以概括为一套“把失败继续收束回线程状态”的系统：
@@ -185,3 +199,32 @@ Codex 的韧性机制并不只停留在“重试 + 沙箱”：
 ---
 
 > 关联阅读：[07-error-security.md](./07-error-security.md) 了解错误处理与沙箱边界的更多细节。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `BackoffRetry` | `codex-rs/core/src/retry.rs` | 指数退避重试：处理 429/503/网络错误，最大重试次数可配置 |
+| `ContextOverflowHandler` | `codex-rs/core/src/context.rs` | 检测 context length 超限并触发 trim 策略 |
+| `PanicSummary` | `codex-rs/cli/src/main.rs` | 顶层 panic 捕获：生成用户友好的错误摘要并建议操作 |
+| `CheckpointWriter` | `codex-rs/core/src/persist.rs` | 阶段性写入检查点，供进程崩溃后恢复用 |
+| `SandboxGuard` | `codex-rs/exec/src/sandbox.rs` | 沙盒 Drop guard：确保异常退出时沙盒资源被清理 |
+| `RateLimitState` | `codex-rs/core/src/retry.rs` | 跟踪当前 rate limit 窗口，避免贡献 429 的无效请求 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Rust Drop 语义实现资源保证**：`SandboxGuard` 利用 Rust RAII，即使 panic 也能通过 Drop 触发清理，无需 `finally` 块。
+- **结构化重试策略**：`BackoffRetry` 分离重试逻辑与业务逻辑，可独立测试和替换重试参数。
+- **顶层 panic 人性化处理**：`PanicSummary` 将底层 Rust panic 转换为用户可读的错误提示，降低用户困惑度。
+
+**风险与改进点**
+
+- **重试最大次数硬编码**：默认重试次数内嵌代码，用户无法通过配置文件调整，高延迟环境可能需要更多重试。
+- **checkpoint 恢复路径未充分测试**：崩溃恢复逻辑分支在正常运行路径外，测试覆盖率低，实际崩溃时行为不可预期。
+- **rate limit 状态无跨进程共享**：`RateLimitState` 存在内存中，多个 codex 实例共享同一 API key 时无法协调限流窗口。

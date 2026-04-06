@@ -13,6 +13,24 @@ title: "OpenCode A05：SessionProcessor.process()"
 
 ---
 
+
+**目录**
+
+- [1. `create()` 只初始化单轮局部状态，不维护 session 全局历史](#1-create-只初始化单轮局部状态不维护-session-全局历史)
+- [2. `process()` 的主体其实是“带重试的单轮流解释器”](#2-process-的主体其实是带重试的单轮流解释器)
+- [3. `56-353` 的核心就是：按事件类型把流翻译成 durable part 更新](#3-56-353-的核心就是按事件类型把流翻译成-durable-part-更新)
+- [4. `start` 和 `reasoning-*` 事件：先把推理痕迹落成 reasoning parts](#4-start-和-reasoning-事件先把推理痕迹落成-reasoning-parts)
+- [5. `tool-*` 事件：processor 在本轮 assistant 内维护一套 tool part 状态机](#5-tool-事件processor-在本轮-assistant-内维护一套-tool-part-状态机)
+- [6. `start-step` / `finish-step`：step part、usage、patch、summary、overflow 检测都在这里落盘](#6-start-step-finish-stepstep-partusagepatchsummaryoverflow-检测都在这里落盘)
+- [7. `text-*` 事件：assistant 正文同样是增量落成 text parts](#7-text-事件assistant-正文同样是增量落成-text-parts)
+- [8. 还有三种看起来小、但决定控制流的事件](#8-还有三种看起来小但决定控制流的事件)
+- [9. `catch` 分支处理 retry、overflow 与 fatal error](#9-catch-分支处理-retryoverflow-与-fatal-error)
+- [10. 无论成功还是失败，processor 退出前都会做一轮统一清理](#10-无论成功还是失败processor-退出前都会做一轮统一清理)
+- [11. `421-424` 返回的是给 loop 的调度信号](#11-421-424-返回的是给-loop-的调度信号)
+- [12. 回到代码行，`SessionProcessor.process()` 实现了什么](#12-回到代码行sessionprocessorprocess-实现了什么)
+
+---
+
 ## 1. `create()` 只初始化单轮局部状态，不维护 session 全局历史
 
 `packages/opencode/src/session/processor.ts:27-45`
@@ -473,3 +491,32 @@ processor 的返回值承担控制信号角色。
 
 因此，processor 承担“单轮流事件 durable writer”的职责。`loop()` 与 `processor` 分层后，session 级调度和单轮事件写回各自独立。
 
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `SessionProcessor.create()` | `session/processor.ts` | 工厂函数：为单个 session 创建带状态的 processor 实例 |
+| `SessionProcessor.process()` | `session/processor.ts` | 处理单轮 LLM 请求：组装 prompt、调用 stream、收集事件 |
+| text event handler | `session/processor.ts` | 处理 `text-delta` 流事件：追加助手消息 token |
+| tool event handler | `session/processor.ts` | 处理 `tool-call`/`tool-result` 事件：分发工具调用并收集结果 |
+| step lifecycle handler | `session/processor.ts` | 处理 `step-start`/`step-finish`：标记 step 边界与 token 使用 |
+| retry/overflow catcher | `session/processor.ts` | 捕获 context overflow 与可重试错误：触发 trimming 或 backoff |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **事件驱动流处理**：基于 AI SDK `fullStream` 的事件类型分发，每类事件独立处理，逻辑不混杂。
+- **Step 粒度持久化**：每个 step-finish 时写入 SQLite，断线重连后可从最后完成的 step 继续，而非从头重放。
+- **context overflow 自动 trim**：processor 内置 overflow 检测与 trimming 触发，无需外部协调器介入。
+
+**风险与改进点**
+
+- **流事件无 schema 验证**：从 AI SDK 接收的流事件依赖运行时结构，无编译期校验，提供商更新返回格式可能静默失败。
+- **tool handler 内置在 processor**：工具调用与流处理耦合在同一文件，工具数量增多后 processor 将成为上帝类。
+- **retry backoff 策略硬编码**：重试间隔和最大次数在 processor 内固定，无法通过配置或插件覆盖。

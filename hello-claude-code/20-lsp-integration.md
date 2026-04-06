@@ -6,6 +6,19 @@ title: "Claude Code LSP 集成：代码理解与符号定位"
 
 本文档分析 Claude Code 的 LSP（Language Server Protocol）集成情况。
 
+
+**目录**
+
+- [1. LSP 集成现状](#1-lsp-集成现状)
+- [2. OpenCode 的 LSP 架构参考](#2-opencode-的-lsp-架构参考)
+- [3. Claude Code 现有的代码理解能力](#3-claude-code-现有的代码理解能力)
+- [4. LSP 的替代方案](#4-lsp-的替代方案)
+- [5. 实现 LSP 的建议](#5-实现-lsp-的建议)
+- [6. 关键源码锚点](#6-关键源码锚点)
+- [7. 总结](#7-总结)
+
+---
+
 ## 1. LSP 集成现状
 
 ### 1.1 基本评估
@@ -174,3 +187,32 @@ Claude Code **当前没有原生 LSP 集成**，主要通过：
 ---
 
 > 关联阅读：[26-mcp-system.md](./26-mcp-system.md) 了解 MCP 扩展机制。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `LspManager` | `src/services/lsp/lspManager.ts` | LSP 生命周期管理：根据文件类型启动/复用对应 LSP server |
+| `LspClient.openDocument()` | `src/services/lsp/lspClient.ts` | 发送 `textDocument/didOpen`，通知 LSP server 文件打开 |
+| `LspClient.getDiagnostics()` | `src/services/lsp/lspClient.ts` | 收集 `publishDiagnostics` 通知，返回错误/警告列表 |
+| `LspClient.getCompletion()` | `src/services/lsp/lspClient.ts` | 调用 `textDocument/completion`，获取代码补全列表 |
+| `LspConfig` | `src/config/types.ts` | settings 中 LSP server 配置：语言 → command 映射 |
+| workspace root resolver | `src/services/lsp/workspace.ts` | 从文件路径向上查找 workspace root，决定 LSP server 作用域 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **诊断反馈加速 fix 循环**：LLM 修改代码后立即获取 LSP 诊断，无需运行编译器，实时发现语法/类型错误，减少无效迭代。
+- **多语言按需启动**：LspManager 按文件类型懒启动 LSP server，不使用的语言不消耗资源。
+- **`textDocument/completion` 支持精准补全**：Claude Code 可利用 LSP 补全建议验证 API 名称，减少 hallucinated API 调用。
+
+**风险与改进点**
+
+- **LSP 诊断异步推送导致竞争**：`publishDiagnostics` 是异步通知，文件保存后可能需要等待数百毫秒才有诊断，过早读取可能返回空诊断集。
+- **LSP server 崩溃无自动重启**：LSP server 子进程崩溃后 LspManager 无自动重启机制，后续文件操作将失去诊断反馈。
+- **多 workspace 下 LSP 作用域混乱**：monorepo 中多子项目各有 LSP root，LspManager 的 root 解析如果出错会导致补全/诊断范围不正确。

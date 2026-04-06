@@ -6,6 +6,21 @@ title: "Gemini CLI Session 持久化与会话恢复"
 
 本文档分析 Gemini CLI 的会话持久化与恢复机制。和 Codex / OpenCode 不同，它没有单独抽出一套 thread/session 协议，而是把“可恢复会话”落实为项目级 JSON 会话文件、路径计算服务和 `--resume` 解析链。
 
+
+**目录**
+
+- [1. 这套机制在源码里的真实位置](#1-这套机制在源码里的真实位置)
+- [2. 会话文件是什么](#2-会话文件是什么)
+- [3. `--resume` 真实是怎么走的](#3-resume-真实是怎么走的)
+- [4. 持久化不是一次性保存，而是增量录制](#4-持久化不是一次性保存而是增量录制)
+- [5. Checkpoint 需要单独澄清](#5-checkpoint-需要单独澄清)
+- [6. 与 OpenCode 的 Session 对比](#6-与-opencode-的-session-对比)
+- [7. 当前限制](#7-当前限制)
+- [8. 关键源码锚点](#8-关键源码锚点)
+- [9. 总结](#9-总结)
+
+---
+
 ## 1. 这套机制在源码里的真实位置
 
 Gemini CLI 当前与 session 直接相关的主链主要由四个节点组成：
@@ -149,3 +164,33 @@ Gemini CLI 的 session 机制本质上是“conversation 文件 + resume 解析 
 ---
 
 > 关联阅读：[05-state-management.md](./05-state-management.md) 了解状态管理详情。
+
+---
+
+## 关键函数清单
+
+| 函数/类型 | 文件 | 职责 |
+|----------|------|------|
+| `Storage.initialize()` | `packages/core/src/config/storage.ts` | 计算 `~/.gemini/tmp/<project-hash>/chats/` 等持久化路径 |
+| `ChatRecordingService.recordMessage()` | `packages/core/src/services/chatRecordingService.ts` | 增量录制消息到 conversation JSON 文件 |
+| `SessionSelector.resolveSession()` | `packages/cli/src/utils/sessionUtils.ts` | 将 `--resume latest|<index>|<uuid>` 解析为具体会话文件路径 |
+| `config.setSessionId()` | `packages/core/src/config/config.ts` | 设置 session ID，确保后续录制续写同一文件 |
+| `startInteractiveUI()` | `packages/cli/src/gemini.tsx:577-609` | 恢复链路入口：将选中 session 传入 UI 启动 |
+| `GitService.getDiff()` | `packages/core/src/services/gitService.ts` | Checkpoint 时捕获工作区 Git diff |
+| `restore` command | `packages/core/src/commands/restore.ts` | Git 驱动的工作区还原命令 |
+
+---
+
+## 代码质量评估
+
+**优点**
+
+- **Conversation 录制增量写入**：`ChatRecordingService` 持续写入，非会话结束时一次性保存，进程意外退出不会全量丢失对话历史。
+- **`--resume` 语义灵活**：支持 `latest`、列表序号、显式 UUID 三种方式选择历史会话，用户体验友好。
+- **Checkpoint 集成 Git**：`general.checkpointing.enabled` 可选，工作区恢复通过 Git 管理，与版本控制体系天然对齐。
+
+**风险与改进点**
+
+- **会话存储为 JSON 文件**：JSON 文件无原子写入保证，多进程并发写同一文件时存在竞态风险，相比 SQLite 事务安全性低。
+- **无 Thread 协议抽象**：恢复语义是"续写 conversation 文件"，不是重建完整 runtime 对象图，部分工具调用上下文（如待审批、运行中 tool）无法恢复。
+- **无并发会话支持**：单进程模型，无法同时运行多个独立 session，相比 OpenCode thread 并发能力弱。
