@@ -212,13 +212,16 @@ async function generatePDF(inputPath, outputPath) {
 
   let browser;
   if (process.env.CI) {
+    console.log('Using @sparticuz/chromium in CI');
     const chromium = require('@sparticuz/chromium');
     browser = await puppeteer.launch({
+      executablePath: chromium.executablePath(),
       headless: 'new',
       args: chromium.args,
       defaultViewport: chromium.defaultViewport
     });
   } else {
+    console.log('Using local Chrome');
     const chromePath = findChrome();
     if (!chromePath) {
       throw new Error('Chrome/Chromium not found');
