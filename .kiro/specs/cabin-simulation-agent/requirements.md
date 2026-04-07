@@ -292,20 +292,20 @@ flowchart LR
 
 ### Requirement 15: 技术栈实现
 
-**User Story:** 作为系统架构师，我希望采用 Python + Rust 混合架构（进程间通信模式），以便在保持开发灵活性的同时获得性能关键路径的高性能，并实现进程隔离和独立部署。
+**User Story:** 作为系统架构师，我希望采用纯 Python 实现，以便简化开发、部署和维护，同时利用 Python 丰富的生态系统和异步编程能力。
 
 #### Acceptance Criteria
 
-1. THE System SHALL 使用 Python 实现 CLI 启动器、HTTP API 服务器、LLM 服务集成和业务编排逻辑。
-2. THE System SHALL 使用 Rust 实现独立二进制（iota），包括内部 HTTP 服务器、WebSocket 连接管理、会话状态管理、日志系统和评测量化计算。
-3. THE System SHALL 通过 subprocess + HTTP/JSON-RPC 实现 Python 和 Rust 之间的进程间通信，不使用 FFI/PyO3。
-4. THE Python 层 SHALL 使用 subprocess.Popen() 启动 Rust 二进制，并通过 HTTP 客户端（httpx/aiohttp）与 Rust 通信。
-5. THE Rust 层 SHALL 提供内部 HTTP 服务器（axum），监听 127.0.0.1:9527，接收 Python 请求。
-6. THE Rust 层 SHALL 通过 HTTP 客户端（reqwest）回调 Python 的 LLM 服务（127.0.0.1:8001）。
-7. THE System SHALL 参考 codex 项目的进程间通信模式和架构模式。
-8. THE System SHALL 通过 JSON 在 Python 和 Rust 之间序列化传递数据（使用 serde_json 和 orjson）。
-9. THE Rust 二进制 SHALL 可独立编译和运行，无需 Python 环境。
-10. THE Python 包安装 SHALL 不需要 Rust 工具链。
+1. THE System SHALL 使用 Python 实现所有组件，包括 CLI、HTTP API 服务器、LLM 服务集成、业务编排逻辑、WebSocket 管理、会话管理、日志系统和评测量化。
+2. THE System SHALL 使用 asyncio 作为核心并发模型，实现高性能异步处理。
+3. THE System SHALL 使用 FastAPI 提供 HTTP REST API 接口。
+4. THE System SHALL 使用 websockets 库实现 WebSocket 客户端连接管理。
+5. THE System SHALL 使用 Pydantic 进行数据验证和序列化。
+6. THE System SHALL 使用 structlog 实现结构化异步日志。
+7. THE System SHALL 直接集成 OpenAI 和 Anthropic Python SDK。
+8. THE System SHALL 使用 orjson 进行高性能 JSON 序列化。
+9. THE System SHALL 支持虚拟环境部署，使用 pip 或 poetry 管理依赖。
+10. THE System SHALL 支持跨平台运行（Linux, macOS, Windows）。
 
 ### Requirement 16: iota 运行时引擎
 
@@ -316,18 +316,16 @@ flowchart LR
 1. THE System SHALL 将核心运行时引擎命名为 "iota"。
 2. THE iota 引擎 SHALL 参考以下项目的实现模式：
    - claude-code: Query engine, tool system, session management
-   - claw-code: High-performance runtime, permission system, MCP support
-   - codex: Native execution, sandbox, config hierarchy
+   - opencode: LLM integration, prompt engineering, async patterns
    - gemini-cli: Streaming, context management
-   - opencode: LLM integration, prompt engineering
 3. THE iota 引擎 SHALL 负责会话生命周期管理（创建、运行、暂停、恢复、终止）。
 4. THE iota 引擎 SHALL 实现模块化工具系统，每个工具独立实现，通过统一接口注册和调用。
-5. THE iota 引擎 SHALL 实现细粒度权限控制模型，支持用户确认流程和权限策略配置。
-6. THE iota 引擎 SHALL 支持配置层级：全局配置（`~/.iota/config.toml`）、项目配置（`.iota/config.toml`）、运行时覆盖（`--config` flags）。
-7. THE iota 引擎 SHALL 默认使用流式处理所有 LLM 调用，支持增量渲染和取消操作。
-8. THE iota 引擎 SHALL 实现系统提示词模板、上下文注入和 Few-shot examples 的 Prompt Engineering 能力。
-9. THE iota 引擎 SHALL 实现错误分类、重试策略和降级处理机制。
-10. THE iota 引擎 SHALL 支持上下文构建、压缩和持久化。
+5. THE iota 引擎 SHALL 支持配置层级：全局配置（`~/.iota/config.toml`）、项目配置（`.iota/config.toml`）、运行时覆盖（`--config` flags）。
+6. THE iota 引擎 SHALL 默认使用流式处理所有 LLM 调用，支持增量渲染和取消操作。
+7. THE iota 引擎 SHALL 实现系统提示词模板、上下文注入和 Few-shot examples 的 Prompt Engineering 能力。
+8. THE iota 引擎 SHALL 实现错误分类、重试策略和降级处理机制。
+9. THE iota 引擎 SHALL 支持上下文构建、压缩和持久化。
+10. THE iota 引擎 SHALL 使用 asyncio 实现所有异步操作。
 
 ### Requirement 17: 模块结构
 
@@ -336,31 +334,34 @@ flowchart LR
 #### Acceptance Criteria
 
 1. THE System SHALL 按以下模块结构组织代码：
-   - `iota/cli/`: Python CLI 启动器
-     - `launcher.py`: 使用 subprocess 启动 Rust 二进制
-     - `config.py`: 配置管理
-     - `signals.py`: 信号转发
-   - `iota/api/`: Python HTTP API 服务器
-     - `server.py`: FastAPI 应用
+   - `iota/__init__.py`: 包初始化
+   - `iota/__main__.py`: CLI 入口点
+   - `iota/cli/`: 命令行接口
+     - `main.py`: CLI 命令（Click/Typer）
+     - `config.py`: 配置加载
+   - `iota/api/`: HTTP API 服务器
+     - `app.py`: FastAPI 应用
      - `routes/`: API 路由
-     - `client.py`: HTTP 客户端（与 Rust 通信）
-   - `iota/llm/`: Python LLM 服务
-     - `server.py`: HTTP 服务器（接收 Rust 回调）
-     - `openai_client.py`: OpenAI SDK 集成
-     - `anthropic_client.py`: Anthropic SDK 集成
-   - `iota/runtime/`: Python 仿真运行时
-     - `coordinator/`: 仿真协调器
-     - `engines/`: 仿真引擎（environment, user_state, behavior）
-     - `decision/`: 决策引擎
-   - `iota/rust/`: Rust 独立二进制
-     - `src/main.rs`: 入口点，HTTP 服务器设置
-     - `src/server/`: HTTP 服务器（axum）
-     - `src/core/`: 核心运行时引擎（websocket, session, logging, evaluation）
-     - `src/client/`: HTTP 客户端（回调 Python LLM 服务）
-     - `src/models/`: 数据模型（serde）
-2. THE Python 模块 SHALL 通过 HTTP 客户端与 Rust 二进制通信。
-3. THE Rust 二进制 SHALL 通过 HTTP 客户端回调 Python LLM 服务。
-4. THE 模块之间 SHALL 通过 HTTP/JSON-RPC 接口交互，实现进程隔离。
+     - `models.py`: Pydantic 模型
+   - `iota/llm/`: LLM 服务层
+     - `service.py`: LLM 服务接口
+     - `providers/`: LLM 提供商（openai.py, anthropic.py）
+     - `prompts/`: 提示词模板
+   - `iota/simulation/`: 仿真运行时
+     - `coordinator.py`: 仿真协调器
+     - `engines/`: 仿真引擎（environment.py, user_state.py, behavior.py, memory.py）
+     - `decision.py`: 决策引擎
+     - `scenario.py`: 场景初始化
+   - `iota/core/`: 核心运行时组件
+     - `session_manager.py`: 会话管理
+     - `websocket_manager.py`: WebSocket 管理
+     - `log_manager.py`: 异步日志
+     - `evaluation.py`: 评测引擎
+   - `iota/models/`: 数据模型（Pydantic）
+   - `iota/utils/`: 工具函数
+2. THE 所有模块 SHALL 在同一 Python 进程中运行。
+3. THE 模块之间 SHALL 通过直接函数调用交互，无需序列化。
+4. THE 所有 I/O 操作 SHALL 使用 asyncio 异步实现。
 
 ### Requirement 18: 构建与部署
 
@@ -369,17 +370,18 @@ flowchart LR
 #### Acceptance Criteria
 
 1. THE System SHALL 提供开发环境构建流程：
-   - 使用 `cargo build --release` 构建 Rust 二进制（iota/rust/target/release/iota）
-   - 使用 `python -m cli.launcher --rust-binary ./rust/target/release/iota` 启动系统
-   - 可独立运行 Rust 二进制进行测试：`./target/release/iota --port 9527`
+   - 使用 `python -m venv venv` 创建虚拟环境
+   - 使用 `pip install -e ".[dev]"` 安装开发依赖
+   - 使用 `python -m iota start --config config.toml` 或 `iota start --config config.toml` 启动系统
+   - 使用 `uvicorn iota.api.app:app --reload --port 8000` 启动开发服务器（支持热重载）
 2. THE System SHALL 提供生产环境构建流程：
-   - 使用 `cargo build --release --target x86_64-unknown-linux-musl` 构建生产 Rust 二进制
-   - 使用 `pip install -e .` 安装 Python 包
-   - 使用 `iota start --config config.toml` 运行系统（Python 自动启动 Rust 二进制）
-3. THE Rust 二进制 SHALL 独立编译，无需 Python 环境。
-4. THE Python 包安装 SHALL 不需要 Rust 工具链。
-5. THE System SHALL 支持跨平台构建（Linux, macOS, Windows）。
-6. THE System SHALL 提供 Docker 镜像用于容器化部署（多阶段构建：Rust builder + Python runtime）。
+   - 使用 `pip install -e .` 安装生产依赖
+   - 使用 `uvicorn iota.api.app:app --host 0.0.0.0 --port 8000 --workers 4` 运行系统
+   - 或使用 `gunicorn iota.api.app:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000` 运行系统
+3. THE System SHALL 只需要 Python 环境（3.11+），无需其他语言工具链。
+4. THE System SHALL 支持跨平台运行（Linux, macOS, Windows）。
+5. THE System SHALL 提供 Docker 镜像用于容器化部署（单阶段构建：Python runtime）。
+6. THE System SHALL 支持使用 pip 或 poetry 管理依赖。
 
 ## Correctness Properties
 
