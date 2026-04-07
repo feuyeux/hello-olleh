@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: "Agent Loop 闭环拓扑：四大 AI Coding 工具的设计哲学对比"
 ---
 
