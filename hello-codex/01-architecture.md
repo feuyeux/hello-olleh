@@ -50,7 +50,7 @@ JS/TS 层则由 pnpm monorepo 管理，包含 3 个 package：
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-graph LR
+flowchart LR
     subgraph L0["Layer 0: 基础工具"]
         direction TB
         utils["codex-utils-* (26)"]
@@ -175,7 +175,7 @@ export interface ResponseEvent {
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-graph LR
+flowchart LR
     subgraph Rust Runtime
         AS["app-server<br/>(axum)"]
         CORE["codex-core"]

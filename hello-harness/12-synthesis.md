@@ -16,7 +16,7 @@ title: "12 - 综合裁定"
 纵轴：**控制平面显式化程度**（规则是否对团队透明、可审查、可版本化）
 
 ```mermaid
-%%{init:{'theme':'neutral'}}%%
+%%{init: {'theme': 'neutral'}}%%
 quadrantChart
     title Harness Engineering 四工程定位
     x-axis 运行时连续性成熟度 (Runtime Continuity) --> 高

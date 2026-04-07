@@ -103,21 +103,21 @@ API Provider（Anthropic / Bedrock / Vertex）
 ## 5. 推荐阅读顺序
 
 **入门（1 小时）**：
-1. [01-architecture](../01-architecture/) — 架构全景
-2. [02-startup-flow](../02-startup-flow/) — 启动流程
-3. [03-agent-loop](../03-agent-loop/) — 核心执行循环
+1. [01-architecture](./01-architecture/) — 架构全景
+2. [02-startup-flow](./02-startup-flow/) — 启动流程
+3. [03-agent-loop](./03-agent-loop/) — 核心执行循环
 
 **深入核心（3 小时）**：
-4. [04-tool-system](../04-tool-system/) — 工具系统
-5. [05-state-management](../05-state-management/) — 状态管理
-6. [10-session-resume](../10-session-resume/) — 会话持久化
-7. [12-prompt-system](../12-prompt-system/) — Prompt 构建
+4. [04-tool-system](./04-tool-system/) — 工具系统
+5. [05-state-management](./05-state-management/) — 状态管理
+6. [10-session-resume](./10-session-resume/) — 会话持久化
+7. [12-prompt-system](./12-prompt-system/) — Prompt 构建
 
 **专项研究**：
-- 扩展体系 → [06-extension-mcp](../06-extension-mcp/) + [14-skill-system](../14-skill-system/) + [15-plugin-system](../15-plugin-system/)
-- 可观测性 → [09-observability](../09-observability/)
-- 韧性机制 → [18-resilience](../18-resilience/)
-- Claude Code 特有 → [21-hooks-lifecycle](../21-hooks-lifecycle/) + [22-repl-and-state](../22-repl-and-state/) + [23-bridge-system](../23-bridge-system/)
+- 扩展体系 → [06-extension-mcp](./06-extension-mcp/) + [14-skill-system](./14-skill-system/) + [15-plugin-system](./15-plugin-system/)
+- 可观测性 → [09-observability](./09-observability/)
+- 韧性机制 → [18-resilience](./18-resilience/)
+- Claude Code 特有 → [21-hooks-lifecycle](./21-hooks-lifecycle/) + [22-repl-and-state](./22-repl-and-state/) + [23-bridge-system](./23-bridge-system/)
 
 ## 6. 与其他系统的定位对比
 

@@ -89,7 +89,7 @@ for handler in plan.handlers {
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-graph LR
+flowchart LR
     A["模型输出<br/>ResponseItem"] --> B["Phase 1: 解析<br/>ToolRouter::build_tool_call()"]
     B --> C["Phase 2: 路由<br/>ToolRouter::dispatch_tool_call_*()"]
     C --> D["Phase 3: 注册表分发<br/>ToolRegistry::dispatch_any()"]
