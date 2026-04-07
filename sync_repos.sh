@@ -8,10 +8,10 @@ failed_clones=()
 repos=(
     "https://github.com/openai/codex.git"
     "https://github.com/anomalyco/opencode.git"
-    "https://github.com/openclaw/openclaw.git"
     "https://github.com/google-gemini/gemini-cli.git"
-    "https://github.com/anthropics/claude-code.git"
-    "https://github.com/zeroclaw-labs/zeroclaw.git"
+    # "https://github.com/openclaw/openclaw.git"  # 不在分析范围内
+    # "https://github.com/anthropics/claude-code.git"  # claude-code 为本地已有目录，非远程仓库
+    # "https://github.com/zeroclaw-labs/zeroclaw.git"  # 不在分析范围内
 )
 
 base_dir="$(pwd)"
