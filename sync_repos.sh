@@ -5,49 +5,44 @@
 
 failed_clones=()
 
-repos=(
-    "https://github.com/openai/codex.git"
-    "https://github.com/anomalyco/opencode.git"
-    "https://github.com/google-gemini/gemini-cli.git"
-    # "https://github.com/openclaw/openclaw.git"  # 不在分析范围内
-    # "https://github.com/anthropics/claude-code.git"  # claude-code 为本地已有目录，非远程仓库
-    # "https://github.com/zeroclaw-labs/zeroclaw.git"  # 不在分析范围内
+# 仓库及对应版本（与 README 一致）
+declare -A repo_tags=(
+    ["openai/codex.git"]="rust-v0.118.0"
+    ["anomalyco/opencode.git"]="v1.3.2"
+    ["google-gemini/gemini-cli.git"]="v0.36.0"
+    # ["openclaw/openclaw.git"]=""  # 不在分析范围内
+    # ["anthropics/claude-code.git"]=""  # claude-code 为本地已有目录，非远程仓库
+    # ["zeroclaw-labs/zeroclaw.git"]=""  # 不在分析范围内
 )
 
 base_dir="$(pwd)"
 
-# 检查gh是否可用
-if command -v gh &> /dev/null; then
-    use_gh=true
-    echo "使用 gh 命令"
-else
-    use_gh=false
-    echo "gh 未安装，使用 git 命令"
-fi
-
-for repo_url in "${repos[@]}"; do
+for repo_url in "${!repo_tags[@]}"; do
+    tag="${repo_tags[$repo_url]}"
     # 从URL提取仓库名作为目录名
     repo_name=$(basename "$repo_url" .git)
     repo_path="$base_dir/$repo_name"
 
     if [ -d "$repo_path" ]; then
         echo ""
-        echo "=== 更新 $repo_name ==="
+        echo "=== 更新 $repo_name ($tag) ==="
         cd "$repo_path"
         git fetch origin --quiet
-        # 获取远程默认分支名
-        remote_default=$(git remote show origin 2>/dev/null | grep "HEAD branch" | sed 's/.*: //')
-        if [ -n "$remote_default" ]; then
-            git checkout --force "$remote_default" 2>/dev/null
-            git reset --hard "origin/$remote_default"
-            git clean -fdx -e "!/.gitkeep" 2>/dev/null
-            if [ "$use_gh" = true ]; then
-                gh repo sync -b "$remote_default" --force
+        if [ -n "$tag" ]; then
+            git checkout --force "$tag" 2>/dev/null
+            git reset --hard "$tag"
+        else
+            # 无指定 tag，取默认分支
+            remote_default=$(git remote show origin 2>/dev/null | grep "HEAD branch" | sed 's/.*: //')
+            if [ -n "$remote_default" ]; then
+                git checkout --force "$remote_default" 2>/dev/null
+                git reset --hard "origin/$remote_default"
             fi
         fi
+        git clean -fdx -e "!/.gitkeep" 2>/dev/null
     else
         echo ""
-        echo "=== 克隆 $repo_name ==="
+        echo "=== 克隆 $repo_name ($tag) ==="
         if ! git clone "$repo_url" "$repo_path" 2>&1; then
             echo "✗ 克隆失败: $repo_url"
             echo "  可能原因:"
@@ -57,6 +52,12 @@ for repo_url in "${repos[@]}"; do
             failed_clones+=("$repo_url")
         else
             echo "✓ 克隆成功: $repo_name"
+            cd "$repo_path"
+            if [ -n "$tag" ]; then
+                echo "=== 切换到 $tag ==="
+                git checkout --force "$tag" 2>/dev/null
+                git reset --hard "$tag"
+            fi
         fi
     fi
 done
