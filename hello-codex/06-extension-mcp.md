@@ -34,7 +34,7 @@ Codex 的扩展体系分为五层：
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-graph LR
+flowchart LR
     subgraph 外部
         MCP["MCP Servers<br/>(rmcp)"]
         PLG["Plugins<br/>(marketplace)"]

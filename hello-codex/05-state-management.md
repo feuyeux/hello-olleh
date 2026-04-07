@@ -26,7 +26,7 @@ Codex 的状态模型分为三层：Thread（线程）、Turn（回合）、Thre
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-graph LR
+flowchart LR
     T["Thread<br/>id, preview, model_provider<br/>status, cwd, source"]
     TN["Turn<br/>id, status, error<br/>items: Vec&lt;ThreadItem&gt;"]
     TI["ThreadItem<br/>UserMessage | AgentMessage<br/>CommandExecution | FileChange<br/>McpToolCall | Reasoning | Plan"]

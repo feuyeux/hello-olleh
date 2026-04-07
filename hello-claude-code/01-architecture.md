@@ -37,10 +37,7 @@ title: "src 工程架构全景"
 ## 1. 架构分层图
 
 ```mermaid
----
-config:
-  theme: 'neutral'
----
+%%{init: {'theme': 'neutral'}}%%
 flowchart LR
     subgraph Entry[入口与启动]
         A1[main.tsx]

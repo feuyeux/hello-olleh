@@ -107,11 +107,11 @@ sequenceDiagram
 
 | 主线节点 | 需要补哪篇专题稿 |
 | --- | --- |
-| 入口与 transport | [19-settings-config.md](./19-settings-config.md)、[31-infra.md](./31-infra.md) |
-| 输入编译 | [30-model.md](./30-model.md)、[11-context-management.md](./11-context-management.md) |
+| 入口与 transport | [19-settings-config.md](./19-settings-config.md)、[33-infra.md](./33-infra.md) |
+| 输入编译 | [32-model.md](./32-model.md)、[11-context-management.md](./11-context-management.md) |
 | 编排主线 | [13-multi-agent.md](./13-multi-agent.md)、[18-resilience.md](./18-resilience.md) |
-| 模型请求 | [11-context-management.md](./11-context-management.md)、[34-design-philosophy.md](./34-design-philosophy.md)、[23-bridge-system.md](./23-bridge-system.md) |
-| durable 写回 | [31-infra.md](./31-infra.md) |
+| 模型请求 | [11-context-management.md](./11-context-management.md)、[36-design-philosophy.md](./36-design-philosophy.md)、[23-bridge-system.md](./23-bridge-system.md) |
+| durable 写回 | [33-infra.md](./33-infra.md) |
 
 原因很简单：主线稿回答“代码怎么走”，专题稿回答“为什么这条路能稳定成立”。
 
@@ -130,10 +130,10 @@ sequenceDiagram
 
 ## 6. 推荐阅读顺序
 
-1. 先读 [17-sdk-transport.md](./17-sdk-transport.md) 和 [26-server-routing.md](./26-server-routing.md)，把 transport 边界和 runtime 边界切开。
-2. 再读 [12-prompt-system.md](./12-prompt-system.md) 到 [28-stream-processor.md](./28-stream-processor.md)，把 `prompt -> loop -> processor` 的交接链吃透。
-3. 接着看 [29-llm-request.md](./29-llm-request.md) 和 [10-session-resume.md](./10-session-resume.md)，理解“请求怎样发出去、结果怎样落回来”。
-4. 最后回看 [30-model.md](./30-model.md)、[11-context-management.md](./11-context-management.md)、[13-multi-agent.md](./13-multi-agent.md)、[18-resilience.md](./18-resilience.md)、[31-infra.md](./31-infra.md)、[19-settings-config.md](./19-settings-config.md) 和 [23-bridge-system.md](./23-bridge-system.md)，补对象模型、上下文工程、韧性、基础设施，以及启动配置和扩展系统。
+1. 先读 [17-sdk-transport.md](./17-sdk-transport.md) 和 [28-server-routing.md](./28-server-routing.md)，把 transport 边界和 runtime 边界切开。
+2. 再读 [12-prompt-system.md](./12-prompt-system.md) 到 [30-stream-processor.md](./30-stream-processor.md)，把 `prompt -> loop -> processor` 的交接链吃透。
+3. 接着看 [31-llm-request.md](./31-llm-request.md) 和 [10-session-resume.md](./10-session-resume.md)，理解”请求怎样发出去、结果怎样落回来”。
+4. 最后回看 [32-model.md](./32-model.md)、[11-context-management.md](./11-context-management.md)、[13-multi-agent.md](./13-multi-agent.md)、[18-resilience.md](./18-resilience.md)、[33-infra.md](./33-infra.md)、[19-settings-config.md](./19-settings-config.md) 和 [23-bridge-system.md](./23-bridge-system.md)，补对象模型、上下文工程、韧性、基础设施，以及启动配置和扩展系统。
 
 ---
 

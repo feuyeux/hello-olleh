@@ -27,3 +27,10 @@ title: "Harness Engineering Framework 源码分析"
     <a class="chapter-card" href="13-agent-loop"><div class="chapter-number">13</div><div class="chapter-title">Agent Loop 闭环拓扑</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 </div>
+
+<footer class="site-footer page-wrapper">
+  <div class="footer-links">
+    <a href="https://github.com/feuyeux/hello-olleh">GitHub</a>
+    <a href="/hello-olleh/">返回首页</a>
+  </div>
+</footer>

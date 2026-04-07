@@ -25,7 +25,7 @@ title: "性能与代码质量：大文件处理、流式传输、优缺点分析
 ### 五阶段管线
 
 ```mermaid
-graph LR
+flowchart LR
     A["1. MarkdownStreamCollector\n原始 delta 累积"] --> B["2. StreamState (VecDeque)\n换行门控 + 时间戳"]
     B --> C["3. StreamController\nHeader 管理 + commit tick"]
     C --> D["4. AdaptiveChunkingPolicy\nSmooth vs CatchUp 模式"]
@@ -86,7 +86,7 @@ tokio::select! {
 ### 五阶段管线
 
 ```mermaid
-graph LR
+flowchart LR
     A["1. MarkdownStreamCollector\n原始 delta 累积"] --> B["2. StreamState (VecDeque)\n换行门控 + 时间戳"]
     B --> C["3. StreamController\nHeader 管理 + commit tick"]
     C --> D["4. AdaptiveChunkingPolicy\nSmooth vs CatchUp 模式"]

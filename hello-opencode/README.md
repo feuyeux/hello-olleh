@@ -78,45 +78,48 @@ flowchart LR
 | [07-error-security.md](./07-error-security.md) | 错误处理与安全性：异常捕获、重试策略、认证鉴权、敏感信息隔离 |
 | [08-performance.md](./08-performance.md) | 性能与代码质量：流式传输、SSE、Bun Runtime 优势、优缺点分析 |
 
-### 3.2 `10-17`：执行主线深挖
+### 3.2 `09-18`：执行主线深挖
 
-这一组顺着调用链走，专门解释“请求怎样一跳一跳落到 durable state”。
+这一组顺着调用链走，专门解释"请求怎样一跳一跳落到 durable state"。
 
 | 文件 | 作用 |
 | --- | --- |
-| [10-mainline-index.md](./10-mainline-index.md) | 执行主线索引 |
-| [11-entry-transports.md](./11-entry-transports.md) | 入口与传输适配 |
-| [12-server-routing.md](./12-server-routing.md) | Server 与路由边界 |
-| [13-prompt-compilation.md](./13-prompt-compilation.md) | 输入编译 |
-| [14-session-loop.md](./14-session-loop.md) | Session Loop |
-| [15-stream-processor.md](./15-stream-processor.md) | Stream Processor |
-| [16-llm-request.md](./16-llm-request.md) | 模型请求 |
-| [17-durable-state.md](./17-durable-state.md) | Durable State 写回 |
+| [09-observability.md](./09-observability.md) | 可观测性 |
+| [10-session-resume.md](./10-session-resume.md) | Session 恢复与回放 |
+| [11-context-management.md](./11-context-management.md) | 上下文工程 |
+| [12-prompt-system.md](./12-prompt-system.md) | Prompt 系统 |
+| [13-multi-agent.md](./13-multi-agent.md) | 多 Agent 协作 |
+| [14-skill-system.md](./14-skill-system.md) | Skill 系统 |
+| [15-plugin-system.md](./15-plugin-system.md) | Plugin 系统 |
+| [16-memory-system.md](./16-memory-system.md) | Memory 系统 |
+| [17-sdk-transport.md](./17-sdk-transport.md) | SDK 与传输层 |
+| [18-resilience.md](./18-resilience.md) | 韧性机制 |
 
-### 3.3 `20-37`：专题与补充
+### 3.3 `20-38`：专题与补充
 
 这一组解释为什么主线能够稳定成立，并补上调试与插件深挖。
 
 | 文件 | 作用 |
 | --- | --- |
-| [20-model.md](./20-model.md) | Durable 对象模型 |
-| [21-context.md](./21-context.md) | 上下文工程 |
-| [22-orchestration.md](./22-orchestration.md) | 高级编排 |
-| [23-resilience.md](./23-resilience.md) | 韧性机制 |
-| [24-infra.md](./24-infra.md) | 基础设施 |
-| [25-observability.md](./25-observability.md) | 可观测性 |
-| [26-lsp.md](./26-lsp.md) | LSP 集成 |
-| [27-startup-config.md](./27-startup-config.md) | 启动与配置加载 |
-| [28-extension-surface.md](./28-extension-surface.md) | 扩展面 |
-| [29-skill-system.md](./29-skill-system.md) | Skill 系统 |
-| [30-worktree-sandbox.md](./30-worktree-sandbox.md) | Worktree 与 Sandbox |
-| [31-memory.md](./31-memory.md) | Memory |
-| [32-mcp.md](./32-mcp.md) | MCP 细节 |
-| [33-design-philosophy.md](./33-design-philosophy.md) | 设计哲学 |
-| [34-prompt-diff.md](./34-prompt-diff.md) | 提示词对比 |
-| [35-debugging.md](./35-debugging.md) | 调试指南 |
-| [36-plugin-system.md](./36-plugin-system.md) | Plugin 系统深挖 |
-| [37-project-init-analysis.md](./37-project-init-analysis.md) | 项目初始化分析报告 |
+| [20-lsp-integration.md](./20-lsp-integration.md) | LSP 集成 |
+| [21-hooks-lifecycle.md](./21-hooks-lifecycle.md) | Hooks 与生命周期 |
+| [22-repl-and-state.md](./22-repl-and-state.md) | REPL 与状态 |
+| [23-bridge-system.md](./23-bridge-system.md) | Bridge 系统 |
+| [24-project-init-analysis.md](./24-project-init-analysis.md) | 项目初始化分析 |
+| [25-input-command-queue.md](./25-input-command-queue.md) | 输入与命令队列 |
+| [26-mcp-system.md](./26-mcp-system.md) | MCP 系统 |
+| [27-debugging.md](./27-debugging.md) | 调试指南 |
+| [28-server-routing.md](./28-server-routing.md) | Server 与路由 |
+| [29-session-loop.md](./29-session-loop.md) | Session Loop |
+| [30-stream-processor.md](./30-stream-processor.md) | Stream Processor |
+| [31-llm-request.md](./31-llm-request.md) | 模型请求 |
+| [32-model.md](./32-model.md) | 对象模型 |
+| [33-infra.md](./33-infra.md) | 基础设施 |
+| [34-worktree-sandbox.md](./34-worktree-sandbox.md) | Worktree 与 Sandbox |
+| [35-mcp-details.md](./35-mcp-details.md) | MCP 细节 |
+| [36-design-philosophy.md](./36-design-philosophy.md) | 设计哲学 |
+| [37-prompt-diff.md](./37-prompt-diff.md) | 提示词对比 |
+| [38-mainline-index.md](./38-mainline-index.md) | 执行主线索引 |
 
 ---
 
@@ -124,34 +127,30 @@ flowchart LR
 
 ### 4.1 想快速建立整体地图
 
-1. [00-opencode_ko.md](./00-opencode_ko.md)
-2. [01-architecture.md](./01-architecture.md)
-3. [02-startup-flow.md](./02-startup-flow.md)
-4. [03-agent-loop.md](./03-agent-loop.md)
-5. [05-state-management.md](./05-state-management.md)
+1. [01-architecture.md](./01-architecture.md)
+2. [02-startup-flow.md](./02-startup-flow.md)
+3. [03-agent-loop.md](./03-agent-loop.md)
+4. [05-state-management.md](./05-state-management.md)
 
 ### 4.2 想严格顺着执行链阅读
 
-1. [10-mainline-index.md](./10-mainline-index.md)
-2. [11-entry-transports.md](./11-entry-transports.md)
-3. [12-server-routing.md](./12-server-routing.md)
-4. [13-prompt-compilation.md](./13-prompt-compilation.md)
-5. [14-session-loop.md](./14-session-loop.md)
-6. [15-stream-processor.md](./15-stream-processor.md)
-7. [16-llm-request.md](./16-llm-request.md)
-8. [17-durable-state.md](./17-durable-state.md)
+1. [38-mainline-index.md](./38-mainline-index.md)
+2. [09-observability.md](./09-observability.md)
+3. [11-context-management.md](./11-context-management.md)
+4. [17-sdk-transport.md](./17-sdk-transport.md)
+5. [28-server-routing.md](./28-server-routing.md)
+6. [29-session-loop.md](./29-session-loop.md)
+7. [30-stream-processor.md](./30-stream-processor.md)
+8. [31-llm-request.md](./31-llm-request.md)
 
 ### 4.3 想补结构性背景
 
-1. [20-model.md](./20-model.md)
-2. [21-context.md](./21-context.md)
-3. [22-orchestration.md](./22-orchestration.md)
-4. [23-resilience.md](./23-resilience.md)
-5. [24-infra.md](./24-infra.md)
-6. [28-extension-surface.md](./28-extension-surface.md)
-7. [29-skill-system.md](./29-skill-system.md)
-8. [32-mcp.md](./32-mcp.md)
-9. [33-design-philosophy.md](./33-design-philosophy.md)
+1. [32-model.md](./32-model.md)
+2. [18-resilience.md](./18-resilience.md)
+3. [33-infra.md](./33-infra.md)
+4. [14-skill-system.md](./14-skill-system.md)
+5. [26-mcp-system.md](./26-mcp-system.md)
+6. [36-design-philosophy.md](./36-design-philosophy.md)
 
 ---
 
