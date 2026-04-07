@@ -111,13 +111,12 @@ flowchart LR
 - **长短期记忆模块**：输入支撑模块，负责沉淀个性化偏好、实时上下文窗口和知识库。
 - **用户意图推演**：仿真编排决策器的内部能力，用于进行情景理解、需求解析、规划策略和交互意图生成。
 - **用户行为仿真**：下层执行反馈模块，负责把上层决策转成具体交互动作，语音为主要形式。
-- **目标系统调用与响应解析**：下层执行反馈中的服务通信组件，负责向目标系统发送动作请求、接收响应并产出结构化执行结果。
-- **车辆响应仿真**：下层执行反馈模块，负责模拟车窗、空调、屏幕和座椅等车载部件的响应。
+- **目标系统调用与响应解析**：下层执行反馈中的服务通信组件，负责向目标系统发送动作请求、接收响应并产出结构化执行结果。目标系统的响应直接反馈给仿真编排决策器和输入支撑模块，无需额外的车辆响应仿真层。
 - **目标系统服务**：下层交互的外部服务对象，用于接收动作请求并返回响应与状态变化。
 - **评测量化**：下层执行反馈模块，负责从合理性、准确性、覆盖率和实时性四个维度做量化评估。
-- **仿真主链路**：从场景初始化到环境/状态/记忆，再到编排决策、行为执行、目标系统调用与车辆响应的主流程。
-- **环境 & 用户反馈链路**：车辆响应反向影响环境感知和用户状态的反馈回路。
-- **量化评估链路**：把用户行为和车辆响应送入评测量化模块的评估回路。
+- **仿真主链路**：从场景初始化到环境/状态/记忆，再到编排决策、行为执行、目标系统调用与响应解析的主流程。
+- **环境 & 用户反馈链路**：目标系统响应反向影响环境感知和用户状态的反馈回路。
+- **量化评估链路**：把用户行为和目标系统响应送入评测量化模块的评估回路。
 - **记忆更新链路**：把行为结果和评估结果沉淀回长短期记忆模块的更新回路。
 - **噪声扰动链路**：把突发噪声注入环境感知和用户状态的扰动回路。
 
@@ -290,6 +289,97 @@ flowchart LR
 2. WHEN 突发噪声被触发, THE System SHALL 通过 `噪声扰动链路` 影响用户状态仿真。
 3. THE 噪声扰动链路 SHALL 作为干预层到输入支撑模块的扰动通道存在。
 4. THE 噪声扰动链路 SHALL NOT 直接生成用户行为、车辆响应或评测量化结果。
+
+### Requirement 15: 技术栈实现
+
+**User Story:** 作为系统架构师，我希望采用 Python + Rust 混合架构（进程间通信模式），以便在保持开发灵活性的同时获得性能关键路径的高性能，并实现进程隔离和独立部署。
+
+#### Acceptance Criteria
+
+1. THE System SHALL 使用 Python 实现 CLI 启动器、HTTP API 服务器、LLM 服务集成和业务编排逻辑。
+2. THE System SHALL 使用 Rust 实现独立二进制（iota），包括内部 HTTP 服务器、WebSocket 连接管理、会话状态管理、日志系统和评测量化计算。
+3. THE System SHALL 通过 subprocess + HTTP/JSON-RPC 实现 Python 和 Rust 之间的进程间通信，不使用 FFI/PyO3。
+4. THE Python 层 SHALL 使用 subprocess.Popen() 启动 Rust 二进制，并通过 HTTP 客户端（httpx/aiohttp）与 Rust 通信。
+5. THE Rust 层 SHALL 提供内部 HTTP 服务器（axum），监听 127.0.0.1:9527，接收 Python 请求。
+6. THE Rust 层 SHALL 通过 HTTP 客户端（reqwest）回调 Python 的 LLM 服务（127.0.0.1:8001）。
+7. THE System SHALL 参考 codex 项目的进程间通信模式和架构模式。
+8. THE System SHALL 通过 JSON 在 Python 和 Rust 之间序列化传递数据（使用 serde_json 和 orjson）。
+9. THE Rust 二进制 SHALL 可独立编译和运行，无需 Python 环境。
+10. THE Python 包安装 SHALL 不需要 Rust 工具链。
+
+### Requirement 16: iota 运行时引擎
+
+**User Story:** 作为系统架构师，我希望核心运行时引擎命名为 "iota"，并参考成熟智能体系统的实现模式，以便构建健壮、高性能的仿真运行时。
+
+#### Acceptance Criteria
+
+1. THE System SHALL 将核心运行时引擎命名为 "iota"。
+2. THE iota 引擎 SHALL 参考以下项目的实现模式：
+   - claude-code: Query engine, tool system, session management
+   - claw-code: High-performance runtime, permission system, MCP support
+   - codex: Native execution, sandbox, config hierarchy
+   - gemini-cli: Streaming, context management
+   - opencode: LLM integration, prompt engineering
+3. THE iota 引擎 SHALL 负责会话生命周期管理（创建、运行、暂停、恢复、终止）。
+4. THE iota 引擎 SHALL 实现模块化工具系统，每个工具独立实现，通过统一接口注册和调用。
+5. THE iota 引擎 SHALL 实现细粒度权限控制模型，支持用户确认流程和权限策略配置。
+6. THE iota 引擎 SHALL 支持配置层级：全局配置（`~/.iota/config.toml`）、项目配置（`.iota/config.toml`）、运行时覆盖（`--config` flags）。
+7. THE iota 引擎 SHALL 默认使用流式处理所有 LLM 调用，支持增量渲染和取消操作。
+8. THE iota 引擎 SHALL 实现系统提示词模板、上下文注入和 Few-shot examples 的 Prompt Engineering 能力。
+9. THE iota 引擎 SHALL 实现错误分类、重试策略和降级处理机制。
+10. THE iota 引擎 SHALL 支持上下文构建、压缩和持久化。
+
+### Requirement 17: 模块结构
+
+**User Story:** 作为开发者，我希望系统采用清晰的模块结构，以便理解、维护和扩展代码。
+
+#### Acceptance Criteria
+
+1. THE System SHALL 按以下模块结构组织代码：
+   - `iota/cli/`: Python CLI 启动器
+     - `launcher.py`: 使用 subprocess 启动 Rust 二进制
+     - `config.py`: 配置管理
+     - `signals.py`: 信号转发
+   - `iota/api/`: Python HTTP API 服务器
+     - `server.py`: FastAPI 应用
+     - `routes/`: API 路由
+     - `client.py`: HTTP 客户端（与 Rust 通信）
+   - `iota/llm/`: Python LLM 服务
+     - `server.py`: HTTP 服务器（接收 Rust 回调）
+     - `openai_client.py`: OpenAI SDK 集成
+     - `anthropic_client.py`: Anthropic SDK 集成
+   - `iota/runtime/`: Python 仿真运行时
+     - `coordinator/`: 仿真协调器
+     - `engines/`: 仿真引擎（environment, user_state, behavior）
+     - `decision/`: 决策引擎
+   - `iota/rust/`: Rust 独立二进制
+     - `src/main.rs`: 入口点，HTTP 服务器设置
+     - `src/server/`: HTTP 服务器（axum）
+     - `src/core/`: 核心运行时引擎（websocket, session, logging, evaluation）
+     - `src/client/`: HTTP 客户端（回调 Python LLM 服务）
+     - `src/models/`: 数据模型（serde）
+2. THE Python 模块 SHALL 通过 HTTP 客户端与 Rust 二进制通信。
+3. THE Rust 二进制 SHALL 通过 HTTP 客户端回调 Python LLM 服务。
+4. THE 模块之间 SHALL 通过 HTTP/JSON-RPC 接口交互，实现进程隔离。
+
+### Requirement 18: 构建与部署
+
+**User Story:** 作为运维人员，我希望系统提供清晰的构建和部署流程，以便在开发和生产环境中快速部署。
+
+#### Acceptance Criteria
+
+1. THE System SHALL 提供开发环境构建流程：
+   - 使用 `cargo build --release` 构建 Rust 二进制（iota/rust/target/release/iota）
+   - 使用 `python -m cli.launcher --rust-binary ./rust/target/release/iota` 启动系统
+   - 可独立运行 Rust 二进制进行测试：`./target/release/iota --port 9527`
+2. THE System SHALL 提供生产环境构建流程：
+   - 使用 `cargo build --release --target x86_64-unknown-linux-musl` 构建生产 Rust 二进制
+   - 使用 `pip install -e .` 安装 Python 包
+   - 使用 `iota start --config config.toml` 运行系统（Python 自动启动 Rust 二进制）
+3. THE Rust 二进制 SHALL 独立编译，无需 Python 环境。
+4. THE Python 包安装 SHALL 不需要 Rust 工具链。
+5. THE System SHALL 支持跨平台构建（Linux, macOS, Windows）。
+6. THE System SHALL 提供 Docker 镜像用于容器化部署（多阶段构建：Rust builder + Python runtime）。
 
 ## Correctness Properties
 

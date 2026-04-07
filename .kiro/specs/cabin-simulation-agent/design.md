@@ -231,6 +231,801 @@ if (response.finalDecision) {
 3. **用户行为仿真**：模拟用户响应，而非接收真实用户输入
 4. **黑盒验证**：目标系统作为黑盒，通过仿真验证其行为正确性
 
+## Technology Stack
+
+### Multi-Language Architecture: Python + Rust (Process-Based)
+
+本系统采用 Python + Rust 混合架构，参考 **codex** 项目的进程间通信模式，使用 **subprocess + HTTP/JSON-RPC** 实现 Python 和 Rust 的解耦通信。
+
+**核心设计原则**：
+- **No FFI/PyO3**：避免 FFI 的复杂性和跨语言内存管理问题
+- **进程隔离**：Python 和 Rust 运行在独立进程中，互不干扰
+- **HTTP 通信**：使用标准 HTTP/JSON-RPC 协议进行进程间通信
+- **独立部署**：Rust 二进制可独立运行和测试
+
+#### Language Responsibilities
+
+**Python 负责 [Python]**：
+- **CLI 启动器**：解析命令行参数，启动 Rust 二进制（subprocess）
+- **HTTP API 服务器**：FastAPI 提供外部 REST API
+- **LLM 服务集成**：所有 LLM 调用（OpenAI/Anthropic SDK）
+- **业务编排**：仿真协调器、仿真引擎、决策引擎的业务逻辑
+- **请求转发**：将仿真请求转发到 Rust HTTP 服务器
+
+**Rust 负责 [Rust]**：
+- **独立二进制 (iota)**：完整的运行时引擎，可独立启动
+- **内部 HTTP 服务器**：监听 127.0.0.1:9527，接收 Python 请求
+- **核心运行时引擎**：
+  - WebSocket 连接管理（高并发、低延迟）
+  - 会话状态管理（高性能读写）
+  - 日志系统（异步 I/O、高吞吐）
+  - 评测量化计算（CPU 密集型）
+- **回调 Python LLM 服务**：通过 HTTP 调用 Python 的 LLM 服务
+
+#### Python-Rust Boundary Definition (Process-Based)
+
+系统在 Python 和 Rust 之间建立清晰的进程边界，通过 **HTTP/JSON-RPC** 进行通信。
+
+**边界原则**：
+1. **Python 进程**：CLI 启动器、HTTP API 服务器、LLM 服务、业务编排
+2. **Rust 进程**：独立二进制 (iota)，内部 HTTP 服务器，核心运行时引擎
+3. **进程通信**：
+   - Python → Rust：HTTP POST 请求（JSON 数据）
+   - Rust → Python：HTTP POST 回调（LLM 服务）
+4. **数据序列化**：JSON 格式（标准 HTTP body）
+
+**标记约定**：
+- `[Python]`：Python 进程中的组件
+- `[Rust]`：Rust 进程中的组件（iota 二进制）
+- `[Python → Rust HTTP]`：Python 通过 HTTP 调用 Rust
+- `[Rust → Python HTTP]`：Rust 通过 HTTP 回调 Python
+
+#### Architecture Pattern (Reference: codex)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       Python Process [Python]                                │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  CLI Launcher [Python]                                              │    │
+│  │  - Parse command line arguments                                     │    │
+│  │  - Spawn Rust binary using subprocess.Popen()                       │    │
+│  │  - Wait for Rust HTTP server ready (health check)                   │    │
+│  │  - Forward signals (SIGINT, SIGTERM) to Rust process                │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  HTTP API Server [Python]                                           │    │
+│  │  - FastAPI application (port 8000)                                  │    │
+│  │  - REST endpoints: /api/simulation/start, /api/simulation/status    │    │
+│  │  - Forward requests to Rust HTTP server (127.0.0.1:9527)            │    │
+│  │  - Return responses to external clients                             │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  LLM Service [Python]                                                │    │
+│  │  - HTTP server (port 8001) for Rust callbacks                       │    │
+│  │  - OpenAI/Anthropic SDK integration                                 │    │
+│  │  - Endpoints: /llm/generate, /llm/analyze                           │    │
+│  │  - Handle streaming responses                                       │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  Simulation Orchestration & Engines [Python]                        │    │
+│  │  - SimulationCoordinator (orchestration logic)                      │    │
+│  │  - EnvironmentPerceptionSimulation (calls LLM service)              │    │
+│  │  - UserStateSimulation (calls LLM service)                          │    │
+│  │  - UserBehaviorSimulation (calls LLM service)                       │    │
+│  │  - DecisionEngine (calls LLM service)                               │    │
+│  │  - Communicate with Rust via HTTP client (httpx/aiohttp)            │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      │ Process Boundary
+                                      │ Communication: HTTP/JSON-RPC
+                                      │ Python → Rust: POST http://127.0.0.1:9527/api/*
+                                      │ Rust → Python: POST http://127.0.0.1:8001/llm/*
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    Rust Process (iota binary) [Rust]                         │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  Internal HTTP Server [Rust]                                        │    │
+│  │  - axum web framework                                                │    │
+│  │  - Listen on 127.0.0.1:9527                                          │    │
+│  │  - Routes:                                                           │    │
+│  │    POST /api/session/create                                          │    │
+│  │    POST /api/session/{id}/execute                                    │    │
+│  │    GET  /api/session/{id}/status                                     │    │
+│  │    POST /api/websocket/connect                                       │    │
+│  │    POST /api/evaluation/compute                                      │    │
+│  │    GET  /health (health check endpoint)                              │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  Core Runtime Engine [Rust]                                         │    │
+│  │                                                                       │    │
+│  │  ┌──────────────────────┐  ┌──────────────────────────────────┐    │    │
+│  │  │  WebSocket Manager   │  │  Session Manager                 │    │    │
+│  │  │  - tokio-tungstenite │  │  - dashmap (concurrent HashMap)  │    │    │
+│  │  │  - Connection pool   │  │  - Arc<RwLock<Session>>          │    │    │
+│  │  │  - Auto-reconnect    │  │  - Thread-safe state access      │    │    │
+│  │  │  - Heartbeat         │  │  - CRUD operations               │    │    │
+│  │  └──────────────────────┘  └──────────────────────────────────┘    │    │
+│  │                                                                       │    │
+│  │  ┌──────────────────────┐  ┌──────────────────────────────────┐    │    │
+│  │  │  Log Manager         │  │  Evaluation Engine               │    │    │
+│  │  │  - tracing framework │  │  - rayon (parallel computation)  │    │    │
+│  │  │  - Async file I/O    │  │  - Metrics calculation           │    │    │
+│  │  │  - Structured JSON   │  │  - Score aggregation             │    │    │
+│  │  │  - Non-blocking      │  │  - Performance optimization      │    │    │
+│  │  └──────────────────────┘  └──────────────────────────────────┘    │    │
+│  │                                                                       │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  HTTP Client for Python LLM Service [Rust]                          │    │
+│  │  - reqwest HTTP client                                               │    │
+│  │  - Call Python LLM service: POST http://127.0.0.1:8001/llm/*        │    │
+│  │  - Handle streaming responses                                        │    │
+│  │  - Retry logic and timeout handling                                  │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**层次说明**：
+
+1. **Python Process [Python]**：
+   - **CLI Launcher**：使用 `subprocess.Popen()` 启动 Rust 二进制，管理进程生命周期
+   - **HTTP API Server**：FastAPI 提供外部 REST API，转发请求到 Rust HTTP 服务器
+   - **LLM Service**：独立 HTTP 服务器，接收 Rust 的 LLM 回调请求
+   - **Simulation Orchestration & Engines**：业务编排逻辑，通过 HTTP 客户端与 Rust 通信
+
+2. **Rust Process (iota binary) [Rust]**：
+   - **Internal HTTP Server**：axum 框架，监听 127.0.0.1:9527，接收 Python 请求
+   - **Core Runtime Engine**：
+     - WebSocket Manager：管理与目标系统的 WebSocket 连接
+     - Session Manager：管理仿真会话状态
+     - Log Manager：异步日志系统
+     - Evaluation Engine：评测计算引擎
+   - **HTTP Client for Python LLM Service**：reqwest 客户端，回调 Python 的 LLM 服务
+
+3. **Process Communication**：
+   - **Python → Rust**：HTTP POST 请求到 `http://127.0.0.1:9527/api/*`
+   - **Rust → Python**：HTTP POST 回调到 `http://127.0.0.1:8001/llm/*`
+   - **Data Format**：JSON (标准 HTTP body)
+   - **Process Management**：Python 使用 subprocess 管理 Rust 进程生命周期
+
+#### Integration Strategy (Process-Based Communication)
+
+**Process Spawning (Python → Rust)**：
+- Python CLI 使用 `subprocess.Popen()` 启动 Rust 二进制
+- Rust 二进制启动内部 HTTP 服务器（127.0.0.1:9527）
+- Python 等待 Rust HTTP 服务器就绪（health check: GET /health）
+- Python 转发信号（SIGINT, SIGTERM）到 Rust 进程
+
+**HTTP Communication (Python ↔ Rust)**：
+- Python → Rust：HTTP POST 请求（JSON body）
+- Rust → Python：HTTP POST 回调（JSON body）
+- 数据格式：标准 JSON（serde_json 序列化）
+- 错误处理：HTTP 状态码 + JSON 错误响应
+
+**Example Integration**：
+
+```python
+# Python side: CLI Launcher
+import subprocess
+import httpx
+import time
+
+class IotaLauncher:
+    def __init__(self, binary_path: str = "./target/release/iota"):
+        self.binary_path = binary_path
+        self.process = None
+        self.rust_url = "http://127.0.0.1:9527"
+    
+    def start(self):
+        # Spawn Rust binary
+        self.process = subprocess.Popen(
+            [self.binary_path, "--port", "9527"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        # Wait for Rust HTTP server ready
+        for _ in range(30):  # 30 seconds timeout
+            try:
+                response = httpx.get(f"{self.rust_url}/health")
+                if response.status_code == 200:
+                    print("Rust HTTP server ready")
+                    return
+            except httpx.ConnectError:
+                time.sleep(1)
+        
+        raise RuntimeError("Rust HTTP server failed to start")
+    
+    def stop(self):
+        if self.process:
+            self.process.terminate()
+            self.process.wait(timeout=10)
+
+# Python side: HTTP Client for Rust
+class IotaClient:
+    def __init__(self, rust_url: str = "http://127.0.0.1:9527"):
+        self.rust_url = rust_url
+        self.client = httpx.AsyncClient()
+    
+    async def create_session(self, config: dict) -> str:
+        response = await self.client.post(
+            f"{self.rust_url}/api/session/create",
+            json=config
+        )
+        response.raise_for_status()
+        return response.json()["session_id"]
+    
+    async def execute_simulation(self, session_id: str, data: dict) -> dict:
+        response = await self.client.post(
+            f"{self.rust_url}/api/session/{session_id}/execute",
+            json=data
+        )
+        response.raise_for_status()
+        return response.json()
+
+# Python side: LLM Service (for Rust callbacks)
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.post("/llm/generate")
+async def llm_generate(request: dict):
+    # Call OpenAI/Anthropic SDK
+    prompt = request["prompt"]
+    response = await openai_client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return {"text": response.choices[0].message.content}
+```
+
+```rust
+// Rust side: Internal HTTP Server
+use axum::{
+    routing::{get, post},
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
+
+#[derive(Deserialize)]
+struct CreateSessionRequest {
+    config: serde_json::Value,
+}
+
+#[derive(Serialize)]
+struct CreateSessionResponse {
+    session_id: String,
+}
+
+async fn create_session(
+    Json(req): Json<CreateSessionRequest>,
+) -> Json<CreateSessionResponse> {
+    // Create session logic
+    let session_id = uuid::Uuid::new_v4().to_string();
+    Json(CreateSessionResponse { session_id })
+}
+
+async fn health_check() -> &'static str {
+    "OK"
+}
+
+#[tokio::main]
+async fn main() {
+    let app = Router::new()
+        .route("/health", get(health_check))
+        .route("/api/session/create", post(create_session))
+        .route("/api/session/:id/execute", post(execute_simulation));
+    
+    let addr = SocketAddr::from(([127, 0, 0, 1], 9527));
+    println!("Rust HTTP server listening on {}", addr);
+    
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+}
+
+// Rust side: HTTP Client for Python LLM Service
+use reqwest::Client;
+
+struct LlmClient {
+    client: Client,
+    python_url: String,
+}
+
+impl LlmClient {
+    fn new(python_url: String) -> Self {
+        Self {
+            client: Client::new(),
+            python_url,
+        }
+    }
+    
+    async fn generate(&self, prompt: &str) -> Result<String, reqwest::Error> {
+        let response = self.client
+            .post(format!("{}/llm/generate", self.python_url))
+            .json(&serde_json::json!({ "prompt": prompt }))
+            .send()
+            .await?;
+        
+        let result: serde_json::Value = response.json().await?;
+        Ok(result["text"].as_str().unwrap().to_string())
+    }
+}
+```
+
+### Agent Runtime Engine: "iota"
+
+系统的核心运行时引擎命名为 **iota**，参考以下项目的实现模式：
+
+#### Reference Implementations
+
+| Project | Language | Key Patterns |
+|---------|----------|--------------|
+| claude-code | TypeScript | Query engine, tool system, session management |
+| claw-code | Rust | High-performance runtime, permission system, MCP support |
+| codex | Rust | Native execution, sandbox, config hierarchy |
+| gemini-cli | TypeScript | Streaming, context management |
+| opencode | Python | LLM integration, prompt engineering |
+
+#### iota Runtime Architecture
+
+**Core Responsibilities**：
+- **Session Lifecycle**: 创建、运行、暂停、恢复、终止会话
+- **Tool Execution**: 工具调用、权限检查、结果收集
+- **Context Management**: 上下文构建、压缩、持久化
+- **Stream Processing**: 流式响应处理、增量更新
+- **Error Handling**: 错误分类、重试策略、降级处理
+
+**Design Principles (from reference projects)**：
+
+1. **Modular Tool System** (claude-code pattern)
+   - 每个工具独立实现
+   - 统一的工具接口
+   - 动态工具注册
+
+2. **Permission Model** (claw-code pattern)
+   - 细粒度权限控制
+   - 用户确认流程
+   - 权限策略配置
+
+3. **Config Hierarchy** (codex pattern)
+   - 全局配置 (`~/.iota/config.toml`)
+   - 项目配置 (`.iota/config.toml`)
+   - 运行时覆盖 (`--config` flags)
+
+4. **Streaming First** (gemini-cli pattern)
+   - 所有 LLM 调用默认流式
+   - 增量渲染
+   - 取消支持
+
+5. **Prompt Engineering** (opencode pattern)
+   - 系统提示词模板
+   - 上下文注入
+   - Few-shot examples
+
+#### iota Module Structure (Process-Based)
+
+```
+iota/
+├── cli/                     # Python CLI launcher
+│   ├── __init__.py
+│   ├── launcher.py         # Spawn Rust binary using subprocess
+│   ├── config.py           # Configuration management
+│   └── signals.py          # Signal forwarding (SIGINT, SIGTERM)
+│
+├── api/                     # Python HTTP API server
+│   ├── __init__.py
+│   ├── server.py           # FastAPI application
+│   ├── routes/
+│   │   ├── simulation.py   # /api/simulation/* endpoints
+│   │   └── health.py       # /health endpoint
+│   └── client.py           # HTTP client for Rust (httpx/aiohttp)
+│
+├── llm/                     # Python LLM service
+│   ├── __init__.py
+│   ├── server.py           # HTTP server for Rust callbacks
+│   ├── openai_client.py    # OpenAI SDK integration
+│   ├── anthropic_client.py # Anthropic SDK integration
+│   └── streaming.py        # Streaming response handling
+│
+├── runtime/                 # Python simulation runtime
+│   ├── coordinator/        # Simulation coordinator
+│   ├── engines/            # Simulation engines
+│   │   ├── environment.py
+│   │   ├── user_state.py
+│   │   └── behavior.py
+│   └── decision/           # Decision engine
+│
+├── rust/                    # Rust binary (iota)
+│   ├── Cargo.toml
+│   ├── src/
+│   │   ├── main.rs         # Entry point, HTTP server setup
+│   │   ├── server/         # HTTP server (axum)
+│   │   │   ├── mod.rs
+│   │   │   ├── routes.rs   # API routes
+│   │   │   └── handlers.rs # Request handlers
+│   │   ├── core/           # Core runtime engine
+│   │   │   ├── websocket/  # WebSocket manager
+│   │   │   ├── session/    # Session manager
+│   │   │   ├── logging/    # Log manager
+│   │   │   └── evaluation/ # Evaluation engine
+│   │   ├── client/         # HTTP client for Python LLM service
+│   │   │   ├── mod.rs
+│   │   │   └── llm.rs      # LLM client (reqwest)
+│   │   └── models/         # Data models (serde)
+│   │       ├── mod.rs
+│   │       ├── session.rs
+│   │       └── request.rs
+│   └── tests/
+│
+└── config/                  # Configuration files
+    ├── default.toml        # Default configuration
+    └── schema.json         # JSON schema for validation
+```
+
+**模块说明**：
+
+1. **Python CLI Launcher (`cli/`)**：
+   - 使用 `subprocess.Popen()` 启动 Rust 二进制
+   - 管理 Rust 进程生命周期
+   - 转发信号到 Rust 进程
+
+2. **Python HTTP API Server (`api/`)**：
+   - FastAPI 应用，提供外部 REST API
+   - 转发请求到 Rust HTTP 服务器
+   - HTTP 客户端（httpx/aiohttp）与 Rust 通信
+
+3. **Python LLM Service (`llm/`)**：
+   - 独立 HTTP 服务器，接收 Rust 回调
+   - OpenAI/Anthropic SDK 集成
+   - 流式响应处理
+
+4. **Python Simulation Runtime (`runtime/`)**：
+   - 仿真协调器和引擎
+   - 业务编排逻辑
+   - 通过 HTTP 客户端与 Rust 通信
+
+5. **Rust Binary (`rust/`)**：
+   - 独立二进制，可独立运行
+   - 内部 HTTP 服务器（axum）
+   - 核心运行时引擎（WebSocket, Session, Logging, Evaluation）
+   - HTTP 客户端（reqwest）回调 Python LLM 服务
+
+#### Performance Optimization Strategy
+
+**Rust for Hot Paths**：
+- WebSocket I/O: 使用 `tokio` 异步运行时
+- Session state: 使用 `dashmap` 并发哈希表
+- Logging: 使用 `tracing` + `tracing-subscriber`
+- Evaluation: 使用 `rayon` 并行计算
+- HTTP Server: 使用 `axum` 高性能 web 框架
+
+**Python for Flexibility**：
+- LLM 调用: 使用成熟的 Python SDK (OpenAI, Anthropic)
+- 数据分析: 使用 pandas, numpy
+- 可视化: 使用 matplotlib, plotly
+- 快速迭代: Python 的动态特性便于实验
+
+**Process Communication Optimization**：
+- 使用 HTTP/1.1 keep-alive 减少连接开销
+- JSON 序列化使用 `serde_json`（Rust）和 `orjson`（Python）
+- 可选：使用 MessagePack 替代 JSON 提升性能
+- 异步 HTTP 客户端（httpx/aiohttp in Python, reqwest in Rust）
+
+#### Build & Deployment (Process-Based)
+
+**Development**：
+```bash
+# Build Rust binary
+cd iota/rust
+cargo build --release
+
+# Binary location: iota/rust/target/release/iota
+
+# Run Rust binary standalone (for testing)
+./target/release/iota --port 9527
+
+# Run Python CLI (spawns Rust binary)
+cd iota
+python -m cli.launcher --rust-binary ./rust/target/release/iota
+
+# Run Python LLM service
+python -m llm.server --port 8001
+
+# Run Python API server
+python -m api.server --port 8000
+```
+
+**Production**：
+```bash
+# Build Rust binary for production
+cd iota/rust
+cargo build --release --target x86_64-unknown-linux-musl
+
+# Install Python package
+cd iota
+pip install -e .
+
+# Run system (Python spawns Rust)
+iota start --config config.toml
+
+# Or run components separately:
+# Terminal 1: Rust binary
+./rust/target/release/iota --port 9527
+
+# Terminal 2: Python LLM service
+iota llm-service --port 8001
+
+# Terminal 3: Python API server
+iota api-server --port 8000
+```
+
+**Docker Deployment**：
+```dockerfile
+# Multi-stage build
+FROM rust:1.75 AS rust-builder
+WORKDIR /app
+COPY iota/rust ./
+RUN cargo build --release
+
+FROM python:3.11-slim
+WORKDIR /app
+
+# Copy Rust binary
+COPY --from=rust-builder /app/target/release/iota /usr/local/bin/iota
+
+# Install Python dependencies
+COPY iota/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Python code
+COPY iota/ ./
+
+# Expose ports
+EXPOSE 8000 8001 9527
+
+# Start script (spawns Rust + Python services)
+CMD ["python", "-m", "cli.launcher"]
+```
+
+**Key Points**：
+- Rust 二进制独立编译，无需 Python 环境
+- Python 包安装不需要 Rust 工具链
+- 可以独立运行 Rust 二进制进行测试
+- Docker 镜像包含 Rust 二进制和 Python 代码
+- 进程间通信通过 HTTP，无需共享内存
+
+#### HTTP/JSON-RPC API Interfaces
+
+本节定义 Python 和 Rust 之间的 HTTP API 接口。
+
+**Python → Rust API (Rust HTTP Server: 127.0.0.1:9527)**：
+
+```typescript
+// Health Check
+GET /health
+Response: 200 OK
+Body: "OK"
+
+// Create Session
+POST /api/session/create
+Request Body: {
+  "config": {
+    "scenario_type": "commute" | "leisure" | "business" | "emergency",
+    "max_turns": number,
+    "timeout": number
+  }
+}
+Response Body: {
+  "session_id": string,
+  "status": "created"
+}
+
+// Execute Simulation Turn
+POST /api/session/{session_id}/execute
+Request Body: {
+  "environment_data": EnvironmentData,
+  "user_state_data": UserStateData,
+  "behavior_data": UserBehaviorData
+}
+Response Body: {
+  "execution_result": {
+    "status": "success" | "error",
+    "response": SystemResponse,
+    "evaluation": EvaluationResult
+  }
+}
+
+// Get Session Status
+GET /api/session/{session_id}/status
+Response Body: {
+  "session_id": string,
+  "status": "running" | "completed" | "aborted",
+  "turn_count": number,
+  "created_at": string,
+  "updated_at": string
+}
+
+// Connect WebSocket to Target System
+POST /api/websocket/connect
+Request Body: {
+  "url": string,
+  "headers": Record<string, string>
+}
+Response Body: {
+  "connection_id": string,
+  "status": "connected"
+}
+
+// Send WebSocket Message
+POST /api/websocket/{connection_id}/send
+Request Body: {
+  "message": any
+}
+Response Body: {
+  "status": "sent",
+  "response": any
+}
+
+// Compute Evaluation
+POST /api/evaluation/compute
+Request Body: {
+  "behavior": UserBehaviorData,
+  "response": SystemResponse
+}
+Response Body: {
+  "evaluation": EvaluationResult
+}
+```
+
+**Rust → Python API (Python LLM Service: 127.0.0.1:8001)**：
+
+```typescript
+// Generate LLM Response
+POST /llm/generate
+Request Body: {
+  "prompt": string,
+  "model": "gpt-4" | "claude-3-opus",
+  "temperature": number,
+  "max_tokens": number,
+  "stream": boolean
+}
+Response Body: {
+  "text": string,
+  "usage": {
+    "prompt_tokens": number,
+    "completion_tokens": number,
+    "total_tokens": number
+  }
+}
+
+// Analyze System Response
+POST /llm/analyze
+Request Body: {
+  "response": SystemResponse,
+  "context": SessionContext
+}
+Response Body: {
+  "analysis": {
+    "intent": string,
+    "sentiment": string,
+    "key_points": string[]
+  }
+}
+
+// Generate Environment Data
+POST /llm/environment/generate
+Request Body: {
+  "scenario": ScenarioState,
+  "context": SessionContext
+}
+Response Body: {
+  "environment": EnvironmentData
+}
+
+// Generate User State Data
+POST /llm/user-state/generate
+Request Body: {
+  "scenario": ScenarioState,
+  "environment": EnvironmentData,
+  "context": SessionContext
+}
+Response Body: {
+  "user_state": UserStateData
+}
+
+// Generate User Behavior
+POST /llm/behavior/generate
+Request Body: {
+  "environment": EnvironmentData,
+  "user_state": UserStateData,
+  "context": SessionContext
+}
+Response Body: {
+  "behavior": UserBehaviorData
+}
+```
+
+**Data Serialization Format**：
+
+所有 HTTP 请求和响应使用 JSON 格式：
+- Content-Type: `application/json`
+- 使用 `serde_json`（Rust）和 `orjson`（Python）进行序列化
+- 可选：使用 `application/msgpack` 提升性能
+
+**Error Handling**：
+
+```typescript
+// Error Response Format
+{
+  "error": {
+    "code": string,  // "SESSION_NOT_FOUND", "WEBSOCKET_ERROR", etc.
+    "message": string,
+    "details": any,
+    "retryable": boolean
+  }
+}
+
+// HTTP Status Codes
+200 OK: Success
+400 Bad Request: Invalid request data
+404 Not Found: Resource not found
+500 Internal Server Error: Server error
+503 Service Unavailable: Service temporarily unavailable
+```
+
+#### Process-Based Architecture Benefits
+
+相比 FFI/PyO3 方案，进程间通信架构具有以下优势：
+
+**1. 简化开发和部署**：
+- 无需 PyO3 绑定代码和复杂的 FFI 接口
+- Rust 二进制独立编译，无需 maturin 构建 Python wheel
+- Python 包安装不需要 Rust 工具链
+- 开发者可以独立测试 Rust 和 Python 组件
+
+**2. 进程隔离和稳定性**：
+- Python 和 Rust 运行在独立进程中，互不干扰
+- Rust 进程崩溃不会影响 Python 进程（反之亦然）
+- 可以独立重启任一进程
+- 更容易调试和监控
+
+**3. 语言边界清晰**：
+- 使用标准 HTTP/JSON 协议，无需处理跨语言内存管理
+- 数据序列化格式明确（JSON）
+- 错误处理通过 HTTP 状态码和 JSON 响应
+- 无需处理 Python GIL 和 Rust 异步运行时的交互
+
+**4. 灵活部署**：
+- 可以将 Rust 和 Python 部署在不同机器上
+- 可以水平扩展 Rust 实例（多个 iota 进程）
+- 可以使用负载均衡器分发请求
+- 支持容器化部署（Docker, Kubernetes）
+
+**5. 参考成熟实践**：
+- 遵循 codex 项目的进程间通信模式
+- 使用标准 HTTP 协议，易于理解和维护
+- 可以使用现有的 HTTP 工具进行测试和监控（curl, Postman, etc.）
+
+**Trade-offs**：
+- HTTP 通信有一定开销（相比 FFI 直接调用）
+- 需要序列化/反序列化数据（JSON）
+- 需要管理多个进程的生命周期
+
+**结论**：对于本系统，进程间通信的优势（简化开发、进程隔离、灵活部署）远大于性能开销，是更合适的架构选择。
+
 ### 核心架构设计
 
 系统采用分层架构，各层职责明确：
@@ -312,120 +1107,168 @@ if (response.finalDecision) {
 - **API层**：HTTP REST API，提供仿真控制接口
 - **会话管理层**：管理仿真会话状态和上下文（纯状态管理）
 - **日志层**：记录所有交互数据
-- **LLM服务层**：为协调器、仿真引擎、决策引擎和执行引擎提供LLM能力
+- **LLM服务层**：为Python业务逻辑提供LLM能力
 
 ```mermaid
 graph TB
-    subgraph API层
-        HTTP[HTTP REST API]
+    subgraph Python进程_业务逻辑和LLM
+        CLI[CLI启动器<br/>Python]
+        
+        subgraph 干预层_Python
+            SceneInit[仿真场景初始化<br/>Python]
+            Noise[突发噪声<br/>Python]
+        end
+        
+        subgraph 输入支撑模块_Python
+            Env[环境感知仿真<br/>Python]
+            UserState[用户状态仿真<br/>Python]
+            Memory[长短期记忆模块<br/>Python]
+        end
+        
+        subgraph 上层决策编排层_Python
+            Orchestrator[仿真编排决策器<br/>Python<br/><br/>内部能力：<br/>情景理解&推理<br/>需求解析&挖掘<br/>长期规划&短期策略<br/>用户意图推演<br/><br/>包含：继续/结束判断]
+        end
+        
+        subgraph 下层执行反馈层_Python
+            Behavior[用户行为仿真<br/>Python]
+        end
+        
+        subgraph LLM服务_Python
+            OpenAI[OpenAI SDK]
+            Anthropic[Anthropic SDK]
+        end
     end
     
-    subgraph 干预层_Intervention_Layer
-        SceneInit[仿真场景初始化<br/>Scenario Initialization]
-        Noise[突发噪声<br/>Sudden Noise]
-    end
-    
-    subgraph 输入支撑模块_Input_Support
-        Env[环境感知仿真<br/>Environment Perception<br/>调用LLM]
-        UserState[用户状态仿真<br/>User State<br/>调用LLM]
-        Memory[长短期记忆模块<br/>Memory Module]
-    end
-    
-    subgraph 上层决策编排层_Upper_Orchestration
-        Orchestrator[仿真编排决策器<br/>Orchestration Decision Maker<br/>调用LLM<br/><br/>内部能力：<br/>情景理解&推理<br/>需求解析&挖掘<br/>长期规划&短期策略<br/>用户意图推演]
-    end
-    
-    subgraph 下层执行反馈层_Lower_Execution
-        Behavior[用户行为仿真<br/>User Behavior<br/>调用LLM]
-        ServiceCall[目标系统调用与响应解析<br/>Service Call & Response<br/>调用LLM分析响应]
-        Eval[评测量化<br/>Evaluation]
-    end
-    
-    subgraph 技术支撑层
-        SessionMgr[会话管理器<br/>状态存储]
-        LogManager[日志管理器<br/>异步非阻塞]
-        LLMService[LLM服务]
+    subgraph Rust进程_iota性能关键组件
+        subgraph 下层执行反馈层_Rust
+            ServiceCall[目标系统调用与响应解析<br/>Rust WebSocket管理]
+            Eval[评测量化<br/>Rust 并行计算]
+        end
+        
+        subgraph 技术支撑层_Rust
+            SessionMgr[会话管理器<br/>Rust dashmap]
+            LogManager[日志管理器<br/>Rust tracing]
+        end
+        
+        ContextStore[(会话上下文<br/>Rust)]
     end
     
     subgraph 外部系统
         TargetSystem[目标系统服务<br/>智能座舱系统]
     end
     
-    ContextStore[(会话上下文<br/>历史响应)]
+    %% Python启动Rust
+    CLI -->|subprocess启动| ServiceCall
     
     %% 主链路（红色 #d9485f）
-    HTTP -->|<span style='color:#d9485f'>01 仿真请求</span>| Orchestrator
-    Orchestrator -->|<span style='color:#d9485f'>02 启动初始化</span>| SceneInit
-    SceneInit -->|<span style='color:#d9485f'>03 初始化环境</span>| Env
-    SceneInit -->|<span style='color:#d9485f'>04 初始化用户</span>| UserState
-    SceneInit -->|<span style='color:#d9485f'>05 初始化记忆</span>| Memory
+    CLI -->|01 仿真请求| Orchestrator
+    Orchestrator -->|02 启动初始化| SceneInit
+    SceneInit -->|03 初始化环境| Env
+    SceneInit -->|04 初始化用户| UserState
+    SceneInit -->|05 初始化记忆| Memory
     
-    Env -->|<span style='color:#d9485f'>06 环境上下文</span>| Orchestrator
-    UserState -->|<span style='color:#d9485f'>07 用户上下文</span>| Orchestrator
-    Memory -->|<span style='color:#d9485f'>08 记忆上下文</span>| Orchestrator
+    Env -->|06 环境上下文| Orchestrator
+    UserState -->|07 用户上下文| Orchestrator
+    Memory -->|08 记忆上下文| Orchestrator
     
-    Orchestrator -->|<span style='color:#d9485f'>09 策略意图</span>| Behavior
-    Behavior -->|<span style='color:#d9485f'>10 行为请求</span>| ServiceCall
-    ServiceCall -->|<span style='color:#d9485f'>11 发送请求</span>| TargetSystem
-    TargetSystem -->|<span style='color:#d9485f'>12 返回响应</span>| ServiceCall
-    ServiceCall -->|<span style='color:#d9485f'>13 结构化响应</span>| Orchestrator
+    Orchestrator -->|09 策略意图| Behavior
+    Behavior -->|10 行为请求 HTTP| ServiceCall
+    ServiceCall -->|11 WebSocket请求| TargetSystem
+    TargetSystem -->|12 返回响应| ServiceCall
+    ServiceCall -->|13 结构化响应 HTTP| Orchestrator
     
     %% 环境&用户反馈链路（蓝色虚线 #2563eb）
-    ServiceCall -.->|<span style='color:#2563eb'>14 反馈环境</span>| Env
-    ServiceCall -.->|<span style='color:#2563eb'>15 反馈用户</span>| UserState
+    ServiceCall -.->|14 反馈环境 HTTP| Env
+    ServiceCall -.->|15 反馈用户 HTTP| UserState
     
     %% 量化评估链路（蓝色虚线 #2563eb）
-    Behavior -.->|<span style='color:#2563eb'>16 行为评估</span>| Eval
-    ServiceCall -.->|<span style='color:#2563eb'>17 响应评估</span>| Eval
+    Behavior -.->|16 行为评估 HTTP| Eval
+    ServiceCall -.->|17 响应评估| Eval
     
     %% 记忆更新链路（蓝色虚线 #2563eb）
-    Behavior -.->|<span style='color:#2563eb'>19 行为写回</span>| Memory
-    Eval -.->|<span style='color:#2563eb'>20 评估写回</span>| Memory
+    Behavior -.->|18 行为写回| Memory
+    Eval -.->|19 评估写回 HTTP| Memory
     
     %% 噪声扰动链路（蓝色虚线 #2563eb）
-    Noise -.->|<span style='color:#2563eb'>21 噪声入环境</span>| Env
-    Noise -.->|<span style='color:#2563eb'>22 噪声入用户</span>| UserState
+    Noise -.->|20 噪声入环境| Env
+    Noise -.->|21 噪声入用户| UserState
     
     %% 评估回编排（红色 #d9485f）
-    Eval -->|<span style='color:#d9485f'>23 评估结果</span>| Orchestrator
+    Eval -->|22 评估结果 HTTP| Orchestrator
+    
+    %% Orchestrator内部判断是否继续（红色 #d9485f）
+    Orchestrator -->|23 判断：继续下一轮| Env
+    Orchestrator -->|24 判断：结束会话| CLI
     
     %% 技术支撑（蓝色虚线 #2563eb）
-    Orchestrator <-->|<span style='color:#2563eb'>24 状态管理</span>| SessionMgr
-    SessionMgr <-->|<span style='color:#2563eb'>25 存储</span>| ContextStore
-    Orchestrator -.->|<span style='color:#2563eb'>26 异步日志</span>| LogManager
+    Orchestrator <-.->|状态管理 HTTP| SessionMgr
+    SessionMgr <-.->|存储| ContextStore
+    Orchestrator -.->|异步日志 HTTP| LogManager
     
-    Orchestrator -.->|<span style='color:#2563eb'>27 LLM调用</span>| LLMService
-    Env -.->|<span style='color:#2563eb'>28 LLM调用</span>| LLMService
-    UserState -.->|<span style='color:#2563eb'>29 LLM调用</span>| LLMService
-    Behavior -.->|<span style='color:#2563eb'>30 LLM调用</span>| LLMService
-    ServiceCall -.->|<span style='color:#2563eb'>31 LLM调用</span>| LLMService
+    %% LLM调用（紫色虚线 #9c27b0，加粗表示调用LLM）
+    Orchestrator -.->|LLM调用| OpenAI
+    Orchestrator -.->|LLM调用| Anthropic
+    Env -.->|LLM调用| OpenAI
+    Env -.->|LLM调用| Anthropic
+    UserState -.->|LLM调用| OpenAI
+    UserState -.->|LLM调用| Anthropic
+    Behavior -.->|LLM调用| OpenAI
+    Behavior -.->|LLM调用| Anthropic
     
-    %% 循环控制（红色 #d9485f）
-    Orchestrator -->|<span style='color:#d9485f'>32 继续/结束</span>| Decision{继续下一轮?}
-    Decision -->|<span style='color:#d9485f'>33 继续</span>| Env
-    Decision -->|<span style='color:#d9485f'>34 结束</span>| Done[会话完成]
+    %% Python组件 - 浅蓝色背景 #e3f2fd
+    style CLI fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style SceneInit fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Noise fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Memory fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Behavior fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style OpenAI fill:#e3f2fd,stroke:#1976d2,stroke-width:1px
+    style Anthropic fill:#e3f2fd,stroke:#1976d2,stroke-width:1px
     
-    style HTTP fill:#e1f5ff
-    style SceneInit fill:#fff4e1
-    style Noise fill:#fff4e1
-    style Env fill:#e8f5e9
-    style UserState fill:#e8f5e9
-    style Memory fill:#e8f5e9
-    style Orchestrator fill:#ffebee
-    style Behavior fill:#fff3e0
-    style ServiceCall fill:#ffe0b2
-    style Eval fill:#e0f2f1
-    style SessionMgr fill:#f3e5f5
-    style LogManager fill:#f3e5f5
-    style LLMService fill:#f3e5f5
-    style TargetSystem fill:#ffcdd2
-    style ContextStore fill:#fff9c4
-    style Decision fill:#ffcdd2
-    style Done fill:#c8e6c9
+    %% Rust组件 - 浅橙色背景 #ffe0b2
+    style ServiceCall fill:#ffe0b2,stroke:#f57c00,stroke-width:2px
+    style Eval fill:#ffe0b2,stroke:#f57c00,stroke-width:2px
+    style SessionMgr fill:#ffe0b2,stroke:#f57c00,stroke-width:2px
+    style LogManager fill:#ffe0b2,stroke:#f57c00,stroke-width:2px
+    style ContextStore fill:#ffe0b2,stroke:#f57c00,stroke-width:2px
     
-    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,22 stroke:#d9485f,stroke-width:2.5px
-    linkStyle 13,14,15,16,17,18,19,20,21,23,24,25,26,27,28,29,30,31 stroke:#2563eb,stroke-width:2px,stroke-dasharray:5
+    %% 调用LLM的组件 - 紫色加粗边框 #9c27b0
+    style Orchestrator fill:#e3f2fd,stroke:#9c27b0,stroke-width:4px
+    style Env fill:#e3f2fd,stroke:#9c27b0,stroke-width:4px
+    style UserState fill:#e3f2fd,stroke:#9c27b0,stroke-width:4px
+    
+    %% 外部系统 - 浅红色
+    style TargetSystem fill:#ffcdd2,stroke:#c62828,stroke-width:2px
+    
+    linkStyle 1,2,3,4,5,6,7,8,9,10,11,12,21,22,23 stroke:#d9485f,stroke-width:2.5px
+    linkStyle 13,14,15,16,17,18,19,20,24,25,26 stroke:#2563eb,stroke-width:2px,stroke-dasharray:5
+    linkStyle 27,28,29,30,31,32,33,34 stroke:#9c27b0,stroke-width:3px,stroke-dasharray:5
 ```
+
+**架构说明**：
+
+**颜色标注**：
+- **浅蓝色背景 (#e3f2fd)**：Python 进程（业务逻辑 + LLM服务）
+- **浅橙色背景 (#ffe0b2)**：Rust 进程（性能关键组件）
+- **紫色加粗边框 (#9c27b0, 4px)**：调用LLM的组件（Orchestrator, Env, UserState）
+- **紫色虚线**：LLM调用链路
+
+**关键设计决策**：
+1. **去掉"车辆响应仿真"**：目标系统的响应直接由ServiceCall解析后反馈给Orchestrator和环境/用户模块
+2. **"是否继续下一轮"在Orchestrator内部**：不是独立节点，是决策器的内部判断逻辑
+3. **Python负责业务逻辑**：
+   - 干预层：仿真场景初始化、突发噪声
+   - 输入支撑模块：环境感知仿真、用户状态仿真、长短期记忆
+   - 上层决策编排层：仿真编排决策器
+   - 下层执行反馈层：用户行为仿真
+   - LLM服务：直接调用OpenAI/Anthropic SDK
+4. **Rust负责性能关键部分**：
+   - WebSocket连接管理（高并发、低延迟）
+   - 会话状态管理（并发读写）
+   - 日志系统（异步I/O）
+   - 评测量化计算（CPU密集型、并行计算）
+5. **Python-Rust通信**：
+   - Python通过HTTP调用Rust的WebSocket管理、会话管理、日志、评测服务
+   - 频率相对较低，主要在关键性能点切换
 
 **完整流程说明（按 requirements.md 定义）：**
 
@@ -3237,3 +4080,592 @@ interface SessionStore {
 }
 ```
 
+
+
+## Reference Implementations
+
+本系统的技术架构和设计模式参考了以下成熟的智能体系统项目：
+
+### 1. claude-code (TypeScript)
+
+**Repository**: `claude-code/` (vendor tree)
+
+**Key Learnings**:
+- **Query Engine**: 1700+ 行的流式对话与工具调用循环，含自动压缩、token 追踪
+- **Tool System**: 30+ 工具，统一接口，动态注册
+- **Session Management**: 会话引擎管理对话状态与归因
+- **Context Building**: git status / CLAUDE.md / memory 上下文构建
+- **Permission System**: plan/auto/manual 模式，6300+ 行权限系统
+- **Hook System**: pre/post tool use hooks，支持 settings.json 配置
+
+**Applied Patterns**:
+- 仿真编排决策器借鉴 Query Engine 的循环控制逻辑
+- 工具调用层借鉴 Tool System 的统一接口设计
+- 会话管理器借鉴 Session Management 的状态管理模式
+
+### 2. claw-code (Rust)
+
+**Repository**: `claw-code/rust/` (vendor tree)
+
+**Key Learnings**:
+- **High-Performance Runtime**: Rust 实现的高性能运行时
+- **Permission System**: 细粒度权限控制，用户确认流程
+- **MCP Support**: Model Context Protocol 客户端和服务器
+- **Config Hierarchy**: 全局/项目/运行时三层配置
+- **Streaming First**: 所有 LLM 调用默认流式
+- **Tool Execution**: bash, read, write, edit, grep, glob 等工具
+
+**Applied Patterns**:
+- iota 核心使用 Rust 实现高性能组件
+- 权限模型借鉴 claw-code 的细粒度控制
+- 配置层级借鉴三层配置模式
+- WebSocket 管理借鉴 Rust 异步运行时模式
+
+### 3. codex (Rust + Bazel)
+
+**Repository**: `codex/codex-rs/` (vendor tree)
+
+**Key Learnings**:
+- **Native Execution**: 零依赖安装的原生可执行文件
+- **Sandbox**: macOS (Seatbelt), Linux (Landlock), Windows 沙箱
+- **Config System**: config.toml 配置文件，丰富的配置选项
+- **MCP Client**: 连接 MCP 服务器，扩展工具能力
+- **Exec Mode**: 非交互式执行，programmatic 调用
+- **Modular Crates**: core, exec, tui, cli 等模块化 crate
+
+**Applied Patterns**:
+- 模块结构借鉴 codex 的 crate 组织方式
+- 配置系统借鉴 config.toml 模式
+- 构建系统借鉴 Cargo workspace 模式
+
+### 4. gemini-cli (TypeScript)
+
+**Repository**: `gemini-cli/` (vendor tree)
+
+**Key Learnings**:
+- **Streaming**: 流式响应处理，增量更新
+- **Context Management**: 上下文管理和压缩
+- **Error Handling**: 错误分类和重试策略
+
+**Applied Patterns**:
+- LLM 服务层借鉴流式处理模式
+- 上下文管理借鉴压缩和持久化策略
+
+### 5. opencode (Python)
+
+**Repository**: `opencode/` (vendor tree)
+
+**Key Learnings**:
+- **LLM Integration**: 成熟的 LLM 服务集成
+- **Prompt Engineering**: 系统提示词模板、上下文注入、Few-shot examples
+
+**Applied Patterns**:
+- Python 层 LLM 集成借鉴 opencode 的实现
+- Prompt Engineering 借鉴提示词工程最佳实践
+
+### Multi-Language Development Pattern
+
+**codex** 和 **claw-code** 展示了如何在同一项目中结合 Python 和 Rust：
+
+**codex 模式**:
+```
+codex/
+├── codex-cli/          # Python CLI wrapper
+│   └── package.json
+└── codex-rs/           # Rust core implementation
+    ├── Cargo.toml
+    └── crates/
+        ├── core/       # Business logic
+        ├── exec/       # Headless CLI
+        ├── tui/        # Terminal UI
+        └── cli/        # CLI multitool
+```
+
+**claw-code 模式**:
+```
+claw-code/
+├── src/                # Python implementation (reference)
+│   ├── assistant/
+│   ├── coordinator/
+│   └── tools/
+└── rust/               # Rust rewrite (production)
+    ├── Cargo.toml
+    └── crates/
+        ├── api/        # Provider clients
+        ├── runtime/    # Session, config, permissions
+        └── tools/      # Tool execution
+```
+
+**iota 采用的模式（进程间通信）**:
+```
+iota/
+├── cli/                     # Python CLI launcher
+│   ├── __init__.py
+│   ├── launcher.py         # Spawn Rust binary using subprocess
+│   ├── config.py           # Configuration management
+│   └── signals.py          # Signal forwarding (SIGINT, SIGTERM)
+│
+├── api/                     # Python HTTP API server
+│   ├── __init__.py
+│   ├── server.py           # FastAPI application
+│   ├── routes/
+│   │   ├── simulation.py   # /api/simulation/* endpoints
+│   │   └── health.py       # /health endpoint
+│   └── client.py           # HTTP client for Rust (httpx/aiohttp)
+│
+├── llm/                     # Python LLM service
+│   ├── __init__.py
+│   ├── server.py           # HTTP server for Rust callbacks
+│   ├── openai_client.py    # OpenAI SDK integration
+│   ├── anthropic_client.py # Anthropic SDK integration
+│   └── streaming.py        # Streaming response handling
+│
+├── runtime/                 # Python simulation runtime
+│   ├── coordinator/        # Simulation coordinator
+│   ├── engines/            # Simulation engines
+│   │   ├── environment.py
+│   │   ├── user_state.py
+│   │   └── behavior.py
+│   └── decision/           # Decision engine
+│
+├── rust/                    # Rust binary (iota)
+│   ├── Cargo.toml
+│   ├── src/
+│   │   ├── main.rs         # Entry point, HTTP server setup
+│   │   ├── server/         # HTTP server (axum)
+│   │   │   ├── mod.rs
+│   │   │   ├── routes.rs   # API routes
+│   │   │   └── handlers.rs # Request handlers
+│   │   ├── core/           # Core runtime engine
+│   │   │   ├── websocket/  # WebSocket manager
+│   │   │   ├── session/    # Session manager
+│   │   │   ├── logging/    # Log manager
+│   │   │   └── evaluation/ # Evaluation engine
+│   │   ├── client/         # HTTP client for Python LLM service
+│   │   │   ├── mod.rs
+│   │   │   └── llm.rs      # LLM client (reqwest)
+│   │   └── models/         # Data models (serde)
+│   │       ├── mod.rs
+│   │       ├── session.rs
+│   │       └── request.rs
+│   └── tests/
+│
+└── config/                  # Configuration files
+    ├── default.toml        # Default configuration
+    └── schema.json         # JSON schema for validation
+```
+
+### Integration Lessons (Process-Based Communication)
+
+1. **Process Isolation**: Python 和 Rust 运行在独立进程中，通过 HTTP/JSON-RPC 通信
+2. **Data Serialization**: 使用 JSON 在进程边界传递数据（serde_json + orjson）
+3. **Error Handling**: HTTP 状态码 + JSON 错误响应，保持错误信息完整
+4. **Process Management**: Python 使用 subprocess 管理 Rust 进程生命周期
+5. **Health Check**: Rust HTTP 服务器提供 /health 端点，Python 等待就绪
+
+### Performance Optimization Lessons
+
+从 claw-code 和 codex 学到的性能优化经验：
+
+1. **Hot Path in Rust**: 将性能关键路径（WebSocket I/O, 会话状态读写）用 Rust 实现
+2. **Async Runtime**: 使用 tokio 异步运行时处理高并发 I/O
+3. **Concurrent Data Structures**: 使用 dashmap 等并发数据结构避免锁竞争
+4. **Zero-Copy**: 尽可能使用零拷贝技术减少内存分配
+5. **Streaming**: 流式处理大数据，避免一次性加载到内存
+6. **HTTP Keep-Alive**: 使用 HTTP/1.1 keep-alive 减少连接开销
+
+### Tool System Lessons
+
+从 claude-code 和 claw-code 学到的工具系统设计：
+
+1. **Unified Interface**: 所有工具实现统一接口（execute, validate, describe）
+2. **Dynamic Registration**: 工具动态注册，支持插件扩展
+3. **Permission Check**: 每个工具执行前检查权限
+4. **Error Recovery**: 工具执行失败时的错误恢复和降级策略
+5. **Tool Search**: 支持工具搜索和发现机制
+
+### Session Management Lessons
+
+从 claude-code 和 codex 学到的会话管理设计：
+
+1. **State Machine**: 会话状态机（created, running, paused, resumed, terminated）
+2. **Persistence**: 会话状态持久化到磁盘，支持恢复
+3. **Context Window**: 上下文窗口管理，自动压缩超长上下文
+4. **History Tracking**: 完整的历史记录，支持回溯和分析
+5. **Concurrent Sessions**: 支持多个并发会话，互不干扰
+
+## Dependencies
+
+### Python Dependencies
+
+```toml
+[project]
+name = "iota"
+version = "0.1.0"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2.0.0",
+    "openai>=1.0.0",
+    "anthropic>=0.7.0",
+    "httpx>=0.25.0",
+    "aiohttp>=3.8.0",
+    "orjson>=3.9.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "plotly>=5.14.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+```
+
+### Rust Dependencies
+
+```toml
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+tokio-tungstenite = "0.21"
+axum = "0.7"
+reqwest = { version = "0.11", features = ["json", "stream"] }
+dashmap = "5.5"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+rayon = "1.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+anyhow = "1.0"
+thiserror = "1.0"
+```
+
+### Development Dependencies
+
+```toml
+[dev-dependencies]
+pytest = ">=7.4.0"
+pytest-asyncio = ">=0.21.0"
+black = ">=23.0.0"
+ruff = ">=0.1.0"
+mypy = ">=1.5.0"
+
+[dev-dependencies.rust]
+cargo-watch = "8.4"
+cargo-nextest = "0.9"
+```
+
+## Deployment Architecture
+
+### Development Environment
+
+```bash
+# 1. Clone repository
+git clone https://github.com/your-org/iota.git
+cd iota
+
+# 2. Build Rust binary
+cd rust
+cargo build --release
+cd ..
+
+# 3. Install Python dependencies
+pip install -e ".[dev]"
+
+# 4. Run Rust binary standalone (for testing)
+./rust/target/release/iota --port 9527
+
+# 5. Run Python CLI (spawns Rust binary)
+python -m cli.launcher --rust-binary ./rust/target/release/iota
+```
+
+### Production Environment
+
+```bash
+# 1. Build Rust binary for production
+cd rust
+cargo build --release --target x86_64-unknown-linux-musl
+cd ..
+
+# 2. Install Python package
+pip install .
+
+# 3. Run system (Python spawns Rust)
+iota start --config /etc/iota/config.toml
+```
+
+### Docker Deployment
+
+```dockerfile
+FROM rust:1.75 as rust-builder
+WORKDIR /app
+COPY core/ ./core/
+RUN cd core && cargo build --release
+
+FROM python:3.11-slim
+WORKDIR /app
+COPY --from=rust-builder /app/core/target/release/libiota_core.so /app/
+COPY runtime/ ./runtime/
+COPY api/ ./api/
+COPY cli/ ./cli/
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir .
+EXPOSE 8000
+CMD ["iota", "--config", "/app/config.toml"]
+```
+
+### Kubernetes Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iota-simulation
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: iota
+  template:
+    metadata:
+      labels:
+        app: iota
+    spec:
+      containers:
+      - name: iota
+        image: your-registry/iota:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: IOTA_CONFIG
+          value: "/config/config.toml"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: config
+        configMap:
+          name: iota-config
+```
+
+## Testing Strategy
+
+### Unit Testing
+
+**Python Tests**:
+```python
+# tests/test_coordinator.py
+import pytest
+from iota.runtime.coordinator import SimulationCoordinator
+
+@pytest.mark.asyncio
+async def test_coordinator_lifecycle():
+    coordinator = SimulationCoordinator()
+    session = await coordinator.create_session(config)
+    assert session.status == "created"
+    
+    await coordinator.start_session(session.id)
+    assert session.status == "running"
+```
+
+**Rust Tests**:
+```rust
+// core/src/websocket/tests.rs
+#[tokio::test]
+async fn test_websocket_connection() {
+    let manager = WebSocketManager::new("ws://localhost:8080");
+    let result = manager.connect().await;
+    assert!(result.is_ok());
+}
+```
+
+### Integration Testing
+
+```python
+# tests/integration/test_full_simulation.py
+@pytest.mark.integration
+async def test_full_simulation_cycle():
+    # 1. Initialize scenario
+    scenario = initialize_scenario(config)
+    
+    # 2. Run simulation
+    result = await run_simulation(scenario)
+    
+    # 3. Verify results
+    assert result.status == "completed"
+    assert result.total_turns > 0
+    assert result.evaluation.overall_score > 0
+```
+
+### Performance Testing
+
+```python
+# tests/performance/test_websocket_throughput.py
+@pytest.mark.performance
+async def test_websocket_throughput():
+    manager = WebSocketManager()
+    
+    start = time.time()
+    for i in range(1000):
+        await manager.send_and_wait({"id": i})
+    duration = time.time() - start
+    
+    throughput = 1000 / duration
+    assert throughput > 100  # > 100 req/s
+```
+
+### Mock Testing
+
+```python
+# tests/mocks/test_with_mock_llm.py
+from unittest.mock import AsyncMock
+
+@pytest.mark.asyncio
+async def test_simulation_with_mock_llm():
+    mock_llm = AsyncMock()
+    mock_llm.generate.return_value = {"content": "mock response"}
+    
+    coordinator = SimulationCoordinator(llm_service=mock_llm)
+    result = await coordinator.execute_turn(session_id)
+    
+    assert mock_llm.generate.called
+    assert result.success
+```
+
+## Monitoring and Observability
+
+### Metrics Collection
+
+```python
+# iota/runtime/metrics.py
+from prometheus_client import Counter, Histogram, Gauge
+
+simulation_turns_total = Counter(
+    'iota_simulation_turns_total',
+    'Total number of simulation turns'
+)
+
+simulation_duration_seconds = Histogram(
+    'iota_simulation_duration_seconds',
+    'Simulation duration in seconds'
+)
+
+active_sessions = Gauge(
+    'iota_active_sessions',
+    'Number of active simulation sessions'
+)
+```
+
+### Logging
+
+```rust
+// core/src/logging/mod.rs
+use tracing::{info, warn, error};
+
+pub fn init_logging() {
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .with_target(false)
+        .with_thread_ids(true)
+        .with_file(true)
+        .with_line_number(true)
+        .init();
+}
+```
+
+### Tracing
+
+```python
+# iota/runtime/tracing.py
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+
+tracer = trace.get_tracer(__name__)
+
+@tracer.start_as_current_span("simulation_turn")
+async def execute_turn(session_id: str):
+    with tracer.start_as_current_span("environment_generation"):
+        env = await generate_environment()
+    
+    with tracer.start_as_current_span("decision_making"):
+        decision = await make_decision(env)
+    
+    return decision
+```
+
+## Security Considerations
+
+### Authentication & Authorization
+
+```python
+# iota/api/auth.py
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPBearer
+
+security = HTTPBearer()
+
+async def verify_token(credentials = Depends(security)):
+    token = credentials.credentials
+    if not is_valid_token(token):
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return token
+```
+
+### Input Validation
+
+```python
+# iota/api/models.py
+from pydantic import BaseModel, Field, validator
+
+class SimulationRequest(BaseModel):
+    scenario_type: str = Field(..., regex="^(commute|leisure|business|emergency)$")
+    max_turns: int = Field(default=10, ge=1, le=100)
+    
+    @validator('scenario_type')
+    def validate_scenario_type(cls, v):
+        allowed = ['commute', 'leisure', 'business', 'emergency']
+        if v not in allowed:
+            raise ValueError(f'scenario_type must be one of {allowed}')
+        return v
+```
+
+### Rate Limiting
+
+```python
+# iota/api/middleware.py
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
+@app.post("/api/simulation/start")
+@limiter.limit("10/minute")
+async def start_simulation(request: SimulationRequest):
+    return await coordinator.start_simulation(request)
+```
+
+### Secrets Management
+
+```python
+# iota/config/secrets.py
+import os
+from cryptography.fernet import Fernet
+
+def load_secret(key: str) -> str:
+    # Load from environment variable
+    if value := os.getenv(key):
+        return value
+    
+    # Load from encrypted file
+    cipher = Fernet(os.getenv("IOTA_ENCRYPTION_KEY"))
+    with open(f"/secrets/{key}", "rb") as f:
+        encrypted = f.read()
+    return cipher.decrypt(encrypted).decode()
+```
+
+## Conclusion
+
+本设计文档定义了智能座舱仿真智能体系统的完整技术架构，采用 Python + Rust 混合架构，核心运行时引擎命名为 "iota"。系统参考了 claude-code、claw-code、codex、gemini-cli 和 opencode 等成熟智能体系统的实现模式，在保持开发灵活性的同时获得性能关键路径的高性能。
+
+系统严格遵循 requirements.md 中定义的四层架构和五条关键链路，通过模块化设计、清晰的接口定义和完善的测试策略，确保系统的可维护性、可扩展性和可靠性。
