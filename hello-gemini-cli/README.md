@@ -32,7 +32,7 @@ title: "Gemini CLI 源码分析"
     <a class="chapter-card" href="10-session-resume/"><div class="chapter-number">10</div><div class="chapter-title">会话恢复：Session 持久化与历史重建</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="11-context-management/"><div class="chapter-number">11</div><div class="chapter-title">上下文管理：消息预算、工具输出与循环检测</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="12-prompt-system/"><div class="chapter-number">12</div><div class="chapter-title">Prompt 系统：PromptProvider 与上下文组装</div><span class="chapter-arrow">&#8599;</span></a>
-    <a class="chapter-card" href="13-multi-agent-remote/"><div class="chapter-number">13</div><div class="chapter-title">多代理与远程：单 Agent 架构与工具级并行</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="13-multi-agent/"><div class="chapter-number">13</div><div class="chapter-title">多代理与远程：本地子代理、A2A 远程代理与调度器</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="14-skill-system/"><div class="chapter-number">14</div><div class="chapter-title">Skill 系统：Markdown 定义与 Prompt 注入</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="15-plugin-system/"><div class="chapter-number">15</div><div class="chapter-title">插件系统：MCP 集成与信任校验</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="16-memory-system/"><div class="chapter-number">16</div><div class="chapter-title">Memory 系统：UserMemory 与项目上下文</div><span class="chapter-arrow">&#8599;</span></a>

@@ -262,7 +262,7 @@ flowchart LR
 > - [02-startup-flow.md](./02-startup-flow.md)
 > - [03-agent-loop.md](./03-agent-loop.md)
 > - [04-tool-system.md](./04-tool-system.md)
-> - [13-multi-agent-remote.md](./13-multi-agent-remote.md)
+> - [13-multi-agent.md](./13-multi-agent.md)
 > - [17-sdk-transport.md](./17-sdk-transport.md)
 > - [22-repl-and-state.md](./22-repl-and-state.md)
 

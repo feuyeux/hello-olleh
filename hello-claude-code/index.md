@@ -6,9 +6,9 @@ title: "Claude Code 源码分析"
 <section class="hero page-wrapper">
   <p class="hero-kicker">Source Code Analysis</p>
   <h1 class="hero-title">🔷 Claude Code</h1>
-  <p class="hero-subtitle">基于 Claude Code v2.1.87（反编译版）源码的深度解析</p>
+  <p class="hero-subtitle">基于 Claude Code v2.1.87（反编译版，运行时版本 2.1.888）源码的深度解析</p>
   <div class="hero-badges">
-    <span class="hero-badge"><span class="dot"></span>v2.1.87</span>
+    <span class="hero-badge"><span class="dot"></span>v2.1.87（源码）/ v2.1.888（运行时）</span>
   </div>
 </section>
 
@@ -42,7 +42,7 @@ title: "Claude Code 源码分析"
     <a class="chapter-card" href="20-lsp-integration"><div class="chapter-number">20</div><div class="chapter-title">LSP 集成：代码理解与符号定位</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 
-  <h2>21-26 特色专题与附录</h2>
+  <h2>21-28 特色专题与附录</h2>
   <div class="chapter-grid">
     <a class="chapter-card" href="21-hooks-lifecycle"><div class="chapter-number">21</div><div class="chapter-title">Hooks 生命周期与运行时语义</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="22-repl-and-state"><div class="chapter-number">22</div><div class="chapter-title">REPL 与状态管理</div><span class="chapter-arrow">&#8599;</span></a>
@@ -50,7 +50,9 @@ title: "Claude Code 源码分析"
     <a class="chapter-card" href="24-project-init-analysis"><div class="chapter-number">24</div><div class="chapter-title">项目初始化分析报告：面向首次进入 Claude Code 仓库的总览</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="25-input-command-queue"><div class="chapter-number">25</div><div class="chapter-title">用户输入、Slash 命令与队列分发</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="26-mcp-system"><div class="chapter-number">26</div><div class="chapter-title">Claude Code 的 MCP 系统（深度专题）</div><span class="chapter-arrow">&#8599;</span></a>
-    <a class="chapter-card" href="27-debugging"><div class="chapter-number">27</div><div class="chapter-title">调试指南</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="26b-mcp-deep"><div class="chapter-number">26b</div><div class="chapter-title">MCP 补充：OAuth/XAA 认证、生命周期钩子与渠道权限</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="27-growthbook"><div class="chapter-number">27</div><div class="chapter-title">GrowthBook 远程配置门控：tengu_* feature flags 与三层覆盖机制</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="27-debugging"><div class="chapter-number">28</div><div class="chapter-title">调试指南</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 </div>
 

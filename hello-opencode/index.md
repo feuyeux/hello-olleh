@@ -15,6 +15,27 @@ title: "OpenCode 源码分析"
 <div class="page-wrapper">
   <hr class="section-divider">
 
+  <h2>章节前缀说明</h2>
+  <div class="chapter-grid" style="font-size:0.85em;">
+    <div style="background:#f8f8f8;padding:12px;border-radius:6px;margin-bottom:8px;">
+      <strong>A0X — 架构专题</strong>：围绕核心系统文件展开，解释代码"长什么样"（入口、Server、loop、processor、LLM 层等关键文件的职责边界）<br>
+      <em>例如</em>：A01=多端入口、A02=Server 路由、A03=prompt 编译、A04=loop 状态机、A05=processor、A06=LLM 请求
+    </div>
+    <div style="background:#f8f8f8;padding:12px;border-radius:6px;margin-bottom:8px;">
+      <strong>B0X — 深度专题</strong>：围绕某个子系统展开，解释"为什么这样设计"（MCP、Skill、Memory、Resilience、Durable State 等内部机制与设计决策）<br>
+      <em>例如</em>：B01=Durable State、B02=上下文工程、B03=高级编排、B04=韧性、B05=基础设施、B06=可观测性、B07=LSP、B08=配置加载、B09=扩展面、B10=Skill、B11=Worktree、B12=Memory、B13=MCP 细节、B14=设计哲学、B15=MCP 调用
+    </div>
+    <div style="background:#f8f8f8;padding:12px;border-radius:6px;margin-bottom:8px;">
+      <strong>C0X — 工具专题</strong>：面向实际操作（调试、对比、Plugin 开发等）<br>
+      <em>例如</em>：C01=断点调试、C02=Plugin 系统
+    </div>
+    <div style="background:#fff8f0;padding:10px;border-radius:6px;">
+      <strong>无前缀</strong>：01-08 为核心总览，10/21/22/24 为独立专题，37/38 为索引与对比文档
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
   <h2>01-08 核心总览</h2>
   <div class="chapter-grid">
     <a class="chapter-card" href="01-architecture"><div class="chapter-number">01</div><div class="chapter-title">架构全景：目录结构、分层模型与核心抽象</div><span class="chapter-arrow">&#8599;</span></a>
@@ -55,6 +76,8 @@ title: "OpenCode 源码分析"
     <a class="chapter-card" href="36-design-philosophy"><div class="chapter-number">36</div><div class="chapter-title">设计哲学：固定骨架与晚绑定策略</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="37-prompt-diff"><div class="chapter-number">37</div><div class="chapter-title">提示词三文件对比分析</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="38-mainline-index"><div class="chapter-number">38</div><div class="chapter-title">执行主线索引：OpenCode 运行主线深度解析</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="39-durable-state-comparison"><div class="chapter-number">39</div><div class="chapter-title">跨工具对比：四大 AI Coding CLI 的状态持久化方案</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="40-effect-ts"><div class="chapter-number">40</div><div class="chapter-title">Effect-ts 依赖注入：Service/Layer/Effect 骨架与晚绑定策略</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 </div>
 

@@ -82,3 +82,5 @@ flowchart TD
 ---
 
 > 关联阅读：[07-error-security.md](./07-error-security.md) 了解在状态异常时系统如何进行错误处理与自愈。
+>
+> **跨工具对比**：Gemini CLI 的 JSON 会话文件方案（替换写）最直接，但缺少事务保证。完整的四工具状态持久化对比见 **[hello-opencode/39-durable-state-comparison.md](../hello-opencode/39-durable-state-comparison.md)**。

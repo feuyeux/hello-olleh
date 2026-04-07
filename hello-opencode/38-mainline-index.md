@@ -31,11 +31,11 @@ title: "执行主线索引：OpenCode 运行主线深度解析"
 | 文件 | 主文件 | 核心交接点 | 这一跳回答什么 |
 | --- | --- | --- | --- |
 | [17-sdk-transport.md](./17-sdk-transport.md) | `src/index.ts`、`cli/cmd/run.ts`、`cli/cmd/tui/*`、桌面壳 | 入口怎样收束成同一套 HTTP/SSE contract | CLI/TUI/Web/Attach/ACP/Desktop 为什么最后都能打到同一个 server |
-| [26-server-routing.md](./26-server-routing.md) | `server/server.ts`、`server/routes/session.ts` | 请求怎样获得 `WorkspaceContext` / `Instance` | Hono app 怎样完成认证、实例绑定、路由装配并进入 `/session` |
+| [28-server-routing.md](./28-server-routing.md) | `server/server.ts`、`server/routes/session.ts` | 请求怎样获得 `WorkspaceContext` / `Instance` | Hono app 怎样完成认证、实例绑定、路由装配并进入 `/session` |
 | [12-prompt-system.md](./12-prompt-system.md) | `session/prompt.ts` | `POST /session/:id/message` 怎样变成 durable user message | text/file/agent/subtask parts 怎样被编译、改写和落库 |
-| [27-session-loop.md](./27-session-loop.md) | `session/prompt.ts` | `loop()` 如何从 durable history 推导下一轮动作 | 并发占位、历史回放、subtask、compaction、overflow、normal round 怎样串成一台状态机 |
-| [28-stream-processor.md](./28-stream-processor.md) | `session/processor.ts` | `SessionProcessor.process()` 如何消费单轮流事件 | reasoning、text、tool、step、patch、error 怎样写回 durable history |
-| [29-llm-request.md](./29-llm-request.md) | `session/llm.ts`、`session/system.ts`、`provider/provider.ts` | 进入模型前的最后一次编译 | provider prompt、system、tools、headers、options、middleware 怎样拼起来 |
+| [29-session-loop.md](./29-session-loop.md) | `session/prompt.ts` | `loop()` 如何从 durable history 推导下一轮动作 | 并发占位、历史回放、subtask、compaction、overflow、normal round 怎样串成一台状态机 |
+| [30-stream-processor.md](./30-stream-processor.md) | `session/processor.ts` | `SessionProcessor.process()` 如何消费单轮流事件 | reasoning、text、tool、step、patch、error 怎样写回 durable history |
+| [31-llm-request.md](./31-llm-request.md) | `session/llm.ts`、`session/system.ts`、`provider/provider.ts` | 进入模型前的最后一次编译 | provider prompt、system、tools、headers、options、middleware 怎样拼起来 |
 | [10-session-resume.md](./10-session-resume.md) | `session/processor.ts`、`session/index.ts`、`message-v2.ts` | 模型流怎样写回 durable state | reasoning、text、tool、step、patch 事件怎样落库并重新投影给前端 |
 
 ---
@@ -143,7 +143,7 @@ sequenceDiagram
 |----------|------|------|
 | `cli/index.ts` entry | `cli/index.ts` | CLI 入口：解析参数，根据 `--tui`/`--http` 分发到不同 transport |
 | `server/server.ts` | `server/server.ts` | HTTP server 主文件：路由注册、中间件挂载、Bun.serve 启动 |
-| `session/loop.ts` | `session/loop.ts` | 核心主循环：驱动 session 状态机，是系统最重要的文件 |
+| `loop()` (SessionPrompt) | `session/prompt.ts:278` | 核心主循环：驱动 session 状态机，是系统最重要的文件 |
 | `session/processor.ts` | `session/processor.ts` | 单轮 LLM 处理：stream 事件消费、工具分发、持久化 |
 | `storage/database.ts` | `storage/database.ts` | SQLite 封装：事务、Effect 集成、连接池 |
 | `plugin/plugin.ts` | `plugin/plugin.ts` | 插件入口：所有 built-in plugin 的注册和 pipeline 编排 |

@@ -107,7 +107,7 @@ SDK 不是第二实现，而是事件协议的消费者。
 
 - Claude Code: [17-sdk-transport.md](../hello-claude-code/17-sdk-transport.md), [23-bridge-system.md](../hello-claude-code/23-bridge-system.md)
 - Gemini CLI: [10-session-resume.md](../hello-gemini-cli/10-session-resume.md), [17-sdk-transport.md](../hello-gemini-cli/17-sdk-transport.md)
-- OpenCode: [17-sdk-transport.md](../hello-opencode/17-sdk-transport.md), [26-server-routing.md](../hello-opencode/26-server-routing.md), [29-llm-request.md](../hello-opencode/29-llm-request.md)
+- OpenCode: [17-sdk-transport.md](../hello-opencode/17-sdk-transport.md), [28-server-routing.md](../hello-opencode/28-server-routing.md), [31-llm-request.md](../hello-opencode/31-llm-request.md)
 
 ---
 
