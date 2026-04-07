@@ -6,7 +6,6 @@ title: "query() 主循环与请求构造"
 
 本篇将 `query()` 视为多轮状态机来拆解，覆盖请求前上下文治理、流式模型调用、工具回流与错误恢复。
 
-
 **目录**
 
 - [1. 定义](#1-定义)
@@ -419,7 +418,164 @@ flowchart LR
 
 分开。
 
-## 15. 关键源码锚点
+## 15. StreamingToolExecutor 深入解析
+
+### 15.1 流式并发执行架构
+
+`StreamingToolExecutor`（`src/services/tools/StreamingToolExecutor.ts`）实现了模型流式输出期间的**流水线并行工具执行**。当模型还在流式输出时，已经完成解析的 `tool_use` 块会被立即排入执行队列。
+
+**入队** — `StreamingToolExecutor.ts:83`：
+
+```typescript
+addTool(block: ToolUseBlock, assistantMessage: AssistantMessage): void {
+  const parsedInput = toolDefinition.inputSchema.safeParse(block.input)
+  const isConcurrencySafe = parsedInput?.success
+    ? Boolean(toolDefinition.isConcurrencySafe(parsedInput.data))
+    : false
+  this.tools.push({
+    id: block.id, block, assistantMessage,
+    status: 'queued', isConcurrencySafe, pendingProgress: [],
+  })
+  void this.processQueue()  // 立即尝试启动
+}
+```
+
+**并发门控** — `StreamingToolExecutor.ts:137-143`：
+
+```typescript
+private canExecuteTool(isConcurrencySafe: boolean): boolean {
+  const executingTools = this.tools.filter(t => t.status === 'executing')
+  return (
+    executingTools.length === 0 ||
+    (isConcurrencySafe && executingTools.every(t => t.isConcurrencySafe))
+  )
+}
+```
+
+规则：当前无工具在执行，或当前所有执行中工具都是只读 (`isConcurrencySafe`) 且新工具也是只读时，才允许并行。
+
+**队列处理** — `StreamingToolExecutor.ts:153`：
+
+```typescript
+private async processQueue(): Promise<void> {
+  for (const tool of this.tools) {
+    if (tool.status !== 'queued') continue
+    if (this.canExecuteTool(tool.isConcurrencySafe)) {
+      await this.executeTool(tool)
+    } else {
+      if (!tool.isConcurrencySafe) break  // 维护非并发工具的顺序性
+    }
+  }
+}
+```
+
+### 15.2 与 runTools() 批处理模式的对比
+
+| 维度 | `StreamingToolExecutor` | `runTools()` |
+|------|------------------------|--------------|
+| 触发时机 | 模型流式输出期间 | 模型响应完成后 |
+| 入口 | `addTool()` 逐个添加 | `runTools(toolUseBlocks)` 批量 |
+| 分组策略 | 单工具粒度的并发门控 | `partitionToolCalls()` 预先分批 |
+| 并发控制 | `canExecuteTool()` 实时判断 | 连续只读工具合并为一批 |
+| 适用场景 | 长响应中提前启动工具 | 短响应或 fallback |
+
+### 15.3 `partitionToolCalls()` 分批算法
+
+`src/services/tools/toolOrchestration.ts:96-119`
+
+```typescript
+function partitionToolCalls(toolUseMessages, toolUseContext): Batch[] {
+  return toolUseMessages.reduce((acc, toolUse) => {
+    const isConcurrencySafe = tool?.isConcurrencySafe(parsedInput.data) || false
+    if (isConcurrencySafe && acc[acc.length - 1]?.isConcurrencySafe) {
+      acc[acc.length - 1].blocks.push(toolUse)  // 合并到同一批
+    } else {
+      acc.push({ isConcurrencySafe, blocks: [toolUse] })
+    }
+    return acc
+  }, [])
+}
+```
+
+最大并发度 — `toolOrchestration.ts:9-11`：
+
+```typescript
+function getMaxToolUseConcurrency(): number {
+  return parseInt(process.env.CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY || '', 10) || 10
+}
+```
+
+---
+
+## 16. 四级上下文压缩体系
+
+Claude Code 拥有业界最复杂的上下文压缩机制，四级压缩按以下顺序在每轮迭代中依次生效：
+
+| 级别 | 函数 | 代码位置 | 触发条件 | 职责 |
+|------|------|----------|----------|------|
+| History Snip | `snipModule.snipCompactIfNeeded()` | `query.ts:346-353` | 特性门控 `HISTORY_SNIP` | 裁剪老旧历史，释放 token |
+| Microcompact | `deps.microcompact()` | `query.ts:353-375` | **每轮迭代**都运行 | 轻量级工具结果裁剪 |
+| Autocompact | `deps.autocompact()` | `query.ts:404-545` | token 接近上限 | 主动摘要压缩 |
+| Reactive Compact | `reactiveCompact.tryReactiveCompact()` | `query.ts:1171-1220` | API 返回 `prompt_too_long` | 被动紧急压缩 |
+
+Reactive Compact 是最后一道防线，只在 API 请求因上下文过长而失败后才触发（`query.ts:1171`）：
+
+```typescript
+if ((isWithheld413 || isWithheldMedia) && reactiveCompact) {
+  const compacted = await reactiveCompact.tryReactiveCompact({
+    hasAttempted: hasAttemptedReactiveCompact,
+    messages: messagesForQuery,
+  })
+  if (compacted) {
+    state = { ...state, messages: buildPostCompactMessages(compacted) }
+    continue  // 用压缩后的上下文重试
+  }
+}
+```
+
+---
+
+## 17. 退出条件完整清单
+
+| 退出路径 | 代码位置 | 条件 | 返回值 |
+|----------|----------|------|--------|
+| 正常完成 | `query.ts:1336` | `!needsFollowUp` 且无待恢复错误 | `{ reason: 'completed' }` |
+| 达到 maxTurns | `query.ts:1705-1710` | `nextTurnCount > maxTurns` | `{ reason: 'max_turns' }` |
+| 用户中断 | `query.ts:984-1048` | `abortController.signal.aborted` | `{ reason: 'aborted_streaming' }` |
+| Stop hook 阻止 | `query.ts:1243-1380` | hook 返回 stop 指令 | `{ reason: 'stop_hook' }` |
+| Max output tokens 耗尽 | `query.ts:1206-1260` | 3 次恢复尝试均失败 | 错误上抛 |
+| 上下文不可恢复 | `query.ts:1171-1220` | reactive compact 失败 | 错误上抛 |
+
+**Max Output Tokens 恢复机制**（`query.ts:1206-1260`）：
+
+`MAX_OUTPUT_TOKENS_RECOVERY_LIMIT = 3`（行 164）。每次恢复时注入一条 meta user message `"Output token limit hit. Resume directly..."`，要求模型从断点续写而非重新开始。
+
+---
+
+## 18. 错误恢复关键路径
+
+### 18.1 模型 fallback
+
+`query.ts:735-1060`：当主模型因 demand/rate limit 失败时，可切换到 `fallbackModel` 重试：
+
+```typescript
+catch (innerError) {
+  if (innerError instanceof FallbackTriggeredError && fallbackModel) {
+    currentModel = fallbackModel
+    attemptWithFallback = true
+    continue
+  }
+  throw innerError
+}
+```
+
+### 18.2 协议层重试
+
+`src/services/api/withRetry.ts:178`：`withRetry()` 处理 429（rate limit）和 5xx 错误的指数退避重试，同时集成 auth refresh 和 fallback 模型切换。
+
+---
+
+## 19. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
