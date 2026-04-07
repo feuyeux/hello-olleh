@@ -2,24 +2,68 @@
 
 ## Introduction
 
-本需求文档以 `.kiro/specs/cabin-simulation-agent/requirements.png` 为唯一约束来源，目标是把图中的模块、分层和链路关系转写为可落地的文字需求。
+本文档定义智能座舱仿真系统 `iota` 的权威需求。系统以纯 Python 实现，目标是在多轮会话中模拟用户、环境与目标座舱系统之间的交互闭环，并输出可量化的评估结果。
 
-该系统从控制与职责视角划分为四个部分：
+系统统一划分为四个部分：
 
-- 干预层：仿真场景初始化、突发噪声
+- 初始化模块：仿真场景初始化、突发噪声
 - 输入支撑模块：环境感知仿真、用户状态仿真、长短期记忆模块
-- 上层决策编排层：仿真编排决策器
+- 上层决策编排层：DecisionEngine
 - 下层执行反馈层：用户行为仿真、目标系统调用与响应解析、评测量化
 
-图中还定义了五条关键链路：
+系统定义四条关键链路：
 
 - `1. 仿真主链路`
 - `2. 环境 & 用户反馈链路`
 - `3. 量化评估链路`
 - `4. 记忆更新链路`
-- `5. 噪声扰动链路`
 
-除上述模块、字段和链路外，图片没有强制规定具体技术实现。因此，本需求文档只约束图中明确出现的结构与逻辑，不额外引入图外模块作为硬性要求。
+## Canonical Data Definitions
+
+### ScenarioInitialization
+
+`ScenarioInitialization` 是全局唯一的场景初始化结果，三份文档均以该定义为准。
+
+- `trip_goal`
+  - `purpose`: 出行目的或任务目标
+  - `destination`: 目标地点，可为空
+  - `success_criteria`: 本次仿真的完成判据
+- `origin`
+  - `latitude`
+  - `longitude`
+  - `label`
+- `occupants`
+  - 乘员列表及角色信息
+- `scene_config`
+  - 场景类型、时间、设备能力、业务参数及仿真约束
+
+### StructuredResponse
+
+`StructuredResponse` 是目标系统调用后的唯一标准化响应结构。
+
+- `response_status`: success / partial / failed / timeout
+- `response_content`: 面向编排器和评测模块的结构化内容
+- `completion_flag`: 当前会话是否满足结束条件
+- `side_effects`: 对环境或用户状态产生的可观测影响
+- `raw_payload`: 原始响应载荷
+- `timestamp`
+
+### SessionContext
+
+`SessionContext` 是三份文档统一使用的会话上下文定义。
+
+- `session_id`
+- `status`: created / running / completed / aborted
+- `turn_index`
+- `max_turns`
+- `initialization`: `ScenarioInitialization`
+- `current_environment`
+- `current_user_state`
+- `memory`
+- `last_behavior`
+- `last_response`
+- `last_evaluation`
+- `history`
 
 ## System Flow
 
@@ -27,11 +71,10 @@
 flowchart LR
     Request[仿真请求]
     BizConfig[业务配置]
-    Orchestrator[仿真编排决策器]
     Result[会话结果]
     TargetService[目标系统服务]
 
-    subgraph Layer1[干预层]
+    subgraph Layer1[初始化模块]
         SceneInit[仿真场景初始化]
         Noise[突发噪声]
     end
@@ -43,7 +86,7 @@ flowchart LR
     end
 
     subgraph Layer3[上层决策编排层]
-        Orchestrator
+        Orchestrator[DecisionEngine]
     end
 
     subgraph Layer4[下层执行反馈层]
@@ -52,222 +95,208 @@ flowchart LR
         Eval[评测量化]
     end
 
-    Request -->|<span style='color:#d9485f'>01 请求进入</span>| Orchestrator
-    BizConfig -->|<span style='color:#d9485f'>02 配置注入</span>| Orchestrator
-    Orchestrator -->|<span style='color:#d9485f'>03 启动会话</span>| SceneInit
+    Request --> Orchestrator
+    BizConfig --> Orchestrator
+    Orchestrator --> SceneInit
 
-    SceneInit -->|<span style='color:#d9485f'>04 初始化环境</span>| Env
-    SceneInit -->|<span style='color:#d9485f'>05 初始化用户状态</span>| UserState
-    SceneInit -->|<span style='color:#d9485f'>06 初始化记忆</span>| Memory
+    SceneInit --> Env
+    SceneInit --> UserState
+    SceneInit --> Memory
 
-    Env -->|<span style='color:#2563eb'>07 环境上下文</span>| Orchestrator
-    UserState -->|<span style='color:#2563eb'>08 用户状态上下文</span>| Orchestrator
-    Memory -->|<span style='color:#2563eb'>09 记忆上下文</span>| Orchestrator
+    Env --> Orchestrator
+    UserState --> Orchestrator
+    Memory --> Orchestrator
 
-    Orchestrator -->|<span style='color:#d9485f'>10 输出策略</span>| Behavior
-    Behavior -->|<span style='color:#d9485f'>11 动作请求</span>| ServiceCall
+    Orchestrator --> Behavior
+    Behavior --> ServiceCall
+    ServiceCall --> TargetService
+    TargetService --> ServiceCall
+    ServiceCall -->|StructuredResponse| Orchestrator
 
-    ServiceCall -->|<span style='color:#d9485f'>12 发送请求</span>| TargetService
-    TargetService -->|<span style='color:#d9485f'>13 返回响应</span>| ServiceCall
-    ServiceCall -->|<span style='color:#2563eb'>14 结构化响应</span>| Orchestrator
+    ServiceCall -.->|side_effects| Env
+    ServiceCall -.->|side_effects| UserState
 
-    ServiceCall -.->|<span style='color:#2563eb'>15 反馈环境</span>| Env
-    ServiceCall -.->|<span style='color:#2563eb'>16 反馈用户</span>| UserState
+    Behavior -.-> Eval
+    ServiceCall -.-> Eval
 
-    Behavior -.->|<span style='color:#2563eb'>17 行为评估</span>| Eval
-    ServiceCall -.->|<span style='color:#2563eb'>18 响应评估</span>| Eval
+    Behavior -.-> Memory
+    Eval -.-> Memory
 
-    Behavior -.->|<span style='color:#2563eb'>20 行为写回</span>| Memory
-    Eval -.->|<span style='color:#2563eb'>21 评估写回</span>| Memory
+    Noise -.-> Env
+    Noise -.-> UserState
 
-    Noise -.->|<span style='color:#2563eb'>22 噪声入环境</span>| Env
-    Noise -.->|<span style='color:#2563eb'>23 噪声入用户</span>| UserState
+    Eval --> Orchestrator
+    Memory --> Orchestrator
 
-    Eval -->|<span style='color:#2563eb'>24 评估回编排</span>| Orchestrator
-    Memory -->|<span style='color:#2563eb'>25 上下文回编排</span>| Orchestrator
-
-    Orchestrator -->|<span style='color:#d9485f'>23 继续下一轮</span>| Env
-    Orchestrator -->|<span style='color:#d9485f'>24 结束会话</span>| Result
-
-    classDef llmNode fill:#fff2cc,stroke:#b7791f,stroke-width:1.5px,color:#111111;
-    class Orchestrator,Env,UserState,Behavior,ServiceCall llmNode;
-    linkStyle 0,1,2,3,4,5,9,10,11,12,22,23 stroke:#d9485f,stroke-width:2.5px;
-    linkStyle 6,7,8,13,14,15,16,17,18,19,20,21 stroke:#2563eb,stroke-width:2px;
+    Orchestrator -->|继续下一轮| Env
+    Orchestrator -->|结束会话| Result
 ```
-
-注：浅黄色背景节点表示结合 `design.md` 与当前需求后，明确建议调用 LLM 的模块，包括 `仿真编排决策器`、`环境感知仿真`、`用户状态仿真`、`用户行为仿真`、`目标系统调用与响应解析`。`仿真编排决策器` 内部包含“用户意图推演”能力，不再单独作为同级模块出现。
-
-线条颜色约定：红色（`#d9485f`）为**请求链路**，蓝色（`#2563eb`）为**数据链路**。序号 01–24 按完整执行时序标注。
 
 ## Glossary
 
-- **仿真请求**：来自调用方的启动或运行请求，用于驱动一次或多次仿真执行。
-- **业务配置**：进入仿真流程前的外部业务参数，用于驱动仿真场景初始化。
-- **仿真编排决策器**：上层决策编排组件，负责按需获取环境、用户状态和记忆上下文，完成当前轮策略生成，并基于目标系统响应、评估结果与轮次约束决定是否进入下一轮。
-- **仿真场景初始化**：主链路入口，负责建立出行目的、起始点坐标、人员配置和场景配置。
-- **突发噪声**：对仿真过程施加扰动的干预源，包括交通事故、热点事件、个人突发和生活/工作事件。
-- **环境感知仿真**：输入支撑模块，负责构造舱外环境、交通参与者、舱内环境和车辆状态。
-- **用户状态仿真**：输入支撑模块，负责构造用户人设、知识背景、身体状态和情绪状态。
-- **长短期记忆模块**：输入支撑模块，负责沉淀个性化偏好、实时上下文窗口和知识库。
-- **用户意图推演**：仿真编排决策器的内部能力，用于进行情景理解、需求解析、规划策略和交互意图生成。
-- **用户行为仿真**：下层执行反馈模块，负责把上层决策转成具体交互动作，语音为主要形式。
-- **目标系统调用与响应解析**：下层执行反馈中的服务通信组件，负责向目标系统发送动作请求、接收响应并产出结构化执行结果。目标系统的响应直接反馈给仿真编排决策器和输入支撑模块，无需额外的车辆响应仿真层。
-- **目标系统服务**：下层交互的外部服务对象，用于接收动作请求并返回响应与状态变化。
-- **评测量化**：下层执行反馈模块，负责从合理性、准确性、覆盖率和实时性四个维度做量化评估。
-- **仿真主链路**：从场景初始化到环境/状态/记忆，再到编排决策、行为执行、目标系统调用与响应解析的主流程。
-- **环境 & 用户反馈链路**：目标系统响应反向影响环境感知和用户状态的反馈回路。
-- **量化评估链路**：把用户行为和目标系统响应送入评测量化模块的评估回路。
-- **记忆更新链路**：把行为结果和评估结果沉淀回长短期记忆模块的更新回路。
-- **噪声扰动链路**：把突发噪声注入环境感知和用户状态的扰动回路。
+- **iota**：本系统名称，不再单独定义“iota 引擎”作为独立子系统。
+- **仿真场景初始化**：主链路起点，生成统一的 `ScenarioInitialization`。
+- **突发噪声**：可选扰动输入，只能影响环境感知仿真和用户状态仿真。
+- **环境感知仿真**：维护舱外环境、交通参与者、舱内环境和车辆状态。
+- **用户状态仿真**：维护用户人设、知识背景、身体状态和情绪状态。
+- **长短期记忆模块**：维护个性化偏好、实时上下文窗口和知识库。
+- **仿真编排决策器**：拉取上下文、生成策略、判断下一轮或结束。
+- **用户行为仿真**：把当前轮策略转成用户动作。
+- **目标系统调用与响应解析**：负责通信、接收响应并产出 `StructuredResponse`。
+- **评测量化**：以用户行为与 `StructuredResponse` 为输入进行量化评估。
 
 ## Requirements
 
 ### Requirement 1: 仿真场景初始化
 
-**User Story:** 作为仿真系统，我希望先建立清晰的初始场景，以便后续输入、决策、执行和评估都基于同一套起点运行。
+**User Story:** 作为仿真系统，我希望用统一格式初始化场景，以便所有模块共享同一套起点。
 
 #### Acceptance Criteria
 
 1. WHEN 系统接收到业务配置, THE System SHALL 进入仿真场景初始化。
-2. THE 仿真场景初始化模块 SHALL 至少生成 `出行目的`、`起始点坐标`、`人员配置` 和 `场景配置`。
-3. THE 仿真场景初始化模块 SHALL 将初始化结果同时提供给环境感知仿真、用户状态仿真和长短期记忆模块。
-4. THE 仿真场景初始化模块 SHALL 作为 `仿真主链路` 的起点。
-5. THE 仿真场景初始化模块 SHALL NOT 直接生成用户行为、车辆响应或评测结果。
+2. THE 仿真场景初始化模块 SHALL 生成全局统一的 `ScenarioInitialization`。
+3. THE `ScenarioInitialization` SHALL 至少包含 `trip_goal`、`origin`、`occupants` 和 `scene_config`。
+4. THE 仿真场景初始化模块 SHALL 将初始化结果同时提供给环境感知仿真、用户状态仿真和长短期记忆模块。
+5. THE 仿真场景初始化模块 SHALL 作为 `仿真主链路` 的起点。
+6. THE 仿真场景初始化模块 SHALL NOT 直接生成用户行为、目标系统响应或评测结果。
 
 ### Requirement 2: 突发噪声
 
-**User Story:** 作为仿真系统，我希望能够在仿真过程中注入突发扰动，以便模拟现实世界中对用户和环境的非稳定影响。
+**User Story:** 作为仿真系统，我希望在初始化后的任意轮次注入扰动，以便覆盖真实世界中的非稳定因素。
 
 #### Acceptance Criteria
 
-1. THE 突发噪声模块 SHALL 支持 `交通事故`、`热点事件`、`个人突发` 和 `生活&工作` 四类干预源。
-2. WHEN 系统注入突发噪声, THE System SHALL 通过 `噪声扰动链路` 将扰动传递到环境感知仿真和用户状态仿真。
-3. THE 突发噪声模块 SHALL 作为干预层能力存在，而不是主链路的必经节点。
-4. THE 突发噪声模块 SHALL NOT 绕过输入支撑模块直接修改仿真编排决策器、用户行为仿真或车辆响应仿真。
+1. THE 突发噪声模块 SHALL 支持 `交通事故`、`热点事件`、`个人突发` 和 `生活&工作` 四类扰动源。
+2. WHEN 系统注入突发噪声, THE System SHALL 仅将扰动传递到环境感知仿真和用户状态仿真。
+3. THE 突发噪声模块 SHALL NOT 直接修改 DecisionEngine、用户行为仿真、目标系统调用与响应解析或评测量化。
+4. THE 突发噪声模块 SHALL 作为可选能力存在，而不是主链路的必经节点。
+5. THE 突发噪声模块 SHALL 在第一版本中仅提供接口定义和 Mock 实现，不实现真实扰动逻辑。
 
 ### Requirement 3: 环境感知仿真
 
-**User Story:** 作为仿真系统，我希望统一模拟用户所处环境，以便上层决策编排获得完整的外部与车内上下文。
+**User Story:** 作为仿真系统，我希望持续维护环境上下文，以便编排器获得完整的外部与车内状态。
 
 #### Acceptance Criteria
 
-1. THE 环境感知仿真模块 SHALL 覆盖 `舱外环境`、`交通参与者`、`舱内环境` 和 `车辆状态` 四类内容。
-2. WHEN 仿真场景初始化完成, THE 环境感知仿真模块 SHALL 基于初始化结果建立当前环境。
-3. WHEN 车辆响应仿真产生新的车辆状态, THE 环境感知仿真模块 SHALL 通过 `环境 & 用户反馈链路` 接收反馈并刷新环境表示。
-4. WHEN 突发噪声发生, THE 环境感知仿真模块 SHALL 通过 `噪声扰动链路` 接收扰动并反映到当前环境中。
-5. THE 环境感知仿真模块 SHALL 将当前结果提供给用户状态仿真和仿真编排决策器。
+1. THE 环境感知仿真模块 SHALL 覆盖 `舱外环境`、`交通参与者`、`舱内环境` 和 `车辆状态`。
+2. WHEN 场景初始化完成, THE 环境感知仿真模块 SHALL 基于 `ScenarioInitialization` 建立当前环境。
+3. WHEN `StructuredResponse.side_effects` 影响环境, THE 环境感知仿真模块 SHALL 通过 `环境 & 用户反馈链路` 刷新环境表示。
+4. WHEN 突发噪声发生, THE 环境感知仿真模块 SHALL 接收扰动并反映到当前环境中。
+5. THE 环境感知仿真模块 SHALL 在每轮中先于用户状态仿真完成更新。
+6. THE 环境感知仿真模块 SHALL 将当前结果提供给用户状态仿真和 DecisionEngine。
 
 ### Requirement 4: 用户状态仿真
 
-**User Story:** 作为仿真系统，我希望持续刻画用户自身状态，以便后续决策和行为符合人物设定和情境变化。
+**User Story:** 作为仿真系统，我希望持续刻画用户状态，以便决策和行为符合人物设定与情境变化。
 
 #### Acceptance Criteria
 
 1. THE 用户状态仿真模块 SHALL 覆盖 `用户人设`、`知识背景`、`身体状态` 和 `情绪状态`。
-2. WHEN 仿真场景初始化完成, THE 用户状态仿真模块 SHALL 基于初始化结果建立用户初始状态。
-3. WHEN 环境感知仿真发生变化, THE 用户状态仿真模块 SHALL 接收环境输入并更新当前用户状态。
-4. WHEN 车辆响应仿真影响用户体验或车内状态, THE 用户状态仿真模块 SHALL 通过 `环境 & 用户反馈链路` 接收反馈。
-5. WHEN 突发噪声发生, THE 用户状态仿真模块 SHALL 通过 `噪声扰动链路` 接收扰动。
-6. THE 用户状态仿真模块 SHALL 将当前结果提供给仿真编排决策器。
+2. WHEN 场景初始化完成, THE 用户状态仿真模块 SHALL 基于 `ScenarioInitialization` 建立初始用户状态。
+3. THE 用户状态仿真模块 SHALL 在每轮中依赖环境感知仿真的当前输出作为前提条件。
+4. WHEN 环境感知仿真完成当前轮更新, THE 用户状态仿真模块 SHALL 基于更新后的环境、突发噪声和 `StructuredResponse.side_effects` 更新当前用户状态。
+5. THE 用户状态仿真模块 SHALL 将当前结果提供给 DecisionEngine。
 
 ### Requirement 5: 长短期记忆模块
 
-**User Story:** 作为仿真系统，我希望保留用户长期偏好和当前上下文，以便决策结果具备连续性和个性化。
+**User Story:** 作为仿真系统，我希望保留长期偏好和当前上下文，以便后续轮次具备连续性。
 
 #### Acceptance Criteria
 
 1. THE 长短期记忆模块 SHALL 维护 `个性化偏好`、`实时上下文窗口` 和 `知识库`。
-2. WHEN 仿真场景初始化完成, THE 长短期记忆模块 SHALL 基于初始场景载入初始记忆。
-3. THE 长短期记忆模块 SHALL 向仿真编排决策器提供可用记忆上下文。
-4. WHEN 用户行为仿真产生新的交互结果, THE 长短期记忆模块 SHALL 通过 `记忆更新链路` 接收更新输入。
-5. WHEN 评测量化产生新的评估结果, THE 长短期记忆模块 SHALL 通过 `记忆更新链路` 接收更新输入。
+2. WHEN 场景初始化完成, THE 长短期记忆模块 SHALL 基于 `ScenarioInitialization` 载入初始记忆。
+3. THE 长短期记忆模块 SHALL 向 DecisionEngine 提供可用记忆上下文。
+4. THE 长短期记忆模块 SHALL 作为外部系统存在，通过异步接口接收更新请求。
+5. THE 长短期记忆模块 SHALL 自行保证更新顺序的正确性，iota 系统只负责发送更新请求。
+6. WHEN 用户行为仿真产生新的交互结果, THE System SHALL 异步发送更新请求到长短期记忆模块。
+7. WHEN 评测量化产生新的评估结果, THE System SHALL 异步发送更新请求到长短期记忆模块。
 
-### Requirement 6: 仿真编排决策器
+### Requirement 6: DecisionEngine
 
-**User Story:** 作为仿真系统，我希望由一个上层编排决策器按需获取上下文、生成当前轮意图，并决定是否进入下一轮，以便让决策与执行分层更清晰。
+**User Story:** 作为仿真系统，我希望由一个上层决策引擎按需获取上下文、生成当前轮策略，并决定是否进入下一轮。
 
 #### Acceptance Criteria
 
-1. THE 仿真编排决策器 SHALL 按需获取环境感知仿真、用户状态仿真和长短期记忆模块的当前结果，而不是被动等待固定顺序的完整输入。
-2. THE 仿真编排决策器 SHALL 在内部具备 `情景理解&推理`、`需求解析&挖掘`、`长期规划&短期策略` 和 `用户意图推演` 四类能力。
-3. THE 仿真编排决策器 SHALL 产出当前轮的策略与意图，并将结果提供给用户行为仿真。
-4. WHEN 目标系统调用与响应解析返回结构化响应, THE 仿真编排决策器 SHALL 基于目标系统响应、评测结果、记忆状态和轮次约束决定继续下一轮还是结束会话。
-5. THE 仿真编排决策器 SHALL NOT 直接调用目标系统服务，也 SHALL NOT 直接产出车辆响应或评测量化结果。
+1. THE DecisionEngine SHALL 按需获取环境感知仿真、用户状态仿真和长短期记忆模块的当前结果。
+2. THE DecisionEngine SHALL 在内部具备 `情景理解与推理`、`需求解析与挖掘`、`长期规划与短期策略` 和 `用户意图推演` 四类能力。
+3. THE DecisionEngine SHALL 产出当前轮策略与意图，并将结果提供给用户行为仿真。
+4. WHEN `StructuredResponse` 返回, THE DecisionEngine SHALL 基于目标系统响应、评测结果、记忆状态和轮次约束决定继续下一轮还是结束会话。
+5. THE DecisionEngine SHALL NOT 直接调用目标系统服务，也 SHALL NOT 直接产出评测量化结果。
+6. THE DecisionEngine SHALL 负责会话级外层循环和单轮级内层执行的编排逻辑。
 
 ### Requirement 7: 用户行为仿真
 
-**User Story:** 作为仿真系统，我希望把上层编排决策转成可执行的交互动作，以便驱动车辆侧响应。
+**User Story:** 作为仿真系统，我希望把当前轮策略转成可执行的用户动作。
 
 #### Acceptance Criteria
 
-1. WHEN 仿真编排决策器完成当前轮策略生成, THE 用户行为仿真模块 SHALL 基于该结果生成行为表达。
+1. WHEN DecisionEngine完成当前轮策略生成, THE 用户行为仿真模块 SHALL 基于该结果生成行为表达。
 2. THE 用户行为仿真模块 SHALL 支持 `语音（主要）`、`按键` 和 `触屏` 三类明确行为形式。
-3. THE 用户行为仿真模块 SHALL 为 `手势` 保留扩展能力，因为原图将其标注为待确认能力。
-4. THE 用户行为仿真模块 SHALL 将行为结果提供给车辆响应仿真。
+3. THE 用户行为仿真模块 SHALL 为 `手势` 保留扩展能力。
+4. THE 用户行为仿真模块 SHALL 将行为结果提供给目标系统调用与响应解析模块。
 5. THE 用户行为仿真模块 SHALL 通过 `量化评估链路` 向评测量化提供输入。
 6. THE 用户行为仿真模块 SHALL 通过 `记忆更新链路` 向长短期记忆模块提供更新输入。
 
-### Requirement 8: 车辆响应仿真
+### Requirement 8: 目标系统调用与响应解析
 
-**User Story:** 作为仿真系统，我希望根据用户行为模拟车辆各部件的反馈，以便形成完整的人车交互闭环。
+**User Story:** 作为仿真系统，我希望把用户行为发送给目标系统并统一解析响应，以便形成执行闭环。
 
 #### Acceptance Criteria
 
-1. WHEN 用户行为仿真产生行为结果, THE 下层执行反馈层 SHALL 先通过 `目标系统调用与响应解析` 向目标系统服务发送请求并接收响应。
-2. THE `目标系统调用与响应解析` 组件 SHALL 输出结构化执行结果，且至少包含响应状态、响应内容和完成标记。
-3. THE `目标系统调用与响应解析` 组件 SHALL 将结构化响应同时提供给 `车辆响应仿真` 和 `仿真编排决策器`。
-4. WHEN `目标系统调用与响应解析` 返回结构化响应, THE 车辆响应仿真模块 SHALL 基于该结果生成车辆响应。
-5. THE 车辆响应仿真模块 SHALL 覆盖 `车窗`、`空调`、`屏幕` 和 `座椅` 四类响应对象。
-6. THE 车辆响应仿真模块 SHALL 通过 `环境 & 用户反馈链路` 把响应结果回传给环境感知仿真和用户状态仿真。
-7. THE 车辆响应仿真模块 SHALL 通过 `量化评估链路` 向评测量化提供输入。
-8. THE 车辆响应仿真模块 SHALL 位于下层执行反馈层，且只能在用户行为之后执行。
+1. WHEN 用户行为仿真产生行为结果, THE 系统 SHALL 通过 `目标系统调用与响应解析` 向目标系统服务发送请求并接收响应。
+2. THE `目标系统调用与响应解析` 模块 SHALL 输出统一的 `StructuredResponse`。
+3. THE `StructuredResponse` SHALL 至少包含 `response_status`、`response_content`、`completion_flag`、`side_effects` 和 `timestamp`。
+4. THE `目标系统调用与响应解析` 模块 SHALL 将 `StructuredResponse` 同时提供给 DecisionEngine、环境感知仿真、用户状态仿真和评测量化。
+5. THE `目标系统调用与响应解析` 模块 SHALL 位于下层执行反馈层，且只能在用户行为之后执行。
+6. THE 响应解析策略 SHALL 为：首先尝试按目标系统协议 schema 直接解析原始响应；如果解析失败或响应格式不符合预期，则使用 LLM 辅助归一化；如果两者都失败，则快速失败并中止会话。
 
 ### Requirement 9: 评测量化
 
-**User Story:** 作为仿真系统，我希望把执行结果转成可度量指标，以便判断仿真是否合理、准确和及时。
+**User Story:** 作为仿真系统，我希望把执行结果转成可量化指标，以便判断仿真是否合理、准确和及时。
 
 #### Acceptance Criteria
 
-1. THE 评测量化模块 SHALL 覆盖 `用户行为合理性`、`车辆响应准确性`、`场景覆盖率` 和 `响应实时性` 四个维度。
-2. THE 评测量化模块 SHALL 以用户行为仿真和车辆响应仿真的输出为输入。
+1. THE 评测量化模块 SHALL 覆盖 `用户行为合理性`、`目标系统响应准确性`、`场景覆盖率` 和 `响应实时性` 四个维度。
+2. THE 评测量化模块 SHALL 以用户行为仿真输出和 `StructuredResponse` 为输入。
 3. THE 评测量化模块 SHALL 通过 `记忆更新链路` 把评估结果回传给长短期记忆模块。
 4. THE 评测量化模块 SHALL 位于下层执行反馈层中的评测节点，而不是上层决策编排组件。
+5. THE 评测量化模块 SHALL 在第一版本中仅提供接口定义和 Mock 实现，返回固定的评估结果。
 
 ### Requirement 10: 分层与主链路编排
 
-**User Story:** 作为系统架构师，我希望系统按“上层决策编排、下层执行反馈”的方式推进主链路，以便职责边界清晰、执行顺序稳定。
+**User Story:** 作为系统架构师，我希望系统按“初始化模块 -> 输入支撑模块 -> 上层决策编排层 -> 下层执行反馈层”的方式推进主链路。
 
 #### Acceptance Criteria
 
-1. THE System SHALL 提供 `仿真编排决策器` 作为全局编排者和唯一的上层决策组件。
-2. WHEN 仿真请求进入系统, THE `仿真编排决策器` SHALL 基于业务配置启动仿真场景初始化。
-3. THE System SHALL 按 `仿真场景初始化 -> 输入支撑模块 -> 仿真编排决策器 -> 用户行为仿真 -> 目标系统调用与响应解析 -> 车辆响应仿真 -> 评测量化` 的主顺序推进。
+1. THE System SHALL 提供 `DecisionEngine` 作为全局编排者和唯一的上层决策组件。
+2. WHEN 仿真请求进入系统, THE `DecisionEngine` SHALL 基于业务配置启动仿真场景初始化。
+3. THE System SHALL 按 `仿真场景初始化 -> 输入支撑模块 -> DecisionEngine -> 用户行为仿真 -> 目标系统调用与响应解析 -> 评测量化` 的主顺序推进。
 4. WHEN 仿真场景初始化完成, THE System SHALL 把结果分别送入环境感知仿真、用户状态仿真和长短期记忆模块。
-5. THE `仿真编排决策器` SHALL 按需从输入支撑模块拉取当前所需上下文，而不是要求所有支撑模块必须以固定顺序主动推送。
-6. THE 下层执行反馈层 SHALL 负责动作落地、目标系统通信、响应解析、车辆反馈和评测量化，而 SHALL NOT 决定是否进入下一轮。
-7. WHEN `目标系统调用与响应解析` 返回结构化响应, THE `仿真编排决策器` SHALL 基于目标系统响应、评测结果、上下文状态和轮次约束决定继续下一轮还是结束会话。
-8. THE System SHALL 保持 `干预层 -> 输入支撑模块 -> 上层决策编排层 -> 下层执行反馈层` 的分层关系，不得把下层执行反馈逻辑上提为全局编排逻辑。
+5. THE `DecisionEngine` SHALL 按需从输入支撑模块拉取当前所需上下文。
+6. THE 下层执行反馈层 SHALL 负责动作落地、目标系统通信、响应解析和评测量化，而 SHALL NOT 决定是否进入下一轮。
+7. WHEN `StructuredResponse` 返回, THE `DecisionEngine` SHALL 基于目标系统响应、评测结果、上下文状态和轮次约束决定继续下一轮还是结束会话。
+8. THE System SHALL 保持 `初始化模块 -> 输入支撑模块 -> 上层决策编排层 -> 下层执行反馈层` 的分层关系。
 
 ### Requirement 11: 环境 & 用户反馈链路
 
-**User Story:** 作为仿真系统，我希望车辆响应能够反向影响环境和用户，以便系统具备闭环反馈能力。
+**User Story:** 作为仿真系统，我希望目标系统响应能够反向影响环境和用户，以便形成闭环反馈。
 
 #### Acceptance Criteria
 
-1. WHEN 车辆响应仿真输出新的车辆状态或车内变化, THE System SHALL 通过 `环境 & 用户反馈链路` 回传给环境感知仿真。
-2. WHEN 车辆响应仿真输出可能影响体验、认知或身体感受的结果, THE System SHALL 通过 `环境 & 用户反馈链路` 回传给用户状态仿真。
+1. WHEN `StructuredResponse.side_effects` 输出新的车辆状态或车内变化, THE System SHALL 通过 `环境 & 用户反馈链路` 回传给环境感知仿真。
+2. WHEN `StructuredResponse.side_effects` 输出可能影响体验、认知或身体感受的结果, THE System SHALL 通过 `环境 & 用户反馈链路` 回传给用户状态仿真。
 3. THE System SHALL 在下一次仿真编排决策前使用更新后的环境和用户状态。
 4. THE 环境 & 用户反馈链路 SHALL NOT 直接跳过输入支撑模块写入上层决策结果。
 
 ### Requirement 12: 量化评估链路
 
-**User Story:** 作为仿真系统，我希望把行为和响应都纳入统一评估，以便形成结构化的效果度量。
+**User Story:** 作为仿真系统，我希望把行为和结构化响应都纳入统一评估。
 
 #### Acceptance Criteria
 
 1. WHEN 用户行为仿真完成, THE System SHALL 通过 `量化评估链路` 把行为结果发送给评测量化模块。
-2. WHEN 车辆响应仿真完成, THE System SHALL 通过 `量化评估链路` 把响应结果发送给评测量化模块。
-3. THE 量化评估链路 SHALL 连接下层执行反馈流程中的行为/响应结果与评测量化，而不是替代主链路。
+2. WHEN `StructuredResponse` 生成完成, THE System SHALL 通过 `量化评估链路` 把响应结果发送给评测量化模块。
+3. THE 量化评估链路 SHALL 连接下层执行反馈流程中的行为结果和结构化响应与评测量化，而不是替代主链路。
 
 ### Requirement 13: 记忆更新链路
 
@@ -279,113 +308,104 @@ flowchart LR
 2. WHEN 评测量化产生新的评估结果, THE System SHALL 通过 `记忆更新链路` 更新长短期记忆模块。
 3. THE 更新后的长短期记忆模块 SHALL 在后续仿真编排决策中可见并可用。
 
-### Requirement 14: 噪声扰动链路
+### Requirement 14: 技术栈与实现约束
 
-**User Story:** 作为仿真系统，我希望突发事件能打断原有稳定态，以便系统能够覆盖更真实的复杂场景。
-
-#### Acceptance Criteria
-
-1. WHEN 突发噪声被触发, THE System SHALL 通过 `噪声扰动链路` 影响环境感知仿真。
-2. WHEN 突发噪声被触发, THE System SHALL 通过 `噪声扰动链路` 影响用户状态仿真。
-3. THE 噪声扰动链路 SHALL 作为干预层到输入支撑模块的扰动通道存在。
-4. THE 噪声扰动链路 SHALL NOT 直接生成用户行为、车辆响应或评测量化结果。
-
-### Requirement 15: 技术栈实现
-
-**User Story:** 作为系统架构师，我希望采用纯 Python 实现，以便简化开发、部署和维护，同时利用 Python 丰富的生态系统和异步编程能力。
+**User Story:** 作为系统架构师，我希望 `iota` 全部采用纯 Python 实现，并使用统一的数据模型和异步运行方式。
 
 #### Acceptance Criteria
 
-1. THE System SHALL 使用 Python 实现所有组件，包括 CLI、HTTP API 服务器、LLM 服务集成、业务编排逻辑、WebSocket 管理、会话管理、日志系统和评测量化。
-2. THE System SHALL 使用 asyncio 作为核心并发模型，实现高性能异步处理。
-3. THE System SHALL 使用 FastAPI 提供 HTTP REST API 接口。
-4. THE System SHALL 使用 websockets 库实现 WebSocket 客户端连接管理。
-5. THE System SHALL 使用 Pydantic 进行数据验证和序列化。
-6. THE System SHALL 使用 structlog 实现结构化异步日志。
-7. THE System SHALL 直接集成 OpenAI 和 Anthropic Python SDK。
-8. THE System SHALL 使用 orjson 进行高性能 JSON 序列化。
-9. THE System SHALL 支持虚拟环境部署，使用 pip 或 poetry 管理依赖。
-10. THE System SHALL 支持跨平台运行（Linux, macOS, Windows）。
+1. THE System SHALL 使用 Python 3.11+ 实现所有组件。
+2. THE System SHALL 使用 asyncio 作为核心并发模型。
+3. THE System SHALL 使用 FastAPI 提供 HTTP REST API。
+4. THE System SHALL 使用 `websockets` 库实现 WebSocket 客户端连接管理。
+5. THE WebSocket 连接 SHALL 为系统级单例，所有会话通过会话 ID 复用同一连接。
+6. THE System SHALL 使用 Pydantic 进行数据验证和序列化。
+7. THE System SHALL 使用 structlog 实现结构化异步日志。
+8. THE System SHALL 直接集成 OpenAI 和 Anthropic Python SDK。
+9. THE System SHALL 使用 orjson 进行高性能 JSON 序列化。
+10. THE System SHALL 支持 pip 或 poetry 进行依赖管理。
+11. THE System SHALL 支持 Linux、macOS 和 Windows。
+12. THE System SHALL 采用快速失败策略，遇到错误立即中止会话，不实现复杂的错误恢复逻辑。
 
-### Requirement 16: iota 运行时引擎
+### Requirement 15: 系统名称、会话上下文与模块结构
 
-**User Story:** 作为系统架构师，我希望核心运行时引擎命名为 "iota"，并参考成熟智能体系统的实现模式，以便构建健壮、高性能的仿真运行时。
-
-#### Acceptance Criteria
-
-1. THE System SHALL 将核心运行时引擎命名为 "iota"。
-2. THE iota 引擎 SHALL 参考以下项目的实现模式：
-   - claude-code: Query engine, tool system, session management
-   - opencode: LLM integration, prompt engineering, async patterns
-   - gemini-cli: Streaming, context management
-3. THE iota 引擎 SHALL 负责会话生命周期管理（创建、运行、暂停、恢复、终止）。
-4. THE iota 引擎 SHALL 实现模块化工具系统，每个工具独立实现，通过统一接口注册和调用。
-5. THE iota 引擎 SHALL 支持配置层级：全局配置（`~/.iota/config.toml`）、项目配置（`.iota/config.toml`）、运行时覆盖（`--config` flags）。
-6. THE iota 引擎 SHALL 默认使用流式处理所有 LLM 调用，支持增量渲染和取消操作。
-7. THE iota 引擎 SHALL 实现系统提示词模板、上下文注入和 Few-shot examples 的 Prompt Engineering 能力。
-8. THE iota 引擎 SHALL 实现错误分类、重试策略和降级处理机制。
-9. THE iota 引擎 SHALL 支持上下文构建、压缩和持久化。
-10. THE iota 引擎 SHALL 使用 asyncio 实现所有异步操作。
-
-### Requirement 17: 模块结构
-
-**User Story:** 作为开发者，我希望系统采用清晰的模块结构，以便理解、维护和扩展代码。
+**User Story:** 作为开发者，我希望系统名称、会话上下文和代码布局都保持全局唯一且一致。
 
 #### Acceptance Criteria
 
-1. THE System SHALL 按以下模块结构组织代码：
-   - `iota/__init__.py`: 包初始化
-   - `iota/__main__.py`: CLI 入口点
-   - `iota/cli/`: 命令行接口
-     - `main.py`: CLI 命令（Click/Typer）
-     - `config.py`: 配置加载
-   - `iota/api/`: HTTP API 服务器
-     - `app.py`: FastAPI 应用
-     - `routes/`: API 路由
-     - `models.py`: Pydantic 模型
-   - `iota/llm/`: LLM 服务层
-     - `service.py`: LLM 服务接口
-     - `providers/`: LLM 提供商（openai.py, anthropic.py）
-     - `prompts/`: 提示词模板
-   - `iota/simulation/`: 仿真运行时
-     - `coordinator.py`: 仿真协调器
-     - `engines/`: 仿真引擎（environment.py, user_state.py, behavior.py, memory.py）
-     - `decision.py`: 决策引擎
-     - `scenario.py`: 场景初始化
-   - `iota/core/`: 核心运行时组件
-     - `session_manager.py`: 会话管理
-     - `websocket_manager.py`: WebSocket 管理
-     - `log_manager.py`: 异步日志
-     - `evaluation.py`: 评测引擎
-   - `iota/models/`: 数据模型（Pydantic）
-   - `iota/utils/`: 工具函数
-2. THE 所有模块 SHALL 在同一 Python 进程中运行。
-3. THE 模块之间 SHALL 通过直接函数调用交互，无需序列化。
-4. THE 所有 I/O 操作 SHALL 使用 asyncio 异步实现。
+1. THE System SHALL 统一使用 `iota` 作为系统名称。
+2. THE System SHALL 在所有模块中统一使用本文档定义的 `SessionContext`。
+3. THE System SHALL 负责会话生命周期管理，状态集合 SHALL 统一为 `created / running / completed / aborted`。
+4. THE SessionManager SHALL 按单用户模式管理会话，每个用户的多轮交互复用同一个 session。
+5. THE System SHALL 支持配置层级：全局配置（`~/.iota/config.toml`）、项目配置（`.iota/config.toml`）、运行时覆盖（`--config`）。
+6. THE 配置合并策略 SHALL 为：运行时覆盖 > 项目配置 > 全局配置，采用深度合并，后者完全覆盖前者的同名键。
+7. THE System SHALL 支持 Prompt 模板、上下文注入、错误分类和上下文持久化。
+8. THE System SHALL 按以下完整模块结构组织代码：
+   - `iota/__init__.py`
+   - `iota/__main__.py`
+   - `iota/cli/main.py`
+   - `iota/cli/config.py`
+   - `iota/api/app.py`
+   - `iota/api/routes/simulation.py`
+   - `iota/api/routes/health.py`
+   - `iota/api/models.py`
+   - `iota/core/config.py`
+   - `iota/core/errors.py`
+   - `iota/core/session_manager.py`
+   - `iota/core/websocket_manager.py`
+   - `iota/core/log_manager.py`
+   - `iota/llm/service.py`
+   - `iota/llm/providers/openai.py`
+   - `iota/llm/providers/anthropic.py`
+   - `iota/llm/prompts/environment.py`
+   - `iota/llm/prompts/user_state.py`
+   - `iota/llm/prompts/behavior.py`
+   - `iota/llm/prompts/decision.py`
+   - `iota/llm/prompts/response_parser.py`
+   - `iota/simulation/decision_engine.py`
+   - `iota/simulation/scenario.py`
+   - `iota/simulation/noise.py`
+   - `iota/simulation/evaluation.py`
+   - `iota/simulation/engines/environment.py`
+   - `iota/simulation/engines/user_state.py`
+   - `iota/simulation/engines/behavior.py`
+   - `iota/simulation/engines/memory.py`
+   - `iota/simulation/engines/service_call.py`
+   - `iota/models/context.py`
+   - `iota/models/scenario.py`
+   - `iota/models/environment.py`
+   - `iota/models/user.py`
+   - `iota/models/behavior.py`
+   - `iota/models/response.py`
+   - `iota/models/evaluation.py`
+   - `iota/utils/async_helpers.py`
+   - `iota/utils/json_utils.py`
+9. THE 所有模块 SHALL 在同一 Python 进程中运行。
+10. THE 模块之间 SHALL 通过直接函数调用交互。
+11. THE 所有 I/O 操作 SHALL 使用 asyncio 异步实现。
 
-### Requirement 18: 构建与部署
+### Requirement 16: 构建与部署
 
-**User Story:** 作为运维人员，我希望系统提供清晰的构建和部署流程，以便在开发和生产环境中快速部署。
+**User Story:** 作为运维人员，我希望系统有清晰的开发和生产部署方式。
 
 #### Acceptance Criteria
 
-1. THE System SHALL 提供开发环境构建流程：
-   - 使用 `python -m venv venv` 创建虚拟环境
-   - 使用 `pip install -e ".[dev]"` 安装开发依赖
-   - 使用 `python -m iota start --config config.toml` 或 `iota start --config config.toml` 启动系统
-   - 使用 `uvicorn iota.api.app:app --reload --port 8000` 启动开发服务器（支持热重载）
-2. THE System SHALL 提供生产环境构建流程：
-   - 使用 `pip install -e .` 安装生产依赖
-   - 使用 `uvicorn iota.api.app:app --host 0.0.0.0 --port 8000 --workers 4` 运行系统
-   - 或使用 `gunicorn iota.api.app:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000` 运行系统
-3. THE System SHALL 只需要 Python 环境（3.11+），无需其他语言工具链。
-4. THE System SHALL 支持跨平台运行（Linux, macOS, Windows）。
-5. THE System SHALL 提供 Docker 镜像用于容器化部署（单阶段构建：Python runtime）。
-6. THE System SHALL 支持使用 pip 或 poetry 管理依赖。
+1. THE System SHALL 支持开发环境构建：
+   - `python -m venv .venv`
+   - `pip install -e ".[dev]"`
+   - `python -m iota start --config config.toml`
+   - `uvicorn iota.api.app:app --reload --port 8000`
+2. THE System SHALL 支持生产环境构建：
+   - `pip install -e .`
+   - `uvicorn iota.api.app:app --host 0.0.0.0 --port 8000 --workers 4`
+   - `gunicorn iota.api.app:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000`
+3. THE System SHALL 只需要 Python 运行时，无需其他语言工具链。
+4. THE System SHALL 提供 Docker 镜像用于容器化部署。
 
 ## Correctness Properties
 
 ### Property 1: 主链路执行顺序
+
 ```text
 FORALL cycle IN simulation_cycles:
   cycle.orchestration_started == TRUE IMPLIES
@@ -402,28 +422,32 @@ FORALL cycle IN simulation_cycles:
     cycle.behavior_ready == TRUE
 
 FORALL cycle IN simulation_cycles:
-  cycle.vehicle_response_started == TRUE IMPLIES
-    cycle.service_call_ready == TRUE
+  cycle.evaluation_started == TRUE IMPLIES
+    cycle.behavior_ready == TRUE AND
+    cycle.structured_response_ready == TRUE
 ```
 
 ### Property 2: 反馈闭环成立
+
 ```text
 FORALL cycle IN simulation_cycles WHERE cycle.number > 1:
-  cycle.environment_input INCLUDES previous_cycle.vehicle_response_effects OR cycle.noise_effects OR initial_scene_state
+  cycle.environment_input INCLUDES previous_cycle.structured_response.side_effects OR cycle.noise_effects OR initial_scene_state
 
 FORALL cycle IN simulation_cycles WHERE cycle.number > 1:
-  cycle.user_state_input INCLUDES current_cycle.environment_output OR previous_cycle.vehicle_response_effects OR cycle.noise_effects
+  cycle.user_state_input INCLUDES current_cycle.environment_output OR previous_cycle.structured_response.side_effects OR cycle.noise_effects
 ```
 
 ### Property 3: 评估依赖执行结果
+
 ```text
 FORALL cycle IN simulation_cycles:
   cycle.evaluation_started == TRUE IMPLIES
     cycle.behavior_ready == TRUE AND
-    cycle.vehicle_response_ready == TRUE
+    cycle.structured_response_ready == TRUE
 ```
 
 ### Property 4: 记忆在轮次间连续
+
 ```text
 FORALL cycle IN simulation_cycles WHERE cycle.number > 1:
   cycle.memory_input == update(
@@ -433,9 +457,10 @@ FORALL cycle IN simulation_cycles WHERE cycle.number > 1:
   )
 ```
 
-### Property 5: 噪声只能经扰动链路进入主流程
+### Property 5: 噪声只能影响输入支撑模块
+
 ```text
 FORALL noise_event IN injected_noises:
   noise_event.affects SUBSET_OF ["environment", "user_state"] AND
-  noise_event.direct_targets EXCLUDES ["orchestrator", "behavior", "service_call", "vehicle_response", "evaluation"]
+  noise_event.direct_targets EXCLUDES ["orchestrator", "behavior", "service_call", "evaluation"]
 ```
