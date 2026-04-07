@@ -51,6 +51,7 @@ title: "OpenAI Codex 源码分析"
     <a class="chapter-card" href="25-input-command-queue"><div class="chapter-number">25</div><div class="chapter-title">用户输入、命令解析与 Mailbox 队列系统</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="26-mcp-system"><div class="chapter-number">26</div><div class="chapter-title">Codex 的 MCP/RMCP 系统</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="27-debugging"><div class="chapter-number">27</div><div class="chapter-title">调试指南</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="28-ghost-snapshot"><div class="chapter-number">28</div><div class="chapter-title">GhostSnapshot：Git 快照、Undo 恢复与 Compaction 幸存机制</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 </div>
 

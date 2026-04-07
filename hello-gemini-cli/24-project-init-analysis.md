@@ -134,7 +134,7 @@ packages/cli/src/gemini.tsx
 4. [04-tool-system.md](./04-tool-system.md)  
 5. [11-context-management.md](./11-context-management.md)  
 6. [12-prompt-system.md](./12-prompt-system.md)  
-7. [13-multi-agent-remote.md](./13-multi-agent-remote.md)  
+7. [13-multi-agent.md](./13-multi-agent.md)  
 8. [15-plugin-system.md](./15-plugin-system.md)  
 9. [17-sdk-transport.md](./17-sdk-transport.md)  
 10. [23-bridge-system.md](./23-bridge-system.md)

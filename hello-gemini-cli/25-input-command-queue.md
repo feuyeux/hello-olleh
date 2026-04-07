@@ -311,6 +311,19 @@ Gemini CLI 的输入层特点：
 - **消息队列支持多路输入**：键盘输入、文件输入、`--message` 参数通过同一队列归一化，CLI 入口不区分来源，扩展新输入源成本低。
 - **Shell 状态隔离不污染对话历史**：Shell 执行结果以独立状态管理，不直接混入 conversation 历史，对话可回放而不受 shell 状态影响。
 
+## 跨工具横向对比
+
+本章（Gemini CLI）与同主题其他工具的差异：
+
+| 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
+|------|------------|-------|------------|----------|
+| 核心主题 | Slash 命令 + QueryGuard 并发控制 | Mailbox + Command Canonicalization + Exec | CommandService + Shell 状态 | PromptInput 编译 + Durable Message |
+| 独有机制 | `QueryGuard` 防并发 query | `Mailbox` 跨 Agent 通信 | `Shell 状态管理` | `Part` 编译类型系统 |
+| 命令返回 | 可改变工具/模型/effort | 命令规范化元数据 | CommandService 统一分发 | 模板化 command 编译 |
+| 架构驱动 | 单 Agent，query 并发控制 | 多 Agent，Mailbox 通信 | 单 Agent，Shell 状态隔离 | Durable State，输入即消息 |
+
+**要点**：Codex 因有多 Agent 架构（含 child-agents），其队列系统加入了 Mailbox 机制和命令规范化，远比其他三个工具复杂；其他三者均面向单 Agent，核心问题是"slash 命令解析 + 输入队列调度"。
+
 **风险与改进点**
 
 - **消息队列无限速机制**：若用户快速粘贴大量输入，队列可能积压过多消息，当前无 backpressure 或输入速率限制。

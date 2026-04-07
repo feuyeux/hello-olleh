@@ -57,7 +57,7 @@ flowchart LR
     subgraph State[状态层]
         C1[state/store.ts]
         C2[state/AppState.tsx]
-        C3[state/AppStateStore.ts]
+        C3[state/compact/]
         C4[utils/messageQueueManager.ts]
         C5[utils/QueryGuard.ts]
     end
@@ -167,7 +167,7 @@ flowchart LR
 
 - `src/state/store.ts`
 - `src/state/AppState.tsx`
-- `src/state/AppStateStore.ts`
+- `src/state/compact/`
 - `src/utils/messageQueueManager.ts`
 - `src/utils/QueryGuard.ts`
 
@@ -539,12 +539,12 @@ flowchart LR
 
 | 符号 | 文件 | 职责 |
 |------|------|------|
-| `main()` | `src/entrypoints/main.tsx` | 进程入口，分发 CLI 子命令 |
-| `REPL()` | `src/REPL.tsx` | 交互式 TUI 主组件：持有 AppState、订阅事件、渲染 UI |
+| `main()` | `src/entrypoints/cli.tsx` | 进程入口，分发 CLI 子命令（`main.tsx` 为预导入副作用层，非直接入口）|
+| `REPL()` | `src/screens/REPL.tsx` | 交互式 TUI 主组件：持有 AppState、订阅事件、渲染 UI |
 | `query()` | `src/query.ts` | 会话执行状态机：管理多轮模型调用、工具执行、上下文治理 |
 | `queryLoop()` | `src/query.ts:241` | query() 的内层循环：单轮推理 + 工具批处理 + 状态更新 |
 | `ToolUseContext` | `src/Tool.ts:158` | 工具执行上下文：持有 permContext、abortController、tool 引用等 |
-| `AppState` | `src/AppState.ts` | 全局可观测状态：消息、连接状态、工具调用状态 |
+| `AppState` | `src/state/AppState.tsx` | 全局可观测状态：消息、连接状态、工具调用状态 |
 | `getAnthropicClient()` | `src/services/api/claude.ts` | API client 工厂 + provider 路由器 |
 | `callModel()` | `src/services/api/claude.ts` | 实际发出模型请求，消费流式响应 |
 | `runTools()` / `runToolUse()` | `src/query.ts` | 批量工具执行入口，含权限检查 |

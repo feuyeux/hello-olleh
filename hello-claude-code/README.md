@@ -26,25 +26,25 @@ title: "deep_dive 阅读导航"
 
 1. [01-architecture.md](./01-architecture.md)：先建立全局分层与主执行链。
 2. [02-startup-flow.md](./02-startup-flow.md)：理解进程如何启动成一个可运行会话。
-3. [12-settings-policy-and-env.md](./12-settings-policy-and-env.md)：补齐 settings、policy、trust 与 env 注入边界。
-4. [03-repl-and-state.md](./03-repl-and-state.md)：理解交互模式下的主控制中心。
-5. [04-state-management.md](./04-state-management.md)：单独看 store、selector 与状态更新模式。
-6. [05-input-command-queue.md](./05-input-command-queue.md)：看输入如何变成一次 turn。
-7. [06-query-and-request.md](./06-query-and-request.md)：看 `query()` 主循环、流式响应和工具回流。
-8. [07-context-management.md](./07-context-management.md)：专门看上下文治理、压缩阶梯与 overflow 恢复。
-9. [08-tools-and-permissions.md](./08-tools-and-permissions.md)：看工具系统、权限判定与执行编排。
-10. [11-hooks-lifecycle-and-runtime.md](./11-hooks-lifecycle-and-runtime.md)：补齐 hook 的运行时模型。
-11. [09-extension-skills-plugins-mcp.md](./09-extension-skills-plugins-mcp.md)：看技能、插件和扩展总线如何接入主系统。
-12. [10-mcp-system.md](./10-mcp-system.md)：再深入看 MCP client、transport、tool/resource/prompt 协议层。
-13. [13-session-storage-and-resume.md](./13-session-storage-and-resume.md)：补齐 transcript、resume 与恢复链路。
-14. [14-prompt-system.md](./14-prompt-system.md)：把 system prompt、工具 prompt、技能 prompt、子代理 prompt 和二级模型 prompt 串成一张图。
-15. [15-memory-system.md](./15-memory-system.md)：把 durable memory、team memory、KAIROS、SessionMemory 与 consolidation 串成一条持久化主线。
-16. [16-performance-cache-context.md](./16-performance-cache-context.md)：看性能、缓存、观测与长会话稳定性。
-17. [17-queryengine-sdk.md](./17-queryengine-sdk.md)：再看非交互 / SDK 路径如何复用内核。
-18. [18-api-provider-retry-errors.md](./18-api-provider-retry-errors.md)：补齐 provider 路由、重试与错误治理。
-19. [19-transport-system.md](./19-transport-system.md)：看 WebSocket、SSE、HybridTransport 与批量上传器。
-20. [20-bridge-system.md](./20-bridge-system.md)：看远程桥接、JWT 刷新、会话同步与远程控制链路。
-21. [21-agents-tasks-remote.md](./21-agents-tasks-remote.md)：最后看多代理、后台任务与远程会话协作。
+3. [12-settings-policy-and-env.md](./19-settings-config.md)：补齐 settings、policy、trust 与 env 注入边界。
+4. [03-repl-and-state.md](./22-repl-and-state.md)：理解交互模式下的主控制中心。
+5. [04-state-management.md](./05-state-management.md)：单独看 store、selector 与状态更新模式。
+6. [05-input-command-queue.md](./25-input-command-queue.md)：看输入如何变成一次 turn。
+7. [06-query-and-request.md](./03-agent-loop.md)：看 `query()` 主循环、流式响应和工具回流。
+8. [07-context-management.md](./11-context-management.md)：专门看上下文治理、压缩阶梯与 overflow 恢复。
+9. [08-tools-and-permissions.md](./04-tool-system.md)：看工具系统、权限判定与执行编排。
+10. [11-hooks-lifecycle-and-runtime.md](./21-hooks-lifecycle.md)：补齐 hook 的运行时模型。
+11. [09-extension-skills-plugins-mcp.md](./06-extension-mcp.md)：看技能、插件和扩展总线如何接入主系统。
+12. [10-mcp-system.md](./26-mcp-system.md)：再深入看 MCP client、transport、tool/resource/prompt 协议层。
+13. [13-session-storage-and-resume.md](./10-session-resume.md)：补齐 transcript、resume 与恢复链路。
+14. [14-prompt-system.md](./12-prompt-system.md)：把 system prompt、工具 prompt、技能 prompt、子代理 prompt 和二级模型 prompt 串成一张图。
+15. [15-memory-system.md](./16-memory-system.md)：把 durable memory、team memory、KAIROS、SessionMemory 与 consolidation 串成一条持久化主线。
+16. [16-performance-cache-context.md](./08-performance.md)：看性能、缓存、观测与长会话稳定性。
+17. [17-queryengine-sdk.md](./17-sdk-transport.md)：再看非交互 / SDK 路径如何复用内核。
+18. [18-api-provider-retry-errors.md](./07-error-security.md)：补齐 provider 路由、重试与错误治理。
+19. [19-transport-system.md](./17-sdk-transport.md)：看 WebSocket、SSE、HybridTransport 与批量上传器。
+20. [20-bridge-system.md](./23-bridge-system.md)：看远程桥接、JWT 刷新、会话同步与远程控制链路。
+21. [21-agents-tasks-remote.md](./13-multi-agent.md)：最后看多代理、后台任务与远程会话协作。
 
 ## 2. 各篇一句话索引
 
@@ -52,25 +52,25 @@ title: "deep_dive 阅读导航"
 | --- | --- | --- |
 | [01-architecture.md](./01-architecture.md) | 这套工程按什么分层，主线怎么走 | 初次进入仓库时 |
 | [02-startup-flow.md](./02-startup-flow.md) | 进程如何从入口走到 setup、trust 和 REPL | 想先搞懂启动链路时 |
-| [03-repl-and-state.md](./03-repl-and-state.md) | 交互模式的控制中心在哪里，状态怎么流动 | 想读 `REPL.tsx` 前 |
-| [04-state-management.md](./04-state-management.md) | `AppState`、store、selector 和状态更新模式如何共同工作 | 想单独研究状态系统时 |
-| [05-input-command-queue.md](./05-input-command-queue.md) | 用户输入如何分类、排队、转消息 | 想跟 prompt 提交流程时 |
-| [06-query-and-request.md](./06-query-and-request.md) | `query()` 为什么是多轮状态机，而不只是 API 包装 | 想读 `query.ts` 时 |
-| [07-context-management.md](./07-context-management.md) | `snip`、`microcompact`、`context collapse`、`autocompact` 如何组成上下文治理链路 | 想单独研究上下文压缩与 overflow 恢复时 |
-| [08-tools-and-permissions.md](./08-tools-and-permissions.md) | 工具如何装配、校验、执行、回流 | 想搞懂 Agent 工具调用时 |
-| [09-extension-skills-plugins-mcp.md](./09-extension-skills-plugins-mcp.md) | 技能、插件、命令扩展与 MCP 接入如何共享统一总线 | 想研究扩展机制时 |
-| [10-mcp-system.md](./10-mcp-system.md) | MCP client、transport、resource、prompt 与权限模型如何落地 | 想深入研究外部协议接入时 |
-| [11-hooks-lifecycle-and-runtime.md](./11-hooks-lifecycle-and-runtime.md) | hooks 到底如何被组装、执行、约束与隔离 | 想把 hook 当运行时系统来理解时 |
-| [12-settings-policy-and-env.md](./12-settings-policy-and-env.md) | settings、policy、MDM 与 env 为什么会影响整条启动链 | 想搞懂配置优先级和 trust 前后差异时 |
-| [13-session-storage-and-resume.md](./13-session-storage-and-resume.md) | transcript 如何持久化，resume 如何真正恢复 live session | 想研究会话恢复与 JSONL 结构时 |
-| [14-prompt-system.md](./14-prompt-system.md) | Claude Code 到底有哪些提示词，它们如何被装配、缓存和分发 | 想系统理解 prompt runtime 时 |
-| [15-memory-system.md](./15-memory-system.md) | 记忆系统有哪些层，哪些长期写入路径能被代码证实 | 想研究长期上下文与 memory 治理时 |
-| [16-performance-cache-context.md](./16-performance-cache-context.md) | 复杂工程性代码到底在优化什么，prompt cache 与长会话稳定性如何被维护 | 想理解性能与稳定性取舍时 |
-| [17-queryengine-sdk.md](./17-queryengine-sdk.md) | 非交互路径怎样复用 query 内核 | 想看 SDK / headless 模式时 |
-| [18-api-provider-retry-errors.md](./18-api-provider-retry-errors.md) | provider 选择、请求构造、重试与错误治理如何工作 | 想深挖 `services/api` 时 |
-| [19-transport-system.md](./19-transport-system.md) | WebSocket、SSE、HybridTransport 与事件上传器如何构成通信层 | 想研究网络层时 |
-| [20-bridge-system.md](./20-bridge-system.md) | 远程桥接、JWT 刷新、历史同步与桥接状态如何工作 | 想研究远程控制与桥接链路时 |
-| [21-agents-tasks-remote.md](./21-agents-tasks-remote.md) | 子代理、后台任务和远程会话如何协作 | 想研究多代理与任务系统时 |
+| [03-repl-and-state.md](./22-repl-and-state.md) | 交互模式的控制中心在哪里，状态怎么流动 | 想读 `REPL.tsx` 前 |
+| [04-state-management.md](./05-state-management.md) | `AppState`、store、selector 和状态更新模式如何共同工作 | 想单独研究状态系统时 |
+| [05-input-command-queue.md](./25-input-command-queue.md) | 用户输入如何分类、排队、转消息 | 想跟 prompt 提交流程时 |
+| [06-query-and-request.md](./03-agent-loop.md) | `query()` 为什么是多轮状态机，而不只是 API 包装 | 想读 `query.ts` 时 |
+| [07-context-management.md](./11-context-management.md) | `snip`、`microcompact`、`context collapse`、`autocompact` 如何组成上下文治理链路 | 想单独研究上下文压缩与 overflow 恢复时 |
+| [08-tools-and-permissions.md](./04-tool-system.md) | 工具如何装配、校验、执行、回流 | 想搞懂 Agent 工具调用时 |
+| [09-extension-skills-plugins-mcp.md](./06-extension-mcp.md) | 技能、插件、命令扩展与 MCP 接入如何共享统一总线 | 想研究扩展机制时 |
+| [10-mcp-system.md](./26-mcp-system.md) | MCP client、transport、resource、prompt 与权限模型如何落地 | 想深入研究外部协议接入时 |
+| [11-hooks-lifecycle-and-runtime.md](./21-hooks-lifecycle.md) | hooks 到底如何被组装、执行、约束与隔离 | 想把 hook 当运行时系统来理解时 |
+| [12-settings-policy-and-env.md](./19-settings-config.md) | settings、policy、MDM 与 env 为什么会影响整条启动链 | 想搞懂配置优先级和 trust 前后差异时 |
+| [13-session-storage-and-resume.md](./10-session-resume.md) | transcript 如何持久化，resume 如何真正恢复 live session | 想研究会话恢复与 JSONL 结构时 |
+| [14-prompt-system.md](./12-prompt-system.md) | Claude Code 到底有哪些提示词，它们如何被装配、缓存和分发 | 想系统理解 prompt runtime 时 |
+| [15-memory-system.md](./16-memory-system.md) | 记忆系统有哪些层，哪些长期写入路径能被代码证实 | 想研究长期上下文与 memory 治理时 |
+| [16-performance-cache-context.md](./08-performance.md) | 复杂工程性代码到底在优化什么，prompt cache 与长会话稳定性如何被维护 | 想理解性能与稳定性取舍时 |
+| [17-queryengine-sdk.md](./17-sdk-transport.md) | 非交互路径怎样复用 query 内核 | 想看 SDK / headless 模式时 |
+| [18-api-provider-retry-errors.md](./07-error-security.md) | provider 选择、请求构造、重试与错误治理如何工作 | 想深挖 `services/api` 时 |
+| [19-transport-system.md](./17-sdk-transport.md) | WebSocket、SSE、HybridTransport 与事件上传器如何构成通信层 | 想研究网络层时 |
+| [20-bridge-system.md](./23-bridge-system.md) | 远程桥接、JWT 刷新、历史同步与桥接状态如何工作 | 想研究远程控制与桥接链路时 |
+| [21-agents-tasks-remote.md](./13-multi-agent.md) | 子代理、后台任务和远程会话如何协作 | 想研究多代理与任务系统时 |
 
 ## 3. 按目标选读
 
@@ -79,65 +79,65 @@ title: "deep_dive 阅读导航"
 推荐路径如下：
 
 1. [02-startup-flow.md](./02-startup-flow.md)
-2. [12-settings-policy-and-env.md](./12-settings-policy-and-env.md)
-3. [03-repl-and-state.md](./03-repl-and-state.md)
-4. [04-state-management.md](./04-state-management.md)
-5. [05-input-command-queue.md](./05-input-command-queue.md)
-6. [06-query-and-request.md](./06-query-and-request.md)
-7. [07-context-management.md](./07-context-management.md)
-8. [08-tools-and-permissions.md](./08-tools-and-permissions.md)
-9. [14-prompt-system.md](./14-prompt-system.md)
-10. [11-hooks-lifecycle-and-runtime.md](./11-hooks-lifecycle-and-runtime.md)
+2. [12-settings-policy-and-env.md](./19-settings-config.md)
+3. [03-repl-and-state.md](./22-repl-and-state.md)
+4. [04-state-management.md](./05-state-management.md)
+5. [05-input-command-queue.md](./25-input-command-queue.md)
+6. [06-query-and-request.md](./03-agent-loop.md)
+7. [07-context-management.md](./11-context-management.md)
+8. [08-tools-and-permissions.md](./04-tool-system.md)
+9. [14-prompt-system.md](./12-prompt-system.md)
+10. [11-hooks-lifecycle-and-runtime.md](./21-hooks-lifecycle.md)
 
 ### 3.2 想理解“为什么这个项目这么大”
 
 推荐路径如下：
 
 1. [01-architecture.md](./01-architecture.md)
-2. [12-settings-policy-and-env.md](./12-settings-policy-and-env.md)
-3. [04-state-management.md](./04-state-management.md)
-4. [07-context-management.md](./07-context-management.md)
-5. [14-prompt-system.md](./14-prompt-system.md)
-6. [15-memory-system.md](./15-memory-system.md)
-7. [16-performance-cache-context.md](./16-performance-cache-context.md)
-8. [10-mcp-system.md](./10-mcp-system.md)
-9. [20-bridge-system.md](./20-bridge-system.md)
-10. [21-agents-tasks-remote.md](./21-agents-tasks-remote.md)
+2. [12-settings-policy-and-env.md](./19-settings-config.md)
+3. [04-state-management.md](./05-state-management.md)
+4. [07-context-management.md](./11-context-management.md)
+5. [14-prompt-system.md](./12-prompt-system.md)
+6. [15-memory-system.md](./16-memory-system.md)
+7. [16-performance-cache-context.md](./08-performance.md)
+8. [10-mcp-system.md](./26-mcp-system.md)
+9. [20-bridge-system.md](./23-bridge-system.md)
+10. [21-agents-tasks-remote.md](./13-multi-agent.md)
 
 ### 3.3 想研究扩展、外部协议与自动化场景
 
 推荐路径如下：
 
-1. [08-tools-and-permissions.md](./08-tools-and-permissions.md)
-2. [09-extension-skills-plugins-mcp.md](./09-extension-skills-plugins-mcp.md)
-3. [10-mcp-system.md](./10-mcp-system.md)
-4. [17-queryengine-sdk.md](./17-queryengine-sdk.md)
-5. [18-api-provider-retry-errors.md](./18-api-provider-retry-errors.md)
-6. [19-transport-system.md](./19-transport-system.md)
-7. [20-bridge-system.md](./20-bridge-system.md)
-8. [21-agents-tasks-remote.md](./21-agents-tasks-remote.md)
+1. [08-tools-and-permissions.md](./04-tool-system.md)
+2. [09-extension-skills-plugins-mcp.md](./06-extension-mcp.md)
+3. [10-mcp-system.md](./26-mcp-system.md)
+4. [17-queryengine-sdk.md](./17-sdk-transport.md)
+5. [18-api-provider-retry-errors.md](./07-error-security.md)
+6. [19-transport-system.md](./17-sdk-transport.md)
+7. [20-bridge-system.md](./23-bridge-system.md)
+8. [21-agents-tasks-remote.md](./13-multi-agent.md)
 
 ### 3.4 想研究配置、hooks 与 resume 这些“隐藏复杂度”
 
 推荐路径如下：
 
-1. [12-settings-policy-and-env.md](./12-settings-policy-and-env.md)
-2. [11-hooks-lifecycle-and-runtime.md](./11-hooks-lifecycle-and-runtime.md)
-3. [07-context-management.md](./07-context-management.md)
-4. [13-session-storage-and-resume.md](./13-session-storage-and-resume.md)
-5. [14-prompt-system.md](./14-prompt-system.md)
-6. [18-api-provider-retry-errors.md](./18-api-provider-retry-errors.md)
+1. [12-settings-policy-and-env.md](./19-settings-config.md)
+2. [11-hooks-lifecycle-and-runtime.md](./21-hooks-lifecycle.md)
+3. [07-context-management.md](./11-context-management.md)
+4. [13-session-storage-and-resume.md](./10-session-resume.md)
+5. [14-prompt-system.md](./12-prompt-system.md)
+6. [18-api-provider-retry-errors.md](./07-error-security.md)
 
 ### 3.5 想专门研究“长会话续航、上下文治理与长期记忆”
 
 推荐路径如下：
 
-1. [07-context-management.md](./07-context-management.md)
-2. [13-session-storage-and-resume.md](./13-session-storage-and-resume.md)
-3. [14-prompt-system.md](./14-prompt-system.md)
-4. [15-memory-system.md](./15-memory-system.md)
-5. [16-performance-cache-context.md](./16-performance-cache-context.md)
-6. [17-queryengine-sdk.md](./17-queryengine-sdk.md)
+1. [07-context-management.md](./11-context-management.md)
+2. [13-session-storage-and-resume.md](./10-session-resume.md)
+3. [14-prompt-system.md](./12-prompt-system.md)
+4. [15-memory-system.md](./16-memory-system.md)
+5. [16-performance-cache-context.md](./08-performance.md)
+6. [17-queryengine-sdk.md](./17-sdk-transport.md)
 
 ## 4. 核心术语表
 

@@ -385,6 +385,19 @@ Codex 的输入层特点：
 - **PromptInput 统一附件与文本**：文本和文件附件在同一输入模型中，发送给 core 时格式一致，不需要两套处理路径。
 - **InputQueue 支持多行组合**：缓冲区设计允许用户粘贴多行代码后一次确认发送，不会因换行提前触发。
 
+## 跨工具横向对比
+
+本章（Codex）与同主题其他工具的差异：
+
+| 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
+|------|------------|-------|------------|----------|
+| 核心主题 | Slash 命令 + QueryGuard 并发控制 | Mailbox + Command Canonicalization + Exec | CommandService + Shell 状态 | PromptInput 编译 + Durable Message |
+| 独有机制 | `QueryGuard` 防并发 query | `Mailbox` 跨 Agent 通信 | `Shell 状态管理` | `Part` 编译类型系统 |
+| 命令返回 | 可改变工具/模型/effort | 命令规范化元数据 | CommandService 统一分发 | 模板化 command 编译 |
+| 架构驱动 | 单 Agent，query 并发控制 | 多 Agent，Mailbox 通信 | 单 Agent，Shell 状态隔离 | Durable State，输入即消息 |
+
+**要点**：Codex 因有多 Agent 架构（含 child-agents），其队列系统加入了 Mailbox 机制和命令规范化，远比其他三个工具复杂；其他三者均面向单 Agent，核心问题是"slash 命令解析 + 输入队列调度"。
+
 **风险与改进点**
 
 - **命令解析与输入处理耦合**：`CommandParser` 嵌入 `InputQueue` 处理流程，难以在集成测试中独立测试命令解析逻辑。
