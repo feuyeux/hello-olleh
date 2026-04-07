@@ -179,7 +179,6 @@ flowchart LR
 | 构造 `functionResponse` | `useGeminiStream.handleCompletedTools()` |
 | Loop detection | `GeminiClient.processTurn()` / `LoopDetectionService` |
 
-
 ---
 
 ## 5. 闭环核心：工具调度与结果回注
@@ -293,7 +292,6 @@ flowchart LR
 - **Scheduler 执行**：安全闸门（hook / policy / approval）→ `ToolExecutor.execute()` → `createSuccessResult()`
 - **UI 回注续跑**：`onComplete` 回调 → `handleCompletedTools()` → `submitQuery(..., isContinuation: true)`
 
-
 ---
 
 ## 6. 循环检测：LoopDetectionService
@@ -349,7 +347,6 @@ flowchart LR
 
 `Turn.callCounter`（`turn.ts:239`）只是为缺失 id 的 function call 生成 fallback `callId`，**不负责任何 loop detection**。
 
-
 ---
 
 ## 7. 关键函数清单
@@ -402,6 +399,96 @@ flowchart LR
 
 ---
 
+## 8.1 Scheduler 三阶段处理详解
+
+`scheduler.ts:405-504` 的 `_processQueue()` 使用 while 循环 + 三阶段模式处理工具调用：
+
+```typescript
+private async _processQueue(signal: AbortSignal): Promise<void> {
+  while (this.state.queueLength > 0 || this.state.isActive) {
+    const shouldContinue = await this._processNextItem(signal);
+    if (!shouldContinue) break;
+  }
+}
+```
+
+每次迭代（`_processNextItem()`，行 411-504）经过：
+
+**Phase 1 — 验证（Validating → Scheduled / AwaitingApproval）**：
+
+```typescript
+const validatingCalls = activeCalls.filter(c => c.status === 'Validating');
+await Promise.all(
+  validatingCalls.map(c => this._processValidatingCall(c, signal))
+);
+```
+
+验证包含 `evaluateBeforeToolHook()`（行 580-585）、`checkPolicy()`（行 610-614）、`resolveConfirmation()`（行 643-653）。
+
+**Phase 2 — 执行（Scheduled → Executing → Terminal）**：
+
+```typescript
+const allReady = activeCalls.every(
+  c => c.status === 'Scheduled' || this.isTerminal(c.status)
+);
+if (allReady && scheduledCalls.length > 0) {
+  await Promise.all(scheduledCalls.map(c => this._execute(c, signal)));
+}
+```
+
+注意只有**所有** active calls 都就绪时才批量执行——这确保了审批中的工具不会被绕过。
+
+**Phase 3 — 终结（Terminal → 清理）**：
+
+```typescript
+for (const call of activeCalls) {
+  if (this.isTerminal(call.status)) {
+    this.state.finalizeCall(call.request.callId);
+  }
+}
+```
+
+### 工具状态机
+
+```
+ToolCallRequestInfo
+    │
+    ▼
+Validating ──→ AwaitingApproval ──→ Scheduled ──→ Executing ──→ Terminal
+    │                                     │              │        (success/error/cancelled)
+    │                                     │              │
+    └──→ Error (验证失败)                  └──→ Error     └──→ Cancelled
+```
+
+### 模型端并发控制
+
+Gemini CLI 独特的并发决策机制——由模型决定工具是否串行（`scheduler.ts:549-558`）：
+
+```typescript
+private _isParallelizable(request: ToolCallRequestInfo): boolean {
+  if (request.args) {
+    const wait = request.args['wait_for_previous'];
+    if (typeof wait === 'boolean') return !wait;
+  }
+  return true;  // 默认并行
+}
+```
+
+模型在工具参数中设置 `wait_for_previous: true` 来要求串行执行。这与 Claude Code（客户端 `isConcurrencySafe`）和 Codex（客户端 `tool_supports_parallel` + `RwLock`）的模式完全不同——Gemini 把串行决策权交给了模型而非客户端。
+
+### Loop Detection 两级响应
+
+`processTurn()` 中的循环检测（`client.ts:629-641`）实现了两级响应策略：
+
+| 检测次数 | 响应 | 行号 |
+|----------|------|------|
+| `count === 1`（首次检测到循环） | 注入反馈消息尝试恢复：`_recoverFromLoop()` | `client.ts:681` |
+| `count > 1`（二次循环） | 强制终止：`yield LoopDetected` | `client.ts:673` |
+
+`_recoverFromLoop()`（`client.ts:778-797`）注入一条用户消息告知模型其行为在重复，然后重新进入 `processTurn()`。这是四个工程中唯一实现了基于 LLM 分析的主动循环模式检测的方案。
+
+---
+
 ## 9. Agent Loop 架构对比：opencode vs gemini-cli vs claude-code
 
 三种工具的 agent loop 设计取向不同，下表横向对比关键维度：
@@ -419,4 +506,3 @@ flowchart LR
 ---
 
 > 关联阅读：[04-tool-system.md](./04-tool-system.md)（工具注册、权限策略与执行器实现）
-

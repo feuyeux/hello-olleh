@@ -24,5 +24,6 @@ title: "Harness Engineering Framework 源码分析"
     <a class="chapter-card" href="10-human-steering"><div class="chapter-number">10</div><div class="chapter-title">Human Steering 人类导向</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="11-extensibility"><div class="chapter-number">11</div><div class="chapter-title">Extensibility 扩展性</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="12-synthesis"><div class="chapter-number">12</div><div class="chapter-title">Synthesis 综合</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="13-agent-loop"><div class="chapter-number">13</div><div class="chapter-title">Agent Loop 闭环拓扑</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 </div>
