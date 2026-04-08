@@ -21,6 +21,7 @@ jobs:
           ruby-version: '3.4'
           bundler-cache: true
           cache-version: '1'
+          working-directory: pages
 
       - name: Install Ruby gems
         run: bundle install
@@ -31,22 +32,22 @@ jobs:
           node-version: '22'
 
       - name: Install npm dependencies
-        run: npm install
+        run: cd pages && npm install
 
       - name: Build Jekyll site
-        run: bundle exec jekyll build --trace
+        run: cd pages && bundle exec jekyll build --trace
         env:
           JEKYLL_ENV: production
 
       - name: Check build output
-        run: ls -la _site/ && ls -la _site/hello-claude-code/ 2>/dev/null | head -10
+        run: ls -la pages/_site/ && ls -la pages/_site/hello-claude-code/ 2>/dev/null | head -10
 
       - name: Generate PDF ebooks
-        run: node scripts/generate-pdfs.js
+        run: node pages/scripts/generate-pdfs.js
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
           name: hello-olleh-ebook
-          path: _site/hello-olleh-complete.pdf
+          path: pages/_site/hello-olleh-complete.pdf
           retention-days: 30

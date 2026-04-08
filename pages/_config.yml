@@ -22,14 +22,25 @@ timezone: Asia/Shanghai
 
 # Exclude upstream source directories from Jekyll processing
 exclude:
-  - claude-code
-  - codex
-  - gemini-cli
-  - opencode
-  - openclaw
-  - prompts
+  - ../claude-code
+  - ../codex
+  - ../gemini-cli
+  - ../opencode
+  - ../openclaw
+  - ../prompts
   - scripts
-  - vendor/bundle
-  - node_modules
-  - .git
-  - .github
+  - ../vendor/bundle
+  - ../node_modules
+  - ../.git
+  - ../.github
+  - ../.idea
+  - ../.vscode
+  - Gemfile.lock
+  - package.json
+  - package-lock.json
+  - ../AGENTS.md
+  - ../GEMINI.md
+  - ../CLAUDE.md
+  - ../README.md
+  - ../sync_repos.sh
+  - hello-harness.png
