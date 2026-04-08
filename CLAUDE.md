@@ -17,24 +17,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/` | Analysis output |
 | `hello-harness/` | Harness Engineering framework analysis |
 | `prompts/` | Generator/evaluator prompts |
-| `scripts/` | Build and PDF generation scripts |
-| `_layouts/`, `style.css`, `404.html` | Jekyll site templates and assets |
+| `pages/scripts/` | Build and PDF generation scripts |
+| `pages/` | Jekyll/GitHub Pages site (layouts, CSS, content) |
 | `.github/workflows/` | GitHub Actions workflows |
 
 ## Jekyll/GitHub Pages Commands
 
+All Jekyll commands run from the `pages/` directory:
+
 ```bash
 # Install dependencies (requires Ruby)
-bundle install
+cd pages && bundle install
 
 # Local preview
-bundle exec jekyll serve
+cd pages && bundle exec jekyll serve
 
 # Build for production
-bundle exec jekyll build
+cd pages && bundle exec jekyll build --source . --destination ./_site
 
 # Build with verbose output
-bundle exec jekyll build --trace
+cd pages && bundle exec jekyll build --source . --destination ./_site --trace
 ```
 
 Site URL: `https://feuyeux.github.io/hello-olleh/`
@@ -42,18 +44,19 @@ Base URL: `/hello-olleh`
 
 ## GitHub Pages Configuration
 
-- Layouts: `_layouts/`
-- CSS: `style.css`
-- Index: `index.md`
-- 404: `404.html`
-- Config: `_config.yml`
+Jekyll site files are located in `pages/`:
+- Layouts: `pages/_layouts/`
+- CSS: `pages/style.css`
+- Index: `pages/index.md`
+- 404: `pages/404.html`
+- Config: `pages/_config.yml`
 
 CSS links use `{{ 'style.css' | relative_url }}` for correct base URL resolution.
 
 ## Analysis Workflow
 
 1. Read source in `claude-code/`/`codex/`/`gemini-cli/`/`opencode/`
-2. Use `hello.txt` as system prompt template
+2. Use `prompts/hello.txt` as system prompt template
 3. Output analysis to corresponding `hello-*/` directory
 4. Follow naming convention: `NN-topic-slug.md` (e.g., `01-architecture.md`)
 
@@ -75,8 +78,8 @@ CSS links use `{{ 'style.css' | relative_url }}` for correct base URL resolution
 ## Git Ignore
 
 Excluded from version control:
-- Jekyll build output: `_site/`, `.jekyll-cache/`, `.sass-cache/`
-- Ruby artifacts: `Gemfile.lock`, `.bundle/`, `vendor/`
+- Jekyll build output: `pages/_site/`, `pages/.jekyll-cache/`, `pages/.sass-cache/`
+- Ruby artifacts: `pages/Gemfile.lock`, `pages/.bundle/`, `pages/vendor/`
 - IDE files: `.idea/`, `.vscode/`
 - System files: `.DS_Store`
 - Upstream source: `codex/`, `gemini-cli/`, `opencode/`, etc.

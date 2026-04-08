@@ -1,9 +1,9 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-`claude-code/`, `codex/`, `gemini-cli/`, and `opencode/` are local upstream source snapshots used as analysis inputs. Treat them as vendor trees unless a task explicitly requires source edits. The `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/`, and `hello-harness/` folders hold generated Markdown analysis and should receive most contributor changes. Root files are lightweight: [`README.md`](README.md) records scope and upstream versions, [`hello.txt`](hello.txt) defines the analysis brief, and [`sync_repos.sh`](sync_repos.sh) refreshes local clones.
+`claude-code/`, `codex/`, `gemini-cli/`, and `opencode/` are local upstream source snapshots used as analysis inputs. Treat them as vendor trees unless a task explicitly requires source edits. The `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/`, and `hello-harness/` folders hold generated Markdown analysis and should receive most contributor changes. Root files are lightweight: [`README.md`](README.md) records scope and upstream versions, [`hello.txt`](prompts/hello.txt) defines the analysis brief, and [`sync_repos.sh`](sync_repos.sh) refreshes local clones.
 
-PDF ebook generation is automated via GitHub Actions workflow (`.github/workflows/ebook.yml`) and can be run locally with `node scripts/generate-pdfs.js`.
+PDF ebook generation is automated via GitHub Actions workflow (`.github/workflows/ebook.yml`) and can be run locally with `node pages/scripts/generate-pdfs.js`.
 
 ## Build, Test, and Development Commands
 There is no single root build or test pipeline. Use repository-level utility commands instead:
@@ -67,4 +67,4 @@ git config --local user.email "noreply@openai.com"
 ```
 
 ## Agent Notes
-Start with the root [`README.md`](README.md) and [`hello.txt`](hello.txt) before generating new analysis. Prefer editing `hello-*` outputs over modifying vendored source trees, and avoid committing sync noise unless the snapshot update is intentional.
+Start with the root [`README.md`](README.md) and [`hello.txt`](prompts/hello.txt) before generating new analysis. Prefer editing `hello-*` outputs over modifying vendored source trees, and avoid committing sync noise unless the snapshot update is intentional.
