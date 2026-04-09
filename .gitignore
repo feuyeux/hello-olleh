@@ -20,11 +20,13 @@ vendor/bundle/
 .DS_Store
 
 # Upstream source code (external repos)
+claw-code/
 codex/
 gemini-cli/
 openclaw/
 opencode/
 zeroclaw/
+claw-code/
 
 # Build output
 dist/
@@ -46,7 +48,33 @@ nul
 *.pdf
 *.epub
 
-# Claude
+# Claude/Kiro
 .claude/
 .kiro/
-!.kiro/specs/
+
+# Python (removed - iota project moved)
+# __pycache__/
+# *.py[cod]
+# *$py.class
+# *.so
+# .Python
+# *.egg-info/
+# dist/
+# build/
+# *.egg
+# .venv/
+# venv/
+# ENV/
+# env/
+# .pytest_cache/
+# .coverage
+# htmlcov/
+# .hypothesis/
+# .mypy_cache/
+# .ruff_cache/
+# .python-version
+
+# Docker (removed - iota project moved)
+# .dockerignore
+# Dockerfile
+# docker-compose.yml
