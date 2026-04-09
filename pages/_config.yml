@@ -33,7 +33,7 @@ exclude:
   - claw-code
   - hello-olleh-memory
   - prompts
-  - vendor
+  - pages/vendor
   - node_modules
   - .git
   - .github
