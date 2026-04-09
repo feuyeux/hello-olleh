@@ -9,12 +9,12 @@ permalink: /
   </div>
 
   <section>
-    <p>
+    <p style="text-align:center">
       <code>hello-olleh</code> 是一个面向 AI Coding 工程的源码阅读与对比分析工作区。
       通过保存上游源码快照和对应的分析产物，深入理解不同工具在启动链路、Agent 调度、工具系统、状态管理与扩展机制上的实现差异。
       本工程采用 Harness Engineering 框架，从可控性工程的视角透视四款主流 AI Coding 工程的源码证据。
     </p>
-    <img src="{{ 'pages/hello-harness.png' | relative_url }}" alt="Harness Engineering Framework" />
+    <img style="display:block;margin:0 auto" src="{{ 'pages/hello-harness.png' | relative_url }}" alt="Harness Engineering Framework" />
   </section>
 
   <hr class="section-divider">
