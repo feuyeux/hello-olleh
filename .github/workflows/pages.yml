@@ -36,7 +36,8 @@ jobs:
           working-directory: pages
 
       - name: Build Jekyll site
-        run: bundle exec jekyll build --source pages --destination pages/_site --trace
+        run: bundle exec jekyll build --destination _site --trace
+        working-directory: pages
         env:
           JEKYLL_ENV: production
 
