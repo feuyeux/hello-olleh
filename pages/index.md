@@ -53,7 +53,7 @@ permalink: /
         <span class="cli-icon">&#x1F537;</span>
         <div>
           <div class="cli-name">Claude Code</div>
-          <div class="cli-version">TypeScript / React &middot; v2.1.87</div>
+          <div class="cli-version">TypeScript / React</div>
         </div>
       </a>
       <a class="cli-card" href="{{ 'hello-codex/' | relative_url }}">
@@ -61,7 +61,7 @@ permalink: /
         <span class="cli-icon">&#x1F536;</span>
         <div>
           <div class="cli-name">OpenAI Codex</div>
-          <div class="cli-version">Rust + TypeScript &middot; rust-v0.118.0</div>
+          <div class="cli-version">Rust + TypeScript</div>
         </div>
       </a>
       <a class="cli-card" href="{{ 'hello-gemini-cli/' | relative_url }}">
@@ -69,7 +69,7 @@ permalink: /
         <span class="cli-icon">&#x1F7E1;</span>
         <div>
           <div class="cli-name">Gemini CLI</div>
-          <div class="cli-version">TypeScript monorepo &middot; v0.36.0</div>
+          <div class="cli-version">TypeScript monorepo</div>
         </div>
       </a>
       <a class="cli-card" href="{{ 'hello-opencode/' | relative_url }}">
@@ -77,7 +77,7 @@ permalink: /
         <span class="cli-icon">&#x1F7E2;</span>
         <div>
           <div class="cli-name">OpenCode</div>
-          <div class="cli-version">Bun + Effect-ts &middot; v1.3.2</div>
+          <div class="cli-version">Bun + Effect-ts</div>
         </div>
       </a>
       <a class="cli-card" href="{{ 'hello-harness/' | relative_url }}">
@@ -85,7 +85,7 @@ permalink: /
         <span class="cli-icon">&#x2699;&#xFE0F;</span>
         <div>
           <div class="cli-name">Harness Engineering</div>
-          <div class="cli-version">4个 AI Coding 工程的综合分析</div>
+          <div class="cli-version">综合分析4个 AI Coding 工程</div>
         </div>
       </a>
     </div>
