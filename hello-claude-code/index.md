@@ -6,9 +6,9 @@ title: "Claude Code 源码分析"
 <section class="hero page-wrapper">
   <p class="hero-kicker">Source Code Analysis</p>
   <h1 class="hero-title">🔷 Claude Code</h1>
-  <p class="hero-subtitle">基于 Claude Code v2.1.87（反编译版，运行时版本 2.1.888）源码的深度解析</p>
+  <p class="hero-subtitle">基于 Claude Code v2.1.87（反编译版）源码的深度解析</p>
   <div class="hero-badges">
-    <span class="hero-badge"><span class="dot"></span>v2.1.87（源码）/ v2.1.888（运行时）</span>
+    <span class="hero-badge"><span class="dot"></span>v2.1.87</span>
   </div>
 </section>
 
