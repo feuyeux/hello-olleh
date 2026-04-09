@@ -8,19 +8,13 @@ permalink: /
     <h1>Hello AI Coding</h1>
   </div>
 
-  <div class="harness-diagram">
-    <img src="{{ 'pages/hello-harness.png' | relative_url }}" alt="Harness Engineering Framework" />
-  </div>
-
   <section>
-    <div class="section-header">
-      <h2>工程目标与价值</h2>
-    </div>
     <p>
-      <code>hello-olleh</code> 是一个面向 AI Coding CLI 的源码阅读与对比分析工作区。
+      <code>hello-olleh</code> 是一个面向 AI Coding 工程的源码阅读与对比分析工作区。
       通过保存上游源码快照和对应的分析产物，深入理解不同工具在启动链路、Agent 调度、工具系统、状态管理与扩展机制上的实现差异。
-      本工程采用 Harness Engineering 框架，从可控性工程的视角透视四款主流 AI Coding CLI 的源码证据。
+      本工程采用 Harness Engineering 框架，从可控性工程的视角透视四款主流 AI Coding 工程的源码证据。
     </p>
+    <img src="{{ 'pages/hello-harness.png' | relative_url }}" alt="Harness Engineering Framework" />
   </section>
 
   <hr class="section-divider">
@@ -28,11 +22,11 @@ permalink: /
   <section>
     <div class="section-header">
       <h2>源代码仓库</h2>
-      <p>四个 AI Coding CLI 的源码版本、语言栈与源码仓库入口</p>
+      <p>四个 AI Coding 工程的源码版本、语言栈与源码仓库入口</p>
     </div>
     <div class="source-links">
-      <a class="source-link" href="https://github.com/anthropics/claude-code" target="_blank" rel="noreferrer">
-        <span class="dot"></span>github.com/anthropics/claude-code (v2.1.87)
+      <a class="source-link" href="{{ 'claude-code/' | relative_url }}">
+        <span class="dot"></span>claude-code (v2.1.87, 反编译版)
       </a>
       <a class="source-link" href="https://github.com/openai/codex.git" target="_blank" rel="noreferrer">
         <span class="dot"></span>github.com/openai/codex.git (rust-v0.118.0)
@@ -50,7 +44,7 @@ permalink: /
 
   <section>
     <div class="section-header">
-      <h2>分析文档入口</h2>
+      <h2>源代码分析</h2>
       <p>五个 hello-* 目录的源码分析文档</p>
     </div>
     <div class="cli-grid">
@@ -91,7 +85,7 @@ permalink: /
         <span class="cli-icon">&#x2699;&#xFE0F;</span>
         <div>
           <div class="cli-name">Harness Engineering</div>
-          <div class="cli-version">13 维度横向对比框架</div>
+          <div class="cli-version">4个 AI Coding 工程的综合分析</div>
         </div>
       </a>
     </div>
@@ -108,5 +102,5 @@ permalink: /
     <a href="{{ 'hello-gemini-cli/' | relative_url }}">Gemini CLI</a>
     <a href="{{ 'hello-opencode/' | relative_url }}">OpenCode</a>
   </div>
-  <p>Hello AI Coding &middot; AI Coding CLI 源码分析 &middot; 2026</p>
+  <p>Hello AI Coding &middot; AI Coding 工程源码分析 &middot; 2026</p>
 </footer>
