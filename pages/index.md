@@ -25,17 +25,17 @@ permalink: /
       <p>四个 AI Coding 工程的源码版本、语言栈与源码仓库入口</p>
     </div>
     <div class="source-links">
-      <a class="source-link" href="{{ 'claude-code/' | relative_url }}">
+      <span class="source-link">
         <span class="dot"></span>claude-code (v2.1.87, 反编译版)
-      </a>
+      </span>
       <a class="source-link" href="https://github.com/openai/codex.git" target="_blank" rel="noreferrer">
-        <span class="dot"></span>github.com/openai/codex.git (rust-v0.118.0)
+        <span class="dot"></span>codex (rust-v0.118.0)
       </a>
       <a class="source-link" href="https://github.com/google-gemini/gemini-cli.git" target="_blank" rel="noreferrer">
-        <span class="dot"></span>github.com/google-gemini/gemini-cli.git (v0.36.0)
+        <span class="dot"></span>gemini-cli.git (v0.36.0)
       </a>
       <a class="source-link" href="https://github.com/anomalyco/opencode.git" target="_blank" rel="noreferrer">
-        <span class="dot"></span>github.com/anomalyco/opencode.git (v1.3.2)
+        <span class="dot"></span>opencode.git (v1.3.2)
       </a>
     </div>
   </section>
