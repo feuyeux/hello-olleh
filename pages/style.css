@@ -347,18 +347,22 @@ code, pre {
 
 .cli-card {
   display: flex !important;
+  flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: center;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 0.75rem 0.9rem;
+  padding: 0.7rem 0.5rem;
   text-decoration: none;
   color: inherit;
   transition: border-color 0.2s, background 0.2s, transform 0.2s;
   opacity: 0;
   animation: fadeUp 0.5s ease forwards;
   min-width: 0;
+  overflow: hidden;
 }
 
 .cli-card:nth-child(1) { animation-delay: 0.1s; }
@@ -373,25 +377,24 @@ code, pre {
 }
 
 .cli-icon {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   line-height: 1;
   flex-shrink: 0;
 }
 
 .cli-name {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .cli-version {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-family: 'JetBrains Mono', monospace;
+  display: none;
 }
 
 /* ── Footer ────────────────────────────────────────────────── */
