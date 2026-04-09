@@ -31,13 +31,16 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install Chromium system dependencies
+      - name: Install system dependencies for Puppeteer
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            chromium-browser \
             fonts-noto-cjk \
-            libgbm1 libxss1 libasound2t64
+            libgbm1 libxss1 libasound2t64 \
+            libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+            libcups2 libdrm2 libxkbcommon0 libxcomposite1 \
+            libxdamage1 libxfixes3 libxrandr2 libpango-1.0-0 \
+            libcairo2 libasound2t64 libatspi2.0-0
 
       - name: Install npm dependencies
         run: cd pages && npm install
@@ -52,9 +55,6 @@ jobs:
 
       - name: Generate PDF ebooks
         run: node pages/scripts/generate-pdfs.js
-        env:
-          CI: ''
-          CHROME_PATH: /usr/bin/chromium-browser
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
