@@ -24,7 +24,7 @@ jobs:
           working-directory: pages
 
       - name: Install Ruby gems
-        run: bundle install
+        run: cd pages && bundle install
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
