@@ -944,3 +944,295 @@ code, pre {
     width: 100%;
   }
 }
+
+/* Experimental Magazine Overrides */
+.front-masthead {
+  font-size: clamp(2.4rem, 6vw, 4rem) !important;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  background: var(--ink);
+  color: var(--paper);
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  transform: rotate(-1deg);
+  margin-bottom: 1.5rem;
+}
+
+.front-hero {
+  border: 4px solid var(--ink);
+  padding: 3rem 1.5rem !important;
+  background: var(--paper-deep);
+  margin-bottom: 2rem;
+  position: relative;
+  box-shadow: 8px 8px 0 var(--accent);
+}
+
+.front-hero::before {
+  display: none !important;
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem) !important;
+  letter-spacing: -0.01em;
+}
+
+.lead-story {
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+  border: none !important;
+  box-shadow: 6px 6px 0 var(--accent) !important;
+  border-radius: 0;
+}
+
+.lead-story h1,
+.lead-story p {
+  color: var(--paper) !important;
+}
+
+.lead-story .story-kicker {
+  color: var(--paper-deep);
+  border-bottom: 1px solid var(--paper-deep);
+  display: inline-block;
+  padding-bottom: 0.2rem;
+}
+
+.lead-story::before {
+  border-color: var(--paper) !important;
+  opacity: 0.3;
+}
+
+.lead-actions a.editor-link {
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--paper);
+}
+
+.lead-actions a.editor-link.subtle {
+  background: transparent;
+  color: var(--paper);
+  border-color: var(--paper);
+}
+
+.brief-card {
+  background: var(--accent) !important;
+  color: var(--paper) !important;
+  border: none !important;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+}
+
+.brief-card h2,
+.brief-card p,
+.brief-card .brief-label {
+  color: var(--paper) !important;
+}
+
+.brief-card::before {
+  border-color: var(--paper) !important;
+  opacity: 0.4;
+}
+
+.section-header .section-kicker {
+  background: var(--ink);
+  color: var(--paper);
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.editorial-figure {
+  border: 4px solid var(--ink);
+  background: var(--paper-deep);
+  box-shadow: -8px 8px 0 var(--ink-muted);
+  padding: 1rem;
+}
+
+.editorial-figure img {
+  border: 2px solid var(--ink);
+}
+
+.editorial-figure figcaption {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cli-grid a.cli-card {
+  border: 3px solid var(--ink) !important;
+  transition: all 0.2s ease;
+  border-radius: 0;
+  background: var(--paper-deep);
+}
+
+.cli-grid a.cli-card:hover {
+  background: var(--accent) !important;
+  transform: translate(-4px, -4px);
+  box-shadow: 6px 6px 0 var(--ink) !important;
+}
+
+.cli-grid a.cli-card:hover .cli-name,
+.cli-grid a.cli-card:hover .cli-version,
+.cli-grid a.cli-card:hover .chapter-number {
+  color: var(--paper) !important;
+}
+
+.ticker-row {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  padding: 1rem 0;
+  border-top: 4px solid var(--accent);
+  border-bottom: 4px solid var(--accent);
+  text-transform: uppercase;
+  margin: 3rem 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  display: flex;
+  gap: 1rem;
+}
+
+.ticker-row span {
+  padding: 0 1rem;
+  position: relative;
+}
+
+.ticker-row span:not(:last-child)::after {
+  content: '✦';
+  position: absolute;
+  right: -0.5rem;
+  color: var(--accent);
+}
+
+.source-link {
+  border: 3px solid var(--ink) !important;
+  border-radius: 0 !important;
+  background: var(--paper) !important;
+}
+
+.source-link:hover {
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+}
+
+.source-link:hover .source-label,
+.source-link:hover .source-meta {
+  color: var(--paper) !important;
+}
+
+.chapter-card {
+  border: 3px solid var(--ink) !important;
+  border-radius: 0 !important;
+  background: var(--paper-card);
+  transition: all 0.2s ease;
+}
+
+.chapter-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 6px 6px 0 var(--accent) !important;
+}
+
+.content-rail {
+  border: 3px solid var(--ink) !important;
+  background: var(--accent) !important;
+  color: var(--paper) !important;
+  box-shadow: -6px 6px 0 var(--ink) !important;
+  border-radius: 0 !important;
+}
+
+.content-rail::before {
+  display: none !important;
+}
+
+.content-rail a.back-link {
+  color: var(--paper);
+  background: var(--ink);
+  padding: 0.2rem 0.5rem;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.content-rail .rail-label {
+  color: var(--paper-deep) !important;
+  border-bottom: 1px solid var(--paper-deep);
+}
+
+.content-rail .rail-copy {
+  color: var(--paper);
+}
+
+.main-content {
+  border: 4px solid var(--ink) !important;
+  background: var(--paper) !important;
+  box-shadow: 8px 8px 0 var(--accent) !important;
+  border-radius: 0 !important;
+}
+
+.main-content::before {
+  display: none !important;
+}
+
+.page-header .page-kicker {
+  background: var(--ink);
+  color: var(--paper);
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  margin-bottom: 0;
+  border: 2px solid var(--ink);
+}
+
+.main-content > h1:first-child {
+  font-size: clamp(2rem, 4vw, 2.8rem) !important;
+  line-height: 1.15;
+  border-bottom: 4px solid var(--ink) !important;
+  padding-bottom: 0.8rem !important;
+  margin-bottom: 2rem !important;
+  letter-spacing: -0.01em;
+}
+
+.main-content h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem) !important;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.4rem 0.8rem !important;
+  border-top: none !important;
+  display: inline-block;
+  margin-top: 2.5em !important;
+  transform: rotate(-0.5deg);
+}
+
+.main-content h3 {
+  font-size: clamp(1.2rem, 2.5vw, 1.5rem) !important;
+  border-left: 6px solid var(--accent);
+  padding-left: 0.8rem;
+  color: var(--ink) !important;
+  margin-top: 2em !important;
+}
+
+.main-content blockquote {
+  border: 3px solid var(--ink) !important;
+  border-left: 8px solid var(--accent) !important;
+  background: var(--paper-deep) !important;
+  color: var(--ink) !important;
+  font-weight: 500;
+  box-shadow: 4px 4px 0 var(--ink) !important;
+}
+
+.main-content pre {
+  border: 3px solid var(--ink) !important;
+  border-radius: 0 !important;
+  background: #111 !important;
+  box-shadow: 6px 6px 0 var(--ink-muted) !important;
+}
+
+.main-content pre code {
+  color: #fff !important;
+}
+
+.mermaid-container {
+  border: 3px solid var(--ink) !important;
+  background: var(--paper-deep) !important;
+  border-radius: 0 !important;
+  box-shadow: 6px 6px 0 var(--accent) !important;
+}
