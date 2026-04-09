@@ -8,7 +8,6 @@
   {% if site.url %}<link rel="canonical" href="{{ site.url }}{{ page.url }}">{% endif %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Noto+Sans+SC:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ 'style.css' | relative_url }}">
   
   <!-- Mermaid.js for diagram rendering -->
@@ -47,11 +46,20 @@
     });
   </script>
 </head>
-<body>
-  <!-- Site navigation -->
+<body class="site-shell {% if page.url == '/' %}is-home{% endif %} {% if page.layout %}layout-{{ page.layout }}{% endif %}">
   <nav class="site-nav">
+    <div class="nav-topline">
+      <div class="nav-topline-inner page-wrapper">
+        <span>Source Intelligence Review</span>
+        <span>AI Coding CLI Archives</span>
+        <span>{{ "now" | date: "%Y" }} Edition</span>
+      </div>
+    </div>
     <div class="nav-inner page-wrapper">
-      <a href="{{ '/' | relative_url }}" class="nav-brand">Hello AI Coding</a>
+      <a href="{{ '/' | relative_url }}" class="nav-brand">
+        <span class="nav-brand-main">Hello Olleh</span>
+        <span class="nav-brand-sub">Engineering Gazette</span>
+      </a>
       <div class="nav-links">
         <a href="{{ 'hello-claude-code/' | relative_url }}">Claude Code</a>
         <a href="{{ 'hello-codex/' | relative_url }}">Codex</a>
@@ -61,7 +69,9 @@
       </div>
     </div>
   </nav>
-  
-  {{ content }}
+
+  <main class="site-main">
+    {{ content }}
+  </main>
 </body>
 </html>

@@ -4,38 +4,100 @@ permalink: /
 ---
 
 <div class="page-wrapper">
-  <div class="section-header">
-    <h1>Hello AI Coding</h1>
-  </div>
-
-  <section>
-    <p style="text-align:center">
-      <code>hello-olleh</code> 是一个面向 AI Coding 工程的源码阅读与对比分析工作区。
-      通过保存上游源码快照和对应的分析产物，深入理解不同工具在启动链路、Agent 调度、工具系统、状态管理与扩展机制上的实现差异。
-      本工程采用 Harness Engineering 框架，从可控性工程的视角透视四款主流 AI Coding 工程的源码证据。
+  <section class="front-hero">
+    <p class="front-kicker">Source Intelligence Review · 2026</p>
+    <div class="front-masthead">
+      <span>Hello</span>
+      <span>AI Coding</span>
+    </div>
+    <p class="front-deck">
+      <code>hello-olleh</code> 把 AI Coding CLI 的源码快照、专题分析和 Harness Engineering 框架研究
+      组织成一份可翻阅的工程档案报，适合按主题、按仓库、按执行链路反复对照阅读。
     </p>
-    <img style="display:block;margin:0 auto" src="{{ 'pages/hello-harness.png' | relative_url }}" alt="Harness Engineering Framework" />
+    <div class="front-meta">
+      <span>4 个上游工程</span>
+      <span>5 个专题入口</span>
+      <span>源码快照 + 分析长文 + PDF ebook</span>
+    </div>
+  </section>
+
+  <section class="front-grid">
+    <article class="lead-story">
+      <p class="story-kicker">Cover Story</p>
+      <h1>把 AI Coding CLI 当作一张可以拆开的系统蓝图来阅读</h1>
+      <p>
+        这里不是产品说明页，而是工程版面。重点不在“它能做什么”，而在“它内部怎样跑起来”：
+        从启动入口、Agent 决策链、Prompt 组装，到工具执行闭环、状态持久化、MCP 扩展与安全边界。
+      </p>
+      <p>
+        你可以先从 Harness Engineering 读一遍总论，再去四个仓库的专题区横向比较；
+        也可以直接跳进某个工程，像翻技术周刊一样连续浏览章节卡片。
+      </p>
+      <div class="lead-actions">
+        <a class="editor-link" href="{{ 'hello-harness/' | relative_url }}">阅读 Harness 专刊</a>
+        <a class="editor-link subtle" href="https://github.com/feuyeux/hello-olleh" target="_blank" rel="noreferrer">查看 GitHub 仓库</a>
+      </div>
+    </article>
+
+    <aside class="news-briefs">
+      <article class="brief-card">
+        <p class="brief-label">Edition</p>
+        <h2>分析对象</h2>
+        <p>Claude Code、Codex、Gemini CLI、OpenCode，加上一份 Harness Engineering 综合框架。</p>
+      </article>
+      <article class="brief-card">
+        <p class="brief-label">Method</p>
+        <h2>阅读方式</h2>
+        <p>保持上游快照不动，主要在 <code>hello-*</code> 目录沉淀结构化分析与可追溯证据。</p>
+      </article>
+      <article class="brief-card">
+        <p class="brief-label">Output</p>
+        <h2>交付形态</h2>
+        <p>网页、Markdown 长文与 PDF ebook 共用一套内容骨架，便于在线读和离线归档。</p>
+      </article>
+    </aside>
+  </section>
+
+  <figure class="editorial-figure">
+    <img src="{{ 'pages/hello-harness.png' | relative_url }}" alt="Harness Engineering Framework" />
+    <figcaption>Harness Engineering Framework 作为总框架，用来统一解读四类 AI Coding 工程中的控制面、反馈面与扩展面。</figcaption>
+  </figure>
+
+  <section class="ticker-row">
+    <span>Startup Flow</span>
+    <span>Agent Loop</span>
+    <span>Prompt System</span>
+    <span>Tool Governance</span>
+    <span>Context & Memory</span>
+    <span>MCP / Plugin</span>
+    <span>Sandbox & Approval</span>
+    <span>Observability</span>
   </section>
 
   <hr class="section-divider">
 
   <section>
     <div class="section-header">
-      <h2>源代码仓库</h2>
-      <p>四个 AI Coding 工程的源码版本、语言栈与源码仓库入口</p>
+      <p class="section-kicker">Repository Desk</p>
+      <h2>本期源码版图</h2>
+      <p>版本、语言栈和资料来源，按报纸资料栏的方式整理。</p>
     </div>
     <div class="source-links">
       <span class="source-link">
-        <span class="dot"></span>claude-code (v2.1.87, 反编译版)
+        <span class="source-label">Claude Code</span>
+        <span class="source-meta">TypeScript / React · v2.1.87 · 反编译版</span>
       </span>
       <a class="source-link" href="https://github.com/openai/codex.git" target="_blank" rel="noreferrer">
-        <span class="dot"></span>codex (rust-v0.118.0)
+        <span class="source-label">OpenAI Codex</span>
+        <span class="source-meta">Rust + TypeScript · rust-v0.118.0</span>
       </a>
       <a class="source-link" href="https://github.com/google-gemini/gemini-cli.git" target="_blank" rel="noreferrer">
-        <span class="dot"></span>gemini-cli.git (v0.36.0)
+        <span class="source-label">Gemini CLI</span>
+        <span class="source-meta">TypeScript monorepo · v0.36.0</span>
       </a>
       <a class="source-link" href="https://github.com/anomalyco/opencode.git" target="_blank" rel="noreferrer">
-        <span class="dot"></span>opencode.git (v1.3.2)
+        <span class="source-label">OpenCode</span>
+        <span class="source-meta">Bun + Effect-ts · v1.3.2</span>
       </a>
     </div>
   </section>
@@ -44,13 +106,13 @@ permalink: /
 
   <section>
     <div class="section-header">
-      <h2>源代码分析</h2>
-      <p>五个 hello-* 目录的源码分析文档</p>
+      <p class="section-kicker">Reading Rooms</p>
+      <h2>五个专题入口</h2>
+      <p>每个入口都是一组“专刊”，继续点进去就是分主题的章节卡片。</p>
     </div>
     <div class="cli-grid">
       <a class="cli-card" href="{{ 'hello-claude-code/' | relative_url }}">
         <span class="chapter-number">01</span>
-        <span class="cli-icon">&#x1F537;</span>
         <div>
           <div class="cli-name">Claude Code</div>
           <div class="cli-version">TypeScript / React</div>
@@ -58,7 +120,6 @@ permalink: /
       </a>
       <a class="cli-card" href="{{ 'hello-codex/' | relative_url }}">
         <span class="chapter-number">02</span>
-        <span class="cli-icon">&#x1F536;</span>
         <div>
           <div class="cli-name">OpenAI Codex</div>
           <div class="cli-version">Rust + TypeScript</div>
@@ -66,7 +127,6 @@ permalink: /
       </a>
       <a class="cli-card" href="{{ 'hello-gemini-cli/' | relative_url }}">
         <span class="chapter-number">03</span>
-        <span class="cli-icon">&#x1F7E1;</span>
         <div>
           <div class="cli-name">Gemini CLI</div>
           <div class="cli-version">TypeScript monorepo</div>
@@ -74,7 +134,6 @@ permalink: /
       </a>
       <a class="cli-card" href="{{ 'hello-opencode/' | relative_url }}">
         <span class="chapter-number">04</span>
-        <span class="cli-icon">&#x1F7E2;</span>
         <div>
           <div class="cli-name">OpenCode</div>
           <div class="cli-version">Bun + Effect-ts</div>
@@ -82,7 +141,6 @@ permalink: /
       </a>
       <a class="cli-card" href="{{ 'hello-harness/' | relative_url }}">
         <span class="chapter-number">05</span>
-        <span class="cli-icon">&#x2699;&#xFE0F;</span>
         <div>
           <div class="cli-name">Harness Engineering</div>
           <div class="cli-version">综合分析4个 AI Coding 工程</div>
