@@ -3,11 +3,18 @@ layout: default
 ---
 <article class="content-page">
   <div class="page-content">
-    <header class="page-header">
+    <aside class="content-rail">
       <a href="{{ page.parent_url | default: '/' | relative_url }}" class="back-link">← 返回目录</a>
-    </header>
-    <div class="main-content">
-      {{ content }}
+      <p class="rail-label">Special Report</p>
+      <p class="rail-copy">源码证据、执行链路与工程机制拆解，按长文特刊方式编排。</p>
+    </aside>
+    <div class="content-main">
+      <header class="page-header">
+        <p class="page-kicker">Engineering Notes</p>
+      </header>
+      <div class="main-content">
+        {{ content }}
+      </div>
     </div>
   </div>
 </article>
