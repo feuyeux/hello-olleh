@@ -3,6 +3,10 @@ description: AI Coding CLI 源码分析工作区
 url: "https://feuyeux.github.io/hello-olleh"
 baseurl: "/hello-olleh"
 
+# Build from repo root so hello-* directories are accessible
+source: ..
+layouts_dir: pages/_layouts
+
 permalink: pretty
 
 # GitHub Pages configuration
@@ -20,27 +24,27 @@ kramdown:
 # Build settings
 timezone: Asia/Shanghai
 
-# Exclude upstream source directories from Jekyll processing
+# Exclude upstream source directories and non-doc files from Jekyll processing
 exclude:
-  - ../claude-code
-  - ../codex
-  - ../gemini-cli
-  - ../opencode
-  - ../openclaw
-  - ../prompts
-  - scripts
-  - ../vendor/bundle
-  - ../node_modules
-  - ../.git
-  - ../.github
-  - ../.idea
-  - ../.vscode
-  - Gemfile.lock
-  - package.json
-  - package-lock.json
-  - ../AGENTS.md
-  - ../GEMINI.md
-  - ../CLAUDE.md
-  - ../README.md
-  - ../sync_repos.sh
-  - hello-harness.png
+  - claude-code
+  - codex
+  - gemini-cli
+  - opencode
+  - claw-code
+  - hello-olleh-memory
+  - prompts
+  - vendor
+  - node_modules
+  - .git
+  - .github
+  - .idea
+  - .vscode
+  - sync_repos.sh
+  - AGENTS.md
+  - GEMINI.md
+  - CLAUDE.md
+  - pages/Gemfile
+  - pages/Gemfile.lock
+  - pages/package.json
+  - pages/package-lock.json
+  - pages/scripts
