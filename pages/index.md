@@ -74,7 +74,7 @@ permalink: /
     <span>Observability</span>
   </section>
 
-  <hr class="section-divider">
+
 
   <section>
     <div class="section-header">
@@ -102,7 +102,7 @@ permalink: /
     </div>
   </section>
 
-  <hr class="section-divider">
+
 
   <section>
     <div class="section-header">
