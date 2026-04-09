@@ -74,6 +74,116 @@ function stripTags(html) {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function readHtml(htmlPath) {
+  return fs.readFileSync(htmlPath, 'utf-8');
+}
+
+function extractBodyAndClassNames(html) {
+  const bodyMatch = html.match(/<body([^>]*)>([\s\S]*?)<\/body>/i);
+  if (!bodyMatch) {
+    return { bodyAttrs: '', bodyClassNames: '', bodyHtml: '' };
+  }
+
+  const bodyAttrs = bodyMatch[1] || '';
+  const classMatch = bodyAttrs.match(/\bclass=(["'])(.*?)\1/i);
+  return {
+    bodyAttrs,
+    bodyClassNames: classMatch ? classMatch[2] : '',
+    bodyHtml: bodyMatch[2] || ''
+  };
+}
+
+function findTagBounds(html, tagName, startIndex = 0) {
+  const openTag = new RegExp(`<${tagName}\\b[^>]*>`, 'ig');
+  openTag.lastIndex = startIndex;
+  const firstMatch = openTag.exec(html);
+  if (!firstMatch) {
+    return null;
+  }
+
+  const tokenPattern = new RegExp(`</?${tagName}\\b[^>]*>`, 'ig');
+  tokenPattern.lastIndex = firstMatch.index;
+
+  let depth = 0;
+  let tokenMatch;
+  while ((tokenMatch = tokenPattern.exec(html))) {
+    if (tokenMatch[0][1] === '/') {
+      depth -= 1;
+      if (depth === 0) {
+        return {
+          start: firstMatch.index,
+          end: tokenMatch.index + tokenMatch[0].length
+        };
+      }
+    } else {
+      depth += 1;
+    }
+  }
+
+  return null;
+}
+
+function findElementByClass(html, tagName, className) {
+  const pattern = new RegExp(`<${tagName}\\b[^>]*class=(["'])[^"']*\\b${escapeRegExp(className)}\\b[^"']*\\1[^>]*>`, 'ig');
+  const match = pattern.exec(html);
+  if (!match) {
+    return null;
+  }
+
+  const bounds = findTagBounds(html, tagName, match.index);
+  if (!bounds) {
+    return null;
+  }
+
+  return {
+    start: bounds.start,
+    end: bounds.end,
+    outerHtml: html.slice(bounds.start, bounds.end)
+  };
+}
+
+function getInnerHtml(outerHtml, tagName) {
+  const openTagPattern = new RegExp(`^<${tagName}\\b[^>]*>`, 'i');
+  return outerHtml
+    .replace(openTagPattern, '')
+    .replace(new RegExp(`</${tagName}>\\s*$`, 'i'), '');
+}
+
+function stripSiteChrome(html) {
+  return html
+    .replace(/<footer\b[^>]*class=(["'])[^"']*\bsite-footer\b[^"']*\1[\s\S]*?<\/footer>/ig, '')
+    .replace(/<nav\b[^>]*class=(["'])[^"']*\bsite-nav\b[^"']*\1[\s\S]*?<\/nav>/ig, '')
+    .replace(/<aside\b[^>]*class=(["'])[^"']*\bcontent-rail\b[^"']*\1[\s\S]*?<\/aside>/ig, '')
+    .replace(/<header\b[^>]*class=(["'])[^"']*\bpage-header\b[^"']*\1[\s\S]*?<\/header>/ig, '')
+    .trim();
+}
+
+function extractRenderableContent(htmlPath) {
+  try {
+    const html = readHtml(htmlPath);
+    const { bodyClassNames, bodyHtml } = extractBodyAndClassNames(html);
+    if (!bodyHtml) {
+      return '';
+    }
+
+    if (/\blayout-content\b/.test(bodyClassNames)) {
+      const mainContent = findElementByClass(bodyHtml, 'div', 'main-content');
+      if (mainContent) {
+        return mainContent.outerHtml.trim();
+      }
+    }
+
+    const siteMain = findElementByClass(bodyHtml, 'main', 'site-main');
+    if (siteMain) {
+      return stripSiteChrome(getInnerHtml(siteMain.outerHtml, 'main'));
+    }
+
+    return stripSiteChrome(bodyHtml);
+  } catch {
+    return '';
+  }
+}
+
 // Get chapter HTML paths from a rendered Jekyll section directory.
 // Supports both flat output (`01.html`) and pretty permalinks (`01/index.html`).
 function getChapterPaths(dir) {
@@ -286,29 +396,62 @@ function createCompleteEbookHtml(book, cssPath, siteDir, baseUrl) {
   <title>Hello Olleh - AI Coding CLI 源码分析</title>
   <style>
 ${css}
+    :root {
+      --ebook-paper: #f7f1e6;
+      --ebook-panel: rgba(255, 251, 243, 0.96);
+      --ebook-ink: #241d18;
+      --ebook-muted: #6f6458;
+      --ebook-rule: rgba(52, 39, 27, 0.2);
+      --ebook-rule-strong: rgba(45, 33, 23, 0.42);
+      --ebook-accent: #8f3a2a;
+    }
+    @page {
+      size: A4;
+      margin: 16mm 14mm 20mm;
+    }
     body {
-      padding: 40px;
-      max-width: 900px;
+      padding: 0;
+      max-width: 1000px;
       margin: 0 auto;
-      font-family: 'Noto Sans SC', 'Crimson Pro', Georgia, sans-serif;
-      font-size: 14px;
+      font-family: 'Noto Serif SC', 'Newsreader', serif;
+      font-size: 13px;
       line-height: 1.8;
+      color: var(--ebook-ink);
+      background: var(--ebook-paper);
+    }
+    body::before {
+      display: none;
+    }
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    .site-main,
+    .page-wrapper,
+    .content-page .page-content,
+    .content-main {
+      width: auto !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
     a {
-      color: #2e6f64;
+      color: var(--ebook-accent);
       text-decoration: underline;
       text-underline-offset: 2px;
     }
     .section {
       page-break-before: always;
-      padding: 20px 0;
+      padding: 8mm 0 2mm;
     }
     .section:first-of-type {
       page-break-before: avoid;
     }
     .chapter {
       page-break-before: always;
-      padding: 15px 0;
+      padding: 4mm 0 0;
     }
     .chapter:first-of-type {
       page-break-before: avoid;
@@ -316,11 +459,14 @@ ${css}
     .ebook-toc-section {
       page-break-before: avoid;
     }
+    .ebook-shell {
+      padding: 10mm 0 16mm;
+    }
     .ebook-nav-backdrop {
-      background: linear-gradient(180deg, #fffef9 0%, #f5f0e6 100%);
-      border: 1px solid #d4cfc4;
-      border-radius: 14px;
-      padding: 28px 32px;
+      background: linear-gradient(180deg, #fffaf0 0%, #f0e5d3 100%);
+      border: 1px solid var(--ebook-rule);
+      padding: 8mm 9mm;
+      box-shadow: 0 12px 24px rgba(31, 24, 19, 0.05);
     }
     .ebook-toc-root,
     .ebook-toc-children {
@@ -337,42 +483,103 @@ ${css}
       display: flex;
       gap: 14px;
       font-size: 12px;
-      margin-bottom: 18px;
-      padding-bottom: 8px;
-      border-bottom: 1px dashed #d4cfc4;
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--ebook-rule);
     }
     .ebook-local-nav a {
-      color: #5c564f;
+      color: var(--ebook-muted);
       text-decoration: none;
     }
+    .front-hero,
+    .hero {
+      padding-top: 0;
+    }
+    .front-hero::before,
+    .hero::before {
+      width: 100%;
+      margin-bottom: 10mm;
+    }
+    .front-grid {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.95fr);
+      gap: 7mm;
+      margin-bottom: 6mm;
+    }
+    .news-briefs,
+    .source-links,
+    .chapter-grid,
+    .cli-grid {
+      display: grid !important;
+      gap: 4mm;
+    }
+    .source-links {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .chapter-grid,
+    .cli-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .lead-story,
+    .brief-card,
+    .source-link,
+    .chapter-card,
+    .cli-card,
+    .editorial-figure,
+    .main-content,
+    .mermaid-container {
+      break-inside: avoid;
+      background: var(--ebook-panel);
+      box-shadow: none !important;
+      border: 1px solid var(--ebook-rule) !important;
+    }
+    .lead-story,
+    .brief-card,
+    .source-link,
+    .chapter-card,
+    .cli-card,
+    .main-content,
+    .mermaid-container {
+      padding: 5mm 5.5mm;
+    }
+    .lead-story::before,
+    .brief-card::before,
+    .source-link::before,
+    .chapter-card::before,
+    .cli-card::before,
+    .main-content::before {
+      border-top-color: var(--ebook-rule-strong);
+    }
     h1 {
-      color: #2d2a26;
-      font-size: 2em;
-      margin-bottom: 30px;
+      color: var(--ebook-ink);
+      font-size: 2.2em;
+      margin-bottom: 20px;
     }
     h2 {
-      color: #4a7c6f;
+      color: var(--ebook-ink);
       font-size: 1.5em;
       margin-top: 30px;
-      border-bottom: 1px solid #d4cfc4;
-      padding-bottom: 10px;
+      border-bottom: 1px solid var(--ebook-rule);
+      padding-bottom: 8px;
     }
     h3 {
-      color: #3d6659;
+      color: #4f2c21;
       font-size: 1.2em;
       margin-top: 20px;
     }
     pre {
-      background: #f5f0e6;
+      background: rgba(248, 241, 230, 0.9);
       padding: 15px;
       overflow-x: auto;
-      border-radius: 4px;
+      border: 1px solid var(--ebook-rule);
+      border-radius: 0;
       font-size: 12px;
     }
     code {
-      background: #f5f0e6;
+      background: rgba(248, 241, 230, 0.92);
       padding: 2px 6px;
-      border-radius: 3px;
+      border: 1px solid rgba(58, 45, 31, 0.12);
+      border-radius: 0;
       font-size: 12px;
     }
     .mermaid-container {
@@ -385,75 +592,115 @@ ${css}
       margin: 15px 0;
     }
     th, td {
-      border: 1px solid #d4cfc4;
+      border: 1px solid var(--ebook-rule);
       padding: 8px 12px;
       text-align: left;
     }
     th {
-      background: #f5f0e6;
+      background: rgba(240, 230, 214, 0.85);
     }
     blockquote {
-      border-left: 4px solid #4a7c6f;
+      border-left: 4px solid var(--ebook-accent);
       margin: 15px 0;
       padding-left: 15px;
-      color: #5a5550;
+      color: var(--ebook-muted);
     }
-    .site-nav, .page-nav, .source-links, .harness-diagram {
+    .site-nav,
+    .page-nav,
+    .content-rail,
+    .page-header,
+    .site-footer,
+    .lead-actions,
+    hr.section-divider {
       display: none;
     }
     img {
       max-width: 100%;
       height: auto;
+      break-inside: avoid;
     }
-    .cli-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin: 20px 0;
+    .editorial-figure {
+      padding: 4mm;
+      margin: 0 0 6mm;
     }
+    .editorial-figure figcaption {
+      padding-top: 4mm;
+      color: var(--ebook-muted);
+      font-size: 11px;
+    }
+    .chapter-card,
     .cli-card {
-      background: #fffef8;
-      border: 1px solid #d4cfc4;
-      border-radius: 8px;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      color: #2d2a26;
+      min-height: 0;
     }
-    .chapter-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin: 20px 0;
+    .chapter-arrow,
+    .ticker-row {
+      color: var(--ebook-accent);
     }
-    .chapter-card {
-      background: #fffef8;
-      border: 1px solid #d4cfc4;
-      border-radius: 8px;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      color: #2d2a26;
+    .main-content {
+      padding: 7mm 8mm;
     }
-    .source-link {
-      background: #fffef8;
-      border: 1px solid #d4cfc4;
-      border-radius: 8px;
-      padding: 12px 15px;
-      display: block;
-      color: #2d2a26;
-      margin: 8px 0;
+    .main-content > h1:first-child {
+      font-size: 2.4em;
+      margin-bottom: 7mm;
     }
-    hr {
-      display: none;
+    .main-content > p:first-of-type::first-letter {
+      color: var(--ebook-accent);
+    }
+    .content-page {
+      padding: 0;
+    }
+    .front-meta span,
+    .hero-badge {
+      background: rgba(255, 250, 241, 0.9);
+    }
+    .front-kicker,
+    .hero-kicker,
+    .section-kicker,
+    .story-kicker,
+    .brief-label,
+    .page-kicker,
+    .source-meta,
+    .cli-version,
+    .chapter-number,
+    .footer-links a {
+      color: var(--ebook-accent);
+    }
+    .ebook-local-nav,
+    .front-meta,
+    .ticker-row {
+      font-family: 'IBM Plex Sans Condensed', sans-serif;
+    }
+    .harness-diagram {
+      text-align: center;
+      margin: 6mm 0;
+    }
+    .harness-diagram img {
+      border: 1px solid var(--ebook-rule);
+    }
+    @media print {
+      .section,
+      .chapter,
+      .lead-story,
+      .brief-card,
+      .source-link,
+      .chapter-card,
+      .cli-card,
+      .main-content,
+      .editorial-figure,
+      .mermaid-container,
+      table,
+      pre,
+      blockquote {
+        break-inside: avoid;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="ebook-shell">
 ${tocHtml}
 ${renderedSections}
+  </div>
 </body>
 </html>`;
 }
@@ -461,6 +708,7 @@ ${renderedSections}
 // Generate PDF from HTML
 async function generatePDF(inputPath, outputPath) {
   const puppeteer = require('puppeteer-core');
+  const protocolTimeout = 10 * 60 * 1000;
 
   let browser;
   if (process.env.CI) {
@@ -470,7 +718,8 @@ async function generatePDF(inputPath, outputPath) {
       executablePath: await chromium.executablePath(),
       headless: 'new',
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport
+      defaultViewport: chromium.defaultViewport,
+      protocolTimeout
     });
   } else {
     console.log('Using local Chrome');
@@ -481,7 +730,8 @@ async function generatePDF(inputPath, outputPath) {
     browser = await puppeteer.launch({
       executablePath: chromePath,
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      protocolTimeout
     });
   }
 
@@ -498,7 +748,7 @@ async function generatePDF(inputPath, outputPath) {
       path: path.resolve(outputPath),
       format: 'A4',
       printBackground: true,
-      outline: true,
+      outline: false,
       timeout: 0,
       margin: { top: '20mm', bottom: '25mm', left: '15mm', right: '15mm' },
       displayHeaderFooter: true,
@@ -552,7 +802,7 @@ async function main() {
         id: makeAnchorId('section', section.name),
         tocTitle: section.title,
         sitePath,
-        introHtml: extractBody(indexPath),
+        introHtml: extractRenderableContent(indexPath),
         chapters: []
       };
 
@@ -582,7 +832,7 @@ async function main() {
         tocTitle: section.title,
         sitePath: sectionSitePath,
         introHtml: fs.existsSync(sectionIndexPath)
-          ? extractBody(sectionIndexPath)
+          ? extractRenderableContent(sectionIndexPath)
           : `<h1>${section.title}</h1>`,
         chapters: []
       };
@@ -597,7 +847,7 @@ async function main() {
           id: makeAnchorId('chapter', chapterSitePath),
           sitePath: chapterSitePath,
           title: extractTitle(chapterPath, chapterSlug || section.title),
-          html: extractBody(chapterPath)
+          html: extractRenderableContent(chapterPath)
         };
 
         sectionEntry.chapters.push(chapterEntry);
@@ -648,5 +898,6 @@ module.exports = {
   resolveRelativeSitePath,
   delay,
   extractBody,
+  extractRenderableContent,
   createCompleteEbookHtml
 };

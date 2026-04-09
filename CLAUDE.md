@@ -1,85 +1,102 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working in this repository.
 
 ## Project Overview
 
-`hello-olleh` is a source code analysis workspace for AI Coding CLI tools. It contains:
-- Upstream source code snapshots (read-only)
-- Generated analysis documents in `hello-*/` directories
-- Jekyll-based GitHub Pages site at `pages/`
+`hello-olleh` is a source-backed analysis workspace for AI Coding CLI tools. It combines:
 
-## Directory Structure
+- Upstream source snapshots used as analysis input
+- Generated analysis chapters in `hello-*` directories
+- A Jekyll-based GitHub Pages site in `pages/`
+- A PDF ebook pipeline driven from the built site
+
+**Current upstream versions:**
+- Claude Code: v2.1.87 (decompiled snapshot)
+- Codex: rust-v0.118.0
+- Gemini CLI: v0.36.0
+- OpenCode: v1.3.2
+
+The current published site uses an editorial / newspaper-like visual system rather than a default docs theme. When editing `pages/`, preserve that direction unless the task explicitly asks for a redesign.
+
+## Primary Directories
 
 | Path | Purpose |
 |------|---------|
-| `claude-code/`, `codex/`, `gemini-cli/`, `opencode/` | Upstream source code (read-only) |
-| `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/` | Analysis output |
+| `claude-code/`, `codex/`, `gemini-cli/`, `opencode/` | Upstream source snapshots; usually treat as read-only vendor trees |
+| `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/` | Structured analysis output |
 | `hello-harness/` | Harness Engineering framework analysis |
-| `prompts/` | Generator/evaluator prompts |
-| `pages/scripts/` | Build and PDF generation scripts |
-| `pages/` | Jekyll/GitHub Pages site (layouts, CSS, content) |
-| `.github/workflows/` | GitHub Actions workflows |
+| `prompts/` | Generator / evaluator prompts and analysis briefs |
+| `pages/` | Jekyll site layouts, CSS, homepage, scripts |
+| `pages/scripts/` | PDF generation and site utility scripts |
+| `.github/` | CI workflows and Copilot instructions |
 
-## Jekyll/GitHub Pages Commands
+## Site and Build Commands
 
-All Jekyll commands run from the `pages/` directory:
+Run site commands from `pages/`:
 
 ```bash
-# Install dependencies (requires Ruby)
-cd pages && bundle install
-
 # Local preview
-cd pages && bundle exec jekyll serve
+cd pages && npm run serve
 
-# Build for production
-cd pages && bundle exec jekyll build --source . --destination ./_site
+# Production build
+cd pages && npm run build
 
-# Build with verbose output
-cd pages && bundle exec jekyll build --source . --destination ./_site --trace
+# Generate combined PDF ebook
+cd pages && npm run pdf
 ```
 
-Site URL: `https://feuyeux.github.io/hello-olleh/`
-Base URL: `/hello-olleh`
+Important details:
 
-## GitHub Pages Configuration
+- `pages/_config.yml` sets `source: ..`, so Jekyll builds from the repository root while using `pages/_layouts/`.
+- Built output goes to `pages/_site/`.
+- Site URL is `https://feuyeux.github.io/hello-olleh/`.
+- Base URL is `/hello-olleh`.
 
-Jekyll site files are located in `pages/`:
-- Layouts: `pages/_layouts/`
-- CSS: `pages/style.css`
-- Index: `pages/index.md`
-- 404: `pages/404.html`
-- Config: `pages/_config.yml`
+## Pages Architecture
 
-CSS links use `{{ 'style.css' | relative_url }}` for correct base URL resolution.
+The active presentation layer is centered on:
+
+- `pages/_layouts/default.html`: site shell, navigation, Mermaid bootstrap
+- `pages/_layouts/content.html`: long-form content-page wrapper
+- `pages/index.md`: homepage content and section structure
+- `pages/style.css`: global design system and responsive behavior
+
+Use `{{ '...' | relative_url }}` for internal site links and assets. Do not hardcode `/hello-olleh/` into page templates unless the file already requires it for a specific reason.
 
 ## Analysis Workflow
 
-1. Read source in `claude-code/`/`codex/`/`gemini-cli/`/`opencode/`
-2. Use `prompts/hello.txt` as system prompt template
-3. Output analysis to corresponding `hello-*/` directory
-4. Follow naming convention: `NN-topic-slug.md` (e.g., `01-architecture.md`)
+1. Read the relevant source under `claude-code/`, `codex/`, `gemini-cli/`, or `opencode/`.
+2. Use `prompts/hello.txt` as the baseline analysis brief.
+3. Write or revise the analysis in the matching `hello-*` directory.
+4. Follow existing filename conventions such as `01-architecture.md`, `10-session-resume.md`, `28-ghost-snapshot.md`, or `38-mainline-index.md`.
+5. If the change affects how the content is presented on the site or in PDF, validate from `pages/`.
 
-### Analysis Document Requirements
+### Analysis Document Expectations
 
-- Markdown format with clear navigation
-- Mermaid diagrams for key flows (use `neutral` theme)
-- Key function lists per module
-- Code references: `file/path:line-range` format
-- Chapters: Architecture → Startup → Core Loop → Tool System → State → Extensibility
+- Markdown with clear sectioning and source-backed claims
+- Mermaid diagrams for key flows, using the neutral theme
+- Key function lists per module where appropriate
+- Concrete file-path references with line numbers when citing code
+- Chapter structure that stays aligned with the surrounding directory conventions
 
 ## Important Rules
 
-- **Do NOT modify** files in `claude-code/`, `codex/`, `gemini-cli/`, `opencode/`
-- **Do NOT commit** to source code subdirectories (they may be in detached HEAD state)
-- All analysis output goes to `hello-*/` directories, not source directories
-- Upstream repos (codex, gemini-cli, opencode, openclaw, zeroclaw) are gitignored
+- Do not modify vendored upstream code unless the task explicitly requires it.
+- Prefer editing `hello-*` outputs over changing source snapshots.
+- If you change `pages/`, keep the editorial layout system coherent across homepage and content pages.
+- Known non-blocking Jekyll warnings currently come from `openclaw/docs/start/showcase.md`; do not treat them as regressions unless you touched that area.
+- If you make a commit, use the correct repository identity:
 
-## Git Ignore
+```bash
+git commit -m "<type>: <message>" \
+  --author="Claude <noreply@anthropic.com>" \
+  -m "Co-authored-by: Claude <noreply@anthropic.com>"
+```
 
-Excluded from version control:
-- Jekyll build output: `pages/_site/`, `pages/.jekyll-cache/`, `pages/.sass-cache/`
-- Ruby artifacts: `pages/Gemfile.lock`, `pages/.bundle/`, `pages/vendor/`
-- IDE files: `.idea/`, `.vscode/`
-- System files: `.DS_Store`
-- Upstream source: `codex/`, `gemini-cli/`, `opencode/`, etc.
+## Practical Defaults
+
+- Start with `README.md`, `AGENTS.md`, and `prompts/hello.txt`.
+- Check `git status --short` before and after edits.
+- Use `rg --files hello-*` or `rg -n` to navigate the analysis corpus quickly.
+- When updating documentation instructions, keep `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` aligned.
