@@ -278,7 +278,7 @@ DEFAULT_CONTEXT_FILENAME = 'GEMINI.md'
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-flowchart TD
+flowchart LR
     Scheduler["Scheduler.schedule()<br/>@ scheduler.ts:191"] -->|"TOOL_CALLS_UPDATE"| Bus["MessageBus.publish()<br/>@ message-bus.ts"]
     Bus -->|"广播"| UIHook["useToolScheduler hook<br/>@ confirmation-bus/"]
     UIHook -->|"setState()"| UIState["UIStateContext<br/>@ UIStateContext.tsx"]
@@ -289,7 +289,7 @@ flowchart TD
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-flowchart TD
+flowchart LR
     MD["GEMINI.md 文件<br/>（global / extension / project）"]
     MD --> Discovery["memoryDiscovery.ts<br/>扫描、去重、分类"]
     Discovery --> CM["ContextManager<br/>三层记忆"]
@@ -420,4 +420,4 @@ class ChatCompressionService {
 
 > 关联阅读：[07-error-security.md](./07-error-security.md) 了解在状态异常时系统如何进行错误处理与自愈。
 >
-> **跨工具对比**：Gemini CLI 的 JSON 会话文件方案（替换写）最直接，但缺少事务保证。完整的四工具状态持久化对比见 **[hello-opencode/39-durable-state-comparison.md](../hello-opencode/39-durable-state-comparison.md)**。
+> **跨工具对比**：Gemini CLI 的 JSON 会话文件方案（替换写）最直接，但缺少事务保证。更新后的四工具 state / session / memory 对比已经整理到 **[hello-harness/06-context-and-memory.md](../hello-harness/06-context-and-memory.md)**。

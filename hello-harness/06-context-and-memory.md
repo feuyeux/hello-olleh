@@ -1,8 +1,8 @@
 ---
 layout: content
-title: "06 - 上下文与记忆"
+title: "06 - 上下文、状态与记忆"
 ---
-# 上下文与记忆工程对比
+# 上下文、状态与记忆工程对比
 
 Agent 的判断质量取决于它在当前时刻能看到什么。这个"能看到什么"——即上下文——不是固定的，而是由工程设计决定的。如果上下文设计得好，Agent 在每次响应时都能访问到相关的历史决策、项目规则、用户偏好；如果设计得差，Agent 每次都从一张白纸开始，反复犯同样的错误，或者在不相关的信息里迷失方向。
 
@@ -201,6 +201,228 @@ OpenCode 的 **InstructionPrompt loaded/claim 机制**（`instruction.ts:168-190
 
 ---
 
+## 5. 四工具 state / session / memory 详细对比
+
+前面 1-4 节主要讨论上下文如何被组织、压缩和按需揭示。但如果再往下切一层，会发现四个工具对 **state**、**session**、**memory** 这三个词本身的定义就不一样。这一层差异会直接决定：哪些对象只是运行态，哪些对象才是可恢复的 durable 边界；长会话压缩后保留的是对话视图、线程协议、recording 文件，还是可重放的消息树；记忆到底是长期知识库、会话摘要，还是文件变更追踪。
+
+### 5.1 概念模型：四个工具到底在管理什么
+
+先拆清三个概念：
+
+- **state**：当前进程里正在变化、要驱动 UI 或执行器的运行态。
+- **session**：一段可以 resume、fork、继续对话的交互边界。
+- **memory**：跨轮次甚至跨会话保留的知识、摘要或结构化衍生物。
+
+| 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
+|------|-------------|-------|------------|----------|
+| **state 是什么** | 进程内 `AppState` + store / selector 驱动的 UI 运行态 | `SessionState / ActiveTurn` 运行态 + `Thread / Turn / ThreadItem` 协议状态 | `Scheduler / MessageBus / UIStateContext` + recording 运行态 | 内存 `SessionStatus` + durable `Session / MessageV2 / Part` |
+| **session 是什么** | transcript 文件边界 + compact boundary 后的有效模型视图 | `Thread` 是会话容器，`Turn` 是轮次边界 | `ChatRecording` JSON 文件就是整个会话 | `SessionTable` 一条 session 记录，下面挂 message / part 树 |
+| **memory 是什么** | `MEMORY.md`、topic files、KAIROS daily log、SessionMemory notes | `AGENTS.md` 长期记忆 + memories pipeline 提取的会话经验 | `GEMINI.md` 三层记忆 + `save_memory` 工具写入 | `session_diff`、summary、instruction 重发现，更偏 session memory |
+| **模型真正读到什么** | compact 后历史 + relevant memories + 系统提示 | `ContextManager` 规范化历史 + `AGENTS.md` + tool spec + memories 结果 | global memory 进 system，extension/project memory 进会话内容 | durable history 投影 + instruction stack + runtime reminders + tool set |
+| **最像单一事实来源的对象** | transcript 负责恢复，`AppState` 负责当前运行 | thread / rollout 是线程事实源 | `ChatRecording` 是事实源，UI 状态只是投影 | SQLite durable state 是事实源，UI / SSE 是投影 |
+
+这意味着四个工具根本不是在解同一道题：
+
+- **Claude Code** 的重点是把运行态做轻，把 transcript 和 memory 文件做强。
+- **Codex** 的重点是把会话提升成线程协议，让 resume、fork、服务化都建立在同一对象模型上。
+- **Gemini CLI** 的重点是让 session 和 memory 都保持文件化、透明、易修改。
+- **OpenCode** 的重点是把多前端共享的事实源压到 durable session 对象里。
+
+```mermaid
+%%{init: {'theme': 'neutral'}}%%
+flowchart TB
+    subgraph Claude["Claude Code"]
+        C1["Runtime State\nAppState / Store"]
+        C2["Session Boundary\ntranscript + compact boundary"]
+        C3["Memory\nMEMORY.md / KAIROS / SessionMemory"]
+        C1 --> C2 --> C3
+    end
+
+    subgraph Codex["Codex"]
+        X1["Runtime State\nSessionState / ActiveTurn"]
+        X2["Session Boundary\nThread / Turn / ThreadItem"]
+        X3["Memory\nAGENTS.md + memories pipeline"]
+        X1 --> X2 --> X3
+    end
+
+    subgraph Gemini["Gemini CLI"]
+        G1["Runtime State\nScheduler / MessageBus / UIState"]
+        G2["Session Boundary\nChatRecording JSON"]
+        G3["Memory\nHierarchical GEMINI.md"]
+        G1 --> G2 --> G3
+    end
+
+    subgraph OpenCode["OpenCode"]
+        O1["Runtime State\nSessionStatus"]
+        O2["Session Boundary\nSession / MessageV2 / Part"]
+        O3["Memory\nsession_diff / summary"]
+        O1 --> O2 --> O3
+    end
+```
+
+### 5.2 实现模型：写入、恢复、压缩、分叉如何落地
+
+概念差异最终会落在实现路径上：
+
+| 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
+|------|-------------|-------|------------|----------|
+| **持久化后端** | JSONL transcript | SQLite WAL + rollout / logs | JSON session file | SQLite + `Storage` JSON |
+| **写入时机** | transcript entry 追加写，运行态主要留内存 | 线程元数据写 SQLite，rollout 持续记录 | recording 增量更新后整体重写 JSON | message / part 流式写库 |
+| **恢复粒度** | 读 transcript，重建 compact boundary | 按 `thread_id` / rollout 恢复到 `Thread / Turn / Item` | 读取 recording JSON 恢复整段会话 | `MessageV2.stream()` + `hydrate()` 回放整个 session |
+| **长会话治理** | snip / microcompact / collapse / autocompact 梯度体系 | `ContextManager` compaction + memories pipeline | `ChatCompressionService` + `ToolOutputMaskingService` | `CompactionTask` + summary agent + `filterCompacted()` |
+| **fork / 分支** | 复制 transcript 或从某边界继续 | `fork_thread()` 基于 rollout 截断 | 复制 JSON recording | 父子 session / `parent_id` |
+| **事务与一致性** | 很弱 | SQLite ACID + WAL | 很弱 | `Database.effect()` 保证先写库后发事件 |
+| **多端共享友好度** | 偏单端 | 强 | 中 | 最强 |
+
+如果从工程取舍角度概括：
+
+1. **Claude Code** 用最容易读懂的 durable 形式，换取较弱的事务和结构化边界。
+2. **Codex** 用最完整的线程协议，换取更高的系统复杂度。
+3. **Gemini CLI** 用最直接的文件式 session/memory，换取较弱的并发保护。
+4. **OpenCode** 用最细粒度的 durable 写回，换取更重的状态系统和更高的实现复杂度。
+
+### 5.3 场景 A：同一轮输入如何落盘
+
+假设四个工具都收到同一个请求：
+
+> "请把 `src/auth.ts` 改成支持 refresh token，并解释改动。"
+
+它们写盘的语义边界并不一样：
+
+| 工具 | 先写什么 | 中间过程怎么存 | 最后恢复时看到什么 |
+|------|----------|----------------|--------------------|
+| Claude Code | transcript entry | token 级过程主要留在运行态，最终追加 entry | transcript entries |
+| Codex | 新 `Turn` / rollout 事件 | `ThreadItem`、command、file change 按协议落盘 | `Thread / Turn / ThreadItem` |
+| Gemini CLI | `ChatRecording.turns[]` | 录制服务更新会话对象，再整体重写 JSON | 一份 recording |
+| OpenCode | `user message` 先入库，assistant skeleton 预分配 | `part` 按流持续写入，Bus/SSE 同步投影 | `Session / Message / Part` 可回放链 |
+
+```mermaid
+%%{init: {'theme': 'neutral'}}%%
+flowchart LR
+    User["同一条用户请求"]
+
+    subgraph Claude["Claude Code"]
+        C1["AppState 更新"]
+        C2["TranscriptManager.append()"]
+        C3["history/<session>.jsonl"]
+        C1 --> C2 --> C3
+    end
+
+    subgraph Codex["Codex"]
+        X1["start turn"]
+        X2["ThreadItem / rollout 记录"]
+        X3["state_5.sqlite + rollout jsonl"]
+        X1 --> X2 --> X3
+    end
+
+    subgraph Gemini["Gemini CLI"]
+        G1["ChatRecording 更新"]
+        G2["toJSON()"]
+        G3["sessions/<id>.json"]
+        G1 --> G2 --> G3
+    end
+
+    subgraph OpenCode["OpenCode"]
+        O1["Session.updateMessage(user)"]
+        O2["assistant skeleton"]
+        O3["Session.updatePart(stream)"]
+        O4["SQLite + Bus/SSE"]
+        O1 --> O2 --> O3 --> O4
+    end
+
+    User --> C1
+    User --> X1
+    User --> G1
+    User --> O1
+```
+
+这个图最能说明 OpenCode 和其他三个的根本区别：OpenCode 不是"响应结束后记账"，而是**先分配 durable 宿主，再持续写入流事件**。
+
+### 5.4 场景 B：长会话如何控长又保形
+
+真正困难的问题不是"怎么删历史"，而是"删完之后，下一轮 prompt 还像不像原来的会话"。
+
+| 工具 | 控长主策略 | 保形方式 |
+|------|-----------|---------|
+| Claude Code | tool result budget → snip → microcompact → collapse → autocompact | compact boundary、SessionMemory、relevant memory recall 共同维持语义连续 |
+| Codex | `ContextManager` + compaction + memories pipeline | 压缩历史后重建 `reference_context_item` 基线，并让 memories pipeline 异步补知识 |
+| Gemini CLI | `ChatCompressionService` + `ToolOutputMaskingService` | 保留最近约 30%，旧大输出落盘 |
+| OpenCode | `CompactionTask` → summary agent → `filterCompacted()` | 用 durable summary 显式替换旧历史，后续只投影活动历史 |
+
+```mermaid
+%%{init: {'theme': 'neutral'}}%%
+flowchart TB
+    Pressure["历史过长 / token 压力升高"]
+
+    Pressure --> ClaudePath["Claude Code\nbudget → snip → microcompact → collapse → autocompact"]
+    Pressure --> CodexPath["Codex\nContextManager compaction\n+ memories pipeline"]
+    Pressure --> GeminiPath["Gemini CLI\ncompress(50%) + masking\n+ spill large outputs to disk"]
+    Pressure --> OpenPath["OpenCode\nCompactionTask → summary agent\n→ compacted messages filtered"]
+
+    ClaudePath --> ClaudeOut["boundary 后的有效视图"]
+    CodexPath --> CodexOut["规范化历史 + 新基线"]
+    GeminiPath --> GeminiOut["summary + 最近 30%"]
+    OpenPath --> OpenOut["summary 投影 + 活动 durable history"]
+```
+
+这里的关键差异是：
+
+- Claude Code 的保形重点是**上下文治理链**；
+- Codex 的保形重点是**线程协议和 context baseline**；
+- Gemini CLI 的保形重点是**别让大输出拖垮窗口**；
+- OpenCode 的保形重点是**把压缩也写成 durable state 的一部分**。
+
+### 5.5 场景 C：跨会话知识如何回流到下一轮 prompt
+
+如果昨天已经讨论过"统一用 `sqlx`"、"测试必须带 integration test"、"这个子目录有特殊 `AGENTS.md` 规则"，四个工具回流知识的方式也不同：
+
+| 工具 | 长期知识载体 | 进入 prompt 的方式 | 关键取舍 |
+|------|--------------|-------------------|---------|
+| Claude Code | `MEMORY.md`、topic files、KAIROS daily log、SessionMemory | system prompt + relevant memory attachment + compact notes | 召回更智能，但系统复杂度最高 |
+| Codex | `AGENTS.md` + memories pipeline 结果 | `project_doc.rs` 拼 base instructions，memory pipeline 异步补充 | 长期知识显式，短期经验半自动 |
+| Gemini CLI | global / extension / project `GEMINI.md` | global 进 system，extension / project 进会话内容 | 文件系统透明，但越久越容易膨胀 |
+| OpenCode | `AGENTS.md` / `CLAUDE.md` / `CONTEXT.md` 栈 + `session_diff` / summary | instruction stack + durable history 投影 + reminder | 更像 session 续航，不像独立长期知识库 |
+
+```mermaid
+%%{init: {'theme': 'neutral'}}%%
+flowchart LR
+    subgraph Claude["Claude Code"]
+        direction LR
+        C1["MEMORY.md / KAIROS / SessionMemory"]
+        C2["relevant recall + system prompt"]
+        C1 --> C2
+    end
+
+    subgraph Codex["Codex"]
+        direction LR
+        X1["AGENTS.md + memories pipeline"]
+        X2["project_doc + build_prompt()"]
+        X1 --> X2
+    end
+
+    subgraph Gemini["Gemini CLI"]
+        direction LR
+        G1["GEMINI.md\n(global / extension / project)"]
+        G2["system memory + session memory"]
+        G1 --> G2
+    end
+
+    subgraph OpenCode["OpenCode"]
+        direction LR
+        O1["Instruction files + session_diff + summary"]
+        O2["instruction stack + toModelMessages()"]
+        O1 --> O2
+    end
+
+    C2 ~~~ X1
+    X2 ~~~ G1
+    G2 ~~~ O1
+```
+
+这一节最重要的结论是：**OpenCode 当前的 memory 更偏会话记忆，而不是长期知识记忆**。如果不先把概念拆开，就会误以为四个工具都在实现同一种 memory backend。
+
+---
+
 ## Agent 可访问信息边界
 
 理解"Agent 能看到什么"和"Agent 不能看到什么"，对治理 Agent 行为至关重要。信息边界定义了 Agent 决策的数据基础，也定义了 Agent 不应该期望自己知道什么。
@@ -236,4 +458,4 @@ OpenCode 的 **InstructionPrompt loaded/claim 机制**（`instruction.ts:168-190
 - Codex 状态、会话与记忆系统：[../hello-codex/04-state-session-memory.md](../hello-codex/04-state-session-memory.md)
 - Gemini CLI 状态、会话与记忆系统：[../hello-gemini-cli/04-state-session-memory.md](../hello-gemini-cli/04-state-session-memory.md)
 - OpenCode 状态、会话与记忆系统：[../hello-opencode/04-state-session-memory.md](../hello-opencode/04-state-session-memory.md)
-- 四工具持久化状态对比：[../hello-opencode/39-durable-state-comparison.md](../hello-opencode/39-durable-state-comparison.md)
+- 四工具 state / session / memory 对比：[本章第 5 节](#5-四工具-state--session--memory-详细对比)
