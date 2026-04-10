@@ -74,7 +74,7 @@ title: "OpenCode 源码分析"
     <a class="chapter-card" href="34-design-philosophy"><div class="chapter-number">34</div><div class="chapter-title">设计哲学：固定骨架与晚绑定策略</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="35-prompt-diff"><div class="chapter-number">35</div><div class="chapter-title">提示词三文件对比分析</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="36-mainline-index"><div class="chapter-number">36</div><div class="chapter-title">执行主线索引：OpenCode 运行主线深度解析</div><span class="chapter-arrow">&#8599;</span></a>
-    <a class="chapter-card" href="37-durable-state-comparison"><div class="chapter-number">37</div><div class="chapter-title">跨工具对比：四大 AI Coding CLI 的状态持久化方案</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="37-durable-state-comparison"><div class="chapter-number">37</div><div class="chapter-title">跨工具对比（详见 Harness 第 06 章）</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="38-effect-ts"><div class="chapter-number">38</div><div class="chapter-title">Effect-ts 依赖注入：Service/Layer/Effect 骨架与晚绑定策略</div><span class="chapter-arrow">&#8599;</span></a>
   </div>
 </div>

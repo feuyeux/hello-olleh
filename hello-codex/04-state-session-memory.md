@@ -676,13 +676,3 @@ pub async fn consolidate(
 - **trim 策略不可配置**：`context_trim()` 固定截取最旧消息，无法配置为"保留工具调用对""保留重要标记消息"等策略。
 - **历史文件无加密**：`~/.codex/history/` 中以明文存储对话历史，包含的代码片段和指令无访问控制保护。
 
----
-
-## 跨工具横向对比
-
-Codex 的 SQLite WAL + Rollout 双写方案在四个工具中最完善，支持 ACID 事务和完整的流事件回放。完整的四工具对比见 **[hello-opencode/39-durable-state-comparison.md](../hello-opencode/39-durable-state-comparison.md)**。
-
-对应阅读：
-- Claude Code: [11-context-management.md](../hello-claude-code/04-state-session-memory.md), [12-prompt-system.md](../hello-claude-code/11-prompt-system.md), [16-memory-system.md](../hello-claude-code/04-state-session-memory.md)
-- Gemini CLI: [11-context-management.md](../hello-gemini-cli/04-state-session-memory.md), [12-prompt-system.md](../hello-gemini-cli/11-prompt-system.md), [16-memory-system.md](../hello-gemini-cli/04-state-session-memory.md)
-- OpenCode: [11-context-management.md](../hello-opencode/04-state-session-memory.md), [12-prompt-system.md](../hello-opencode/11-prompt-system.md), [16-memory-system.md](../hello-opencode/04-state-session-memory.md)
