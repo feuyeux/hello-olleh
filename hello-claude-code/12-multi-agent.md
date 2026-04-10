@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "多代理、后台任务与远程会话"
 ---
@@ -6,7 +6,7 @@ title: "多代理、后台任务与远程会话"
 
 本篇梳理子代理、后台任务与远程会话如何通过 `AgentTool` 接入统一运行时。
 
-如果重点关注远程通信与桥接底座，可先读 [17-sdk-transport.md](./17-sdk-transport.md) 与 [23-bridge-system.md](./23-bridge-system.md)。
+如果重点关注远程通信与桥接底座，可先读 [17-sdk-transport.md](./15-sdk-transport.md) 与 [23-bridge-system.md](./21-bridge-system.md)。
 
 
 **目录**

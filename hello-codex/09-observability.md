@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "Codex 可观测性：日志、追踪与监控"
 ---
@@ -181,7 +181,7 @@ Codex 的可观测性相比 OpenCode 较为基础：
 
 ---
 
-> 关联阅读：[05-state-management.md](./05-state-management.md) 了解线程状态、持久化与回放链路。
+> 关联阅读：[05-state-management.md](./04-state-session-memory.md) 了解线程状态、持久化与回放链路。
 
 ---
 

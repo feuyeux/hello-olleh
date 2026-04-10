@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "架构全景：多宿主外壳、Core 组合根与 Agent 执行闭环"
 ---
@@ -261,10 +261,10 @@ flowchart LR
 > 关联阅读：
 > - [02-startup-flow.md](./02-startup-flow.md)
 > - [03-agent-loop.md](./03-agent-loop.md)
-> - [04-tool-system.md](./04-tool-system.md)
-> - [13-multi-agent.md](./13-multi-agent.md)
-> - [17-sdk-transport.md](./17-sdk-transport.md)
-> - [22-repl-and-state.md](./22-repl-and-state.md)
+> - [04-tool-system.md](./05-tool-system.md)
+> - [13-multi-agent.md](./12-multi-agent.md)
+> - [17-sdk-transport.md](./15-sdk-transport.md)
+> - [22-repl-and-state.md](./20-repl-and-state.md)
 
 ---
 

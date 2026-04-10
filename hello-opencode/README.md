@@ -1,4 +1,4 @@
----
+﻿---
 layout: default
 title: "OpenCode 源码深度解析 README"
 ---
@@ -72,8 +72,8 @@ flowchart LR
 | [01-architecture.md](./01-architecture.md) | 架构全景：目录结构、分层模型、核心抽象 |
 | [02-startup-flow.md](./02-startup-flow.md) | 启动链路：入口点、CLI/TUI/Web 多表面初始化、Server 启动顺序 |
 | [03-agent-loop.md](./03-agent-loop.md) | 核心执行循环：Session loop、Prompt 编译、LLM 调用、流式响应处理 |
-| [04-tool-system.md](./04-tool-system.md) | 工具调用机制：Tool 注册、权限控制、执行闭环、结果写回 Durable State |
-| [05-state-management.md](./05-state-management.md) | 状态管理：Durable State、消息持久化、并发占位与历史回放 |
+| [04-tool-system.md](./05-tool-system.md) | 工具调用机制：Tool 注册、权限控制、执行闭环、结果写回 Durable State |
+| [05-state-management.md](./04-state-session-memory.md) | 状态管理：Durable State、消息持久化、并发占位与历史回放 |
 | [06-extension-mcp.md](./06-extension-mcp.md) | 扩展性：MCP 集成链路、Plugin 加载、新增工具的修改点 |
 | [07-error-security.md](./07-error-security.md) | 错误处理与安全性：异常捕获、重试策略、认证鉴权、敏感信息隔离 |
 | [08-performance.md](./08-performance.md) | 性能与代码质量：流式传输、SSE、Bun Runtime 优势、优缺点分析 |
@@ -86,14 +86,14 @@ flowchart LR
 | --- | --- |
 | [09-observability.md](./09-observability.md) | 可观测性 |
 | [10-session-resume.md](./10-session-resume.md) | Session 恢复与回放 |
-| [11-context-management.md](./11-context-management.md) | 上下文工程 |
-| [12-prompt-system.md](./12-prompt-system.md) | Prompt 系统 |
-| [13-multi-agent.md](./13-multi-agent.md) | 多 Agent 协作 |
-| [14-skill-system.md](./14-skill-system.md) | Skill 系统 |
-| [15-plugin-system.md](./15-plugin-system.md) | Plugin 系统 |
-| [16-memory-system.md](./16-memory-system.md) | Memory 系统 |
-| [17-sdk-transport.md](./17-sdk-transport.md) | SDK 与传输层 |
-| [18-resilience.md](./18-resilience.md) | 韧性机制 |
+| [11-context-management.md](./04-state-session-memory.md) | 上下文工程 |
+| [12-prompt-system.md](./11-prompt-system.md) | Prompt 系统 |
+| [13-multi-agent.md](./12-multi-agent.md) | 多 Agent 协作 |
+| [14-skill-system.md](./13-skill-system.md) | Skill 系统 |
+| [15-plugin-system.md](./14-plugin-system.md) | Plugin 系统 |
+| [16-memory-system.md](./04-state-session-memory.md) | Memory 系统 |
+| [17-sdk-transport.md](./15-sdk-transport.md) | SDK 与传输层 |
+| [18-resilience.md](./16-resilience.md) | 韧性机制 |
 
 ### 3.3 `20-38`：专题与补充
 
@@ -101,25 +101,25 @@ flowchart LR
 
 | 文件 | 作用 |
 | --- | --- |
-| [20-lsp-integration.md](./20-lsp-integration.md) | LSP 集成 |
-| [21-hooks-lifecycle.md](./21-hooks-lifecycle.md) | Hooks 与生命周期 |
-| [22-repl-and-state.md](./22-repl-and-state.md) | REPL 与状态 |
-| [23-bridge-system.md](./23-bridge-system.md) | Bridge 系统 |
-| [24-project-init-analysis.md](./24-project-init-analysis.md) | 项目初始化分析 |
-| [25-input-command-queue.md](./25-input-command-queue.md) | 输入与命令队列 |
-| [26-mcp-system.md](./26-mcp-system.md) | MCP 系统 |
-| [27-debugging.md](./27-debugging.md) | 调试指南 |
-| [28-server-routing.md](./28-server-routing.md) | Server 与路由 |
-| [29-session-loop.md](./29-session-loop.md) | Session Loop |
-| [30-stream-processor.md](./30-stream-processor.md) | Stream Processor |
-| [31-llm-request.md](./31-llm-request.md) | 模型请求 |
-| [32-model.md](./32-model.md) | 对象模型 |
-| [33-infra.md](./33-infra.md) | 基础设施 |
-| [34-worktree-sandbox.md](./34-worktree-sandbox.md) | Worktree 与 Sandbox |
-| [35-mcp-details.md](./35-mcp-details.md) | MCP 细节 |
-| [36-design-philosophy.md](./36-design-philosophy.md) | 设计哲学 |
-| [37-prompt-diff.md](./37-prompt-diff.md) | 提示词对比 |
-| [38-mainline-index.md](./38-mainline-index.md) | 执行主线索引 |
+| [20-lsp-integration.md](./18-lsp-integration.md) | LSP 集成 |
+| [21-hooks-lifecycle.md](./19-hooks-lifecycle.md) | Hooks 与生命周期 |
+| [22-repl-and-state.md](./20-repl-and-state.md) | REPL 与状态 |
+| [23-bridge-system.md](./21-bridge-system.md) | Bridge 系统 |
+| [24-project-init-analysis.md](./22-project-init-analysis.md) | 项目初始化分析 |
+| [25-input-command-queue.md](./23-input-command-queue.md) | 输入与命令队列 |
+| [26-mcp-system.md](./24-mcp-system.md) | MCP 系统 |
+| [27-debugging.md](./25-debugging.md) | 调试指南 |
+| [28-server-routing.md](./26-server-routing.md) | Server 与路由 |
+| [29-session-loop.md](./27-session-loop.md) | Session Loop |
+| [30-stream-processor.md](./28-stream-processor.md) | Stream Processor |
+| [31-llm-request.md](./29-llm-request.md) | 模型请求 |
+| [32-model.md](./30-model.md) | 对象模型 |
+| [33-infra.md](./31-infra.md) | 基础设施 |
+| [34-worktree-sandbox.md](./32-worktree-sandbox.md) | Worktree 与 Sandbox |
+| [35-mcp-details.md](./33-mcp-details.md) | MCP 细节 |
+| [36-design-philosophy.md](./34-design-philosophy.md) | 设计哲学 |
+| [37-prompt-diff.md](./35-prompt-diff.md) | 提示词对比 |
+| [38-mainline-index.md](./36-mainline-index.md) | 执行主线索引 |
 
 ---
 
@@ -130,27 +130,27 @@ flowchart LR
 1. [01-architecture.md](./01-architecture.md)
 2. [02-startup-flow.md](./02-startup-flow.md)
 3. [03-agent-loop.md](./03-agent-loop.md)
-4. [05-state-management.md](./05-state-management.md)
+4. [05-state-management.md](./04-state-session-memory.md)
 
 ### 4.2 想严格顺着执行链阅读
 
-1. [38-mainline-index.md](./38-mainline-index.md)
+1. [38-mainline-index.md](./36-mainline-index.md)
 2. [09-observability.md](./09-observability.md)
-3. [11-context-management.md](./11-context-management.md)
-4. [17-sdk-transport.md](./17-sdk-transport.md)
-5. [28-server-routing.md](./28-server-routing.md)
-6. [29-session-loop.md](./29-session-loop.md)
-7. [30-stream-processor.md](./30-stream-processor.md)
-8. [31-llm-request.md](./31-llm-request.md)
+3. [11-context-management.md](./04-state-session-memory.md)
+4. [17-sdk-transport.md](./15-sdk-transport.md)
+5. [28-server-routing.md](./26-server-routing.md)
+6. [29-session-loop.md](./27-session-loop.md)
+7. [30-stream-processor.md](./28-stream-processor.md)
+8. [31-llm-request.md](./29-llm-request.md)
 
 ### 4.3 想补结构性背景
 
-1. [32-model.md](./32-model.md)
-2. [18-resilience.md](./18-resilience.md)
-3. [33-infra.md](./33-infra.md)
-4. [14-skill-system.md](./14-skill-system.md)
-5. [26-mcp-system.md](./26-mcp-system.md)
-6. [36-design-philosophy.md](./36-design-philosophy.md)
+1. [32-model.md](./30-model.md)
+2. [18-resilience.md](./16-resilience.md)
+3. [33-infra.md](./31-infra.md)
+4. [14-skill-system.md](./13-skill-system.md)
+5. [26-mcp-system.md](./24-mcp-system.md)
+6. [36-design-philosophy.md](./34-design-philosophy.md)
 
 ---
 

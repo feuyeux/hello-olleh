@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "Transcript 持久化、会话恢复与 resume 语义"
 ---
@@ -122,7 +122,7 @@ transcript 的核心数据结构不是数组，而是：
 
 `compact boundary`、`snip`、`context collapse` 在运行时分别如何工作，完整说明见：
 
-- [11-context-management.md](./11-context-management.md)
+- [11-context-management.md](./04-state-session-memory.md)
 
 ## 5. progress 被明确排除在持久化主链之外
 

@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "Gemini CLI 可观测性：日志、MessageBus 与 UI 状态追踪"
 ---
@@ -244,7 +244,7 @@ Gemini CLI 的可观测性相比 OpenCode 较为基础：
 
 ---
 
-> 关联阅读：[05-state-management.md](./05-state-management.md) 了解 Storage 详情。
+> 关联阅读：[05-state-management.md](./04-state-session-memory.md) 了解 Storage 详情。
 
 ---
 

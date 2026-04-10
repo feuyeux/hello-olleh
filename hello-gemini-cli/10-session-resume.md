@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "Gemini CLI Session 持久化与会话恢复"
 ---
@@ -163,7 +163,7 @@ Gemini CLI 的 session 机制本质上是“conversation 文件 + resume 解析 
 
 ---
 
-> 关联阅读：[05-state-management.md](./05-state-management.md) 了解状态管理详情。
+> 关联阅读：[05-state-management.md](./04-state-session-memory.md) 了解状态管理详情。
 
 ---
 

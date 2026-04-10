@@ -1,10 +1,10 @@
----
+﻿---
 layout: content
 title: "Claude Code MCP 深度专题：OAuth 认证、生命周期钩子与渠道权限"
 ---
 # Claude Code MCP 深度专题：OAuth 认证、生命周期钩子与渠道权限
 
-> 本章为 [26-mcp-system.md](./26-mcp-system.md) 的补充，展开 26 章中未细化的实现细节。基础概念（Mcphub、传输类型、JSON-RPC 格式）请先阅读 26 章。
+> 本章为 [26-mcp-system.md](./24-mcp-system.md) 的补充，展开 26 章中未细化的实现细节。基础概念（Mcphub、传输类型、JSON-RPC 格式）请先阅读 26 章。
 
 **目录**
 

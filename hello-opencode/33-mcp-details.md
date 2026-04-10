@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "OpenCode 深度专题 B13：MCP，Model Context Protocol 扩展系统的全部实现细节"
 ---
@@ -186,7 +186,7 @@ client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
 
 ## 9. MCP 为什么不是插件系统的另一套
 
-[23-bridge-system.md](./23-bridge-system.md) 已经提到 plugin 和 MCP 都是扩展入口，它们的本质区别在于：
+[23-bridge-system.md](./21-bridge-system.md) 已经提到 plugin 和 MCP 都是扩展入口，它们的本质区别在于：
 
 | 维度 | Plugin | MCP |
 | --- | --- | --- |
