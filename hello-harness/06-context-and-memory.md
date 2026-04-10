@@ -230,8 +230,10 @@ OpenCode 的 **InstructionPrompt loaded/claim 机制**（`instruction.ts:168-190
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-flowchart TB
+flowchart LR
+
     subgraph Claude["Claude Code"]
+        direction LR
         C1["Runtime State\nAppState / Store"]
         C2["Session Boundary\ntranscript + compact boundary"]
         C3["Memory\nMEMORY.md / KAIROS / SessionMemory"]
@@ -239,6 +241,7 @@ flowchart TB
     end
 
     subgraph Codex["Codex"]
+        direction LR
         X1["Runtime State\nSessionState / ActiveTurn"]
         X2["Session Boundary\nThread / Turn / ThreadItem"]
         X3["Memory\nAGENTS.md + memories pipeline"]
@@ -246,6 +249,7 @@ flowchart TB
     end
 
     subgraph Gemini["Gemini CLI"]
+        direction LR
         G1["Runtime State\nScheduler / MessageBus / UIState"]
         G2["Session Boundary\nChatRecording JSON"]
         G3["Memory\nHierarchical GEMINI.md"]
@@ -253,6 +257,7 @@ flowchart TB
     end
 
     subgraph OpenCode["OpenCode"]
+        direction LR
         O1["Runtime State\nSessionStatus"]
         O2["Session Boundary\nSession / MessageV2 / Part"]
         O3["Memory\nsession_diff / summary"]
@@ -385,7 +390,7 @@ flowchart TB
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-flowchart LR
+flowchart TB
     subgraph Claude["Claude Code"]
         direction LR
         C1["MEMORY.md / KAIROS / SessionMemory"]
@@ -414,9 +419,8 @@ flowchart LR
         O1 --> O2
     end
 
-    C2 ~~~ X1
-    X2 ~~~ G1
-    G2 ~~~ O1
+    G1 ~~~ O2    
+    C1 ~~~ X2
 ```
 
 这一节最重要的结论是：**OpenCode 当前的 memory 更偏会话记忆，而不是长期知识记忆**。如果不先把概念拆开，就会误以为四个工具都在实现同一种 memory backend。
