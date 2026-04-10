@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "Claude Code LSP 集成：代码理解与符号定位"
 ---
@@ -186,7 +186,7 @@ Claude Code **当前没有原生 LSP 集成**，主要通过：
 
 ---
 
-> 关联阅读：[26-mcp-system.md](./26-mcp-system.md) 了解 MCP 扩展机制。
+> 关联阅读：[26-mcp-system.md](./24-mcp-system.md) 了解 MCP 扩展机制。
 
 ---
 

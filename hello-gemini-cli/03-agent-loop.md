@@ -1,10 +1,10 @@
----
+﻿---
 layout: content
 title: "核心执行循环：Agent 决策链与 LLM 调用"
 ---
 # 核心执行循环：Agent 决策链与 LLM 调用
 
-> **关联文档**：[02-startup-flow.md](./02-startup-flow.md)（启动链路）、[04-tool-system.md](./04-tool-system.md)（工具注册与执行器）、[12-prompt-system.md](./12-prompt-system.md)（Prompt 构建详解）、[25-input-command-queue.md](./25-input-command-queue.md)（UI 输入链路）
+> **关联文档**：[02-startup-flow.md](./02-startup-flow.md)（启动链路）、[04-tool-system.md](./05-tool-system.md)（工具注册与执行器）、[12-prompt-system.md](./11-prompt-system.md)（Prompt 构建详解）、[25-input-command-queue.md](./23-input-command-queue.md)（UI 输入链路）
 
 ---
 
@@ -61,7 +61,7 @@ AppContainer.handleFinalSubmit()
 
 ### 2.1 UI 提交链（简述）
 
-用户提交文本后，经过以下组件链才抵达 `handleFinalSubmit()`（详见 [25-input-command-queue.md](./25-input-command-queue.md)）：
+用户提交文本后，经过以下组件链才抵达 `handleFinalSubmit()`（详见 [25-input-command-queue.md](./23-input-command-queue.md)）：
 
 ```
 Composer()
@@ -130,7 +130,7 @@ sequenceDiagram
 
 ## 3. Prompt 构建链：系统提示词是在哪里接入的
 
-> Prompt 构建的完整细节见 [12-prompt-system.md](./12-prompt-system.md)，本节只梳理注入点。
+> Prompt 构建的完整细节见 [12-prompt-system.md](./11-prompt-system.md)，本节只梳理注入点。
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
@@ -505,4 +505,4 @@ private _isParallelizable(request: ToolCallRequestInfo): boolean {
 
 ---
 
-> 关联阅读：[04-tool-system.md](./04-tool-system.md)（工具注册、权限策略与执行器实现）
+> 关联阅读：[04-tool-system.md](./05-tool-system.md)（工具注册、权限策略与执行器实现）

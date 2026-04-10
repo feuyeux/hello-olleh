@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "OpenCode 深度专题 B08：启动与配置加载，从全局目录到 .opencode 覆写"
 ---
@@ -277,7 +277,7 @@ opencode/package.json (dev)
 例如：
 
 1. `Format.init()` 会基于 `Config.get()` 建 formatter 集合，并订阅 `File.Event.Edited`，见 `format/index.ts:39-115`。
-2. `LSP.init()` 会先建可用 server 列表，但具体 language server 仍按文件懒启动，见 [20-lsp-integration.md](./20-lsp-integration.md)。
+2. `LSP.init()` 会先建可用 server 列表，但具体 language server 仍按文件懒启动，见 [20-lsp-integration.md](./18-lsp-integration.md)。
 3. `Snapshot.init()` 只准备 snapshot state 和后台清理循环；真正 `git init`/`write-tree` 在 `track()` 时才发生，见 `snapshot/index.ts:68-175`。
 
 所以 bootstrap 的风格是：**固定装配、延迟执行。**

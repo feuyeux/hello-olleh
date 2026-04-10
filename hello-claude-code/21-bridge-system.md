@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "Claude Code 的桥接系统"
 ---
@@ -24,7 +24,7 @@ title: "Claude Code 的桥接系统"
 
 本篇讨论远程桥接、会话同步、JWT 刷新与写入缓冲如何共同构成远程控制链路。
 
-桥接直接建立在底层 transport 之上；网络通道与事件上传器的细节见 [17-sdk-transport.md](./17-sdk-transport.md)。
+桥接直接建立在底层 transport 之上；网络通道与事件上传器的细节见 [17-sdk-transport.md](./15-sdk-transport.md)。
 
 ```mermaid
 ---

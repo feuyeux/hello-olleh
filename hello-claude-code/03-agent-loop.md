@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "query() 主循环与请求构造"
 ---
@@ -172,7 +172,7 @@ flowchart LR
 
 完整机制说明已经独立到：
 
-- [11-context-management.md](./11-context-management.md)
+- [11-context-management.md](./04-state-session-memory.md)
 
 本篇只保留与 `query()` 主循环直接相关的两条事实：
 

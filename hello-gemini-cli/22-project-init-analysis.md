@@ -1,4 +1,4 @@
----
+﻿---
 layout: content
 title: "项目初始化分析报告：首次进入 Gemini CLI 仓库时该先看什么"
 ---
@@ -131,13 +131,13 @@ packages/cli/src/gemini.tsx
 1. [01-architecture.md](./01-architecture.md)  
 2. [02-startup-flow.md](./02-startup-flow.md)  
 3. [03-agent-loop.md](./03-agent-loop.md)  
-4. [04-tool-system.md](./04-tool-system.md)  
-5. [11-context-management.md](./11-context-management.md)  
-6. [12-prompt-system.md](./12-prompt-system.md)  
-7. [13-multi-agent.md](./13-multi-agent.md)  
-8. [15-plugin-system.md](./15-plugin-system.md)  
-9. [17-sdk-transport.md](./17-sdk-transport.md)  
-10. [23-bridge-system.md](./23-bridge-system.md)
+4. [04-tool-system.md](./05-tool-system.md)  
+5. [11-context-management.md](./04-state-session-memory.md)  
+6. [12-prompt-system.md](./11-prompt-system.md)  
+7. [13-multi-agent.md](./12-multi-agent.md)  
+8. [15-plugin-system.md](./14-plugin-system.md)  
+9. [17-sdk-transport.md](./15-sdk-transport.md)  
+10. [23-bridge-system.md](./21-bridge-system.md)
 
 如果只想快速定位“出问题该去哪看”：
 
