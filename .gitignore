@@ -27,6 +27,7 @@ openclaw/
 opencode/
 zeroclaw/
 claw-code/
+hermes-agent/
 
 # Build output
 dist/

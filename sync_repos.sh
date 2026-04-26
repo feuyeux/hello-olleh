@@ -8,6 +8,7 @@ repo_specs='
 openai/codex.git rust-v0.118.0
 anomalyco/opencode.git v1.3.2
 google-gemini/gemini-cli.git v0.36.0
+nousresearch/hermes-agent.git v2026.4.23
 '
 
 base_dir="$(pwd)"

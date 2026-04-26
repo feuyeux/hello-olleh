@@ -1,0 +1,225 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.6 Chrome/144.0.7559.236 Electron/40.8.4 Safari/537.36" version="29.6.6">
+  <diagram name="Hermes Memory System" id="hermes-memory">
+    <mxGraphModel dx="1622" dy="677" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" value="Hermes 记忆系统架构：四层记忆模型" vertex="1">
+          <mxGeometry height="40" width="600" x="400" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="working-memory-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3CD;strokeColor=#856404;strokeWidth=2;dashed=1;dashPattern=8 8;" value="" vertex="1">
+          <mxGeometry height="380" width="320" x="80" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="working-memory-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" value="🧠 工作记忆 (Working Memory)" vertex="1">
+          <mxGeometry height="30" width="280" x="100" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="working-memory-subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#856404" value="容量有限 · 易失性 · 不落盘" vertex="1">
+          <mxGeometry height="20" width="280" x="100" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="session-messages" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#856404;align=center;" value="_session_messages&#xa;当前轮次消息列表" vertex="1">
+          <mxGeometry height="50" width="260" x="110" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="todo-store" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#856404;align=center;" value="_todo_store&#xa;当前任务列表 (内存对象)" vertex="1">
+          <mxGeometry height="50" width="260" x="110" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="ephemeral-context" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#856404;align=center;" value="ephemeral_context&#xa;瞬时注入 (不写回 Session)" vertex="1">
+          <mxGeometry height="50" width="260" x="110" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="token-budget" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#856404;align=center;" value="token_budget / context_pressure&#xa;迭代预算 · 上下文压力" vertex="1">
+          <mxGeometry height="50" width="260" x="110" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="episodic-memory-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1ECF1;strokeColor=#0C5460;strokeWidth=2;dashed=1;dashPattern=8 8;" value="" vertex="1">
+          <mxGeometry height="280" width="320" x="440" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="episodic-memory-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" value="🎬 情节记忆 (Episodic Memory)" vertex="1">
+          <mxGeometry height="30" width="280" x="460" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="episodic-memory-subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#0C5460" value="时序性 · 具体经验 · 持久化" vertex="1">
+          <mxGeometry height="20" width="280" x="460" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="state-db" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0C5460;align=center;" value="state.db (SQLite)&#xa;会话历史 · Session Lineage" vertex="1">
+          <mxGeometry height="50" width="260" x="470" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="session-logs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0C5460;align=center;" value="sessions/*.json&#xa;完整对话轨迹 · 工具调用序列" vertex="1">
+          <mxGeometry height="50" width="260" x="470" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="compressed-history" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0C5460;align=center;" value="压缩后的历史消息&#xa;(保头 + 保尾 + 中间摘要)" vertex="1">
+          <mxGeometry height="50" width="260" x="470" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="semantic-memory-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4EDDA;strokeColor=#155724;strokeWidth=2;dashed=1;dashPattern=8 8;" value="" vertex="1">
+          <mxGeometry height="280" width="320" x="800" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="semantic-memory-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" value="📚 语义记忆 (Semantic Memory)" vertex="1">
+          <mxGeometry height="30" width="280" x="820" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="semantic-memory-subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#155724" value="事实性知识 · 去情境化 · 持久化" vertex="1">
+          <mxGeometry height="20" width="280" x="820" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="memory-md" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#155724;align=center;" value="MEMORY.md&#xa;环境知识 · 项目结构 · 技术栈" vertex="1">
+          <mxGeometry height="50" width="260" x="830" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="user-md" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#155724;align=center;" value="USER.md&#xa;用户画像 · 偏好 · 技能水平" vertex="1">
+          <mxGeometry height="50" width="260" x="830" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="vector-db" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#155724;align=center;" value="Vector DB / RAG&#xa;外部知识库 · 相似度检索" vertex="1">
+          <mxGeometry height="50" width="260" x="830" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="procedural-memory-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2E3E5;strokeColor=#383D41;strokeWidth=2;dashed=1;dashPattern=8 8;" value="" vertex="1">
+          <mxGeometry height="180" width="580" x="440" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="procedural-memory-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" value="🛠️ 程序记忆 (Procedural Memory)" vertex="1">
+          <mxGeometry height="30" width="280" x="460" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="procedural-memory-subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#383D41" value="操作性知识 · 如何执行 · 持久化" vertex="1">
+          <mxGeometry height="20" width="280" x="460" y="455" as="geometry" />
+        </mxCell>
+        <mxCell id="skill-md" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#383D41;align=center;" value="skills/*.md&#xa;技能指令 · 步骤化流程" vertex="1">
+          <mxGeometry height="50" width="260" x="470" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="agents-md" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#383D41;align=center;" value="AGENTS.md&#xa;开发规范 · 编码风格 · 提交流程" vertex="1">
+          <mxGeometry height="50" width="260" x="470" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="tool-registry" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#383D41;align=center;" value="ToolRegistry&#xa;工具注册表 · 可执行能力" vertex="1">
+          <mxGeometry height="50" width="260" x="740" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="plugin-hooks" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#383D41;align=center;" value="Plugin Hooks&#xa;pre_llm_call · post_llm_call" vertex="1">
+          <mxGeometry height="50" width="260" x="740" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1" edge="1" parent="1" source="session-messages" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0C5460;endArrow=classic;endFill=1;" target="state-db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1-label" connectable="0" parent="arrow1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#0C5460;" value="轮次结束&#xa;持久化" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="5" y="-24" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow2" edge="1" parent="1" source="state-db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#856404;endArrow=classic;endFill=1;dashed=1;" target="session-messages" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2-label" connectable="0" parent="arrow2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#856404;" value="恢复&#xa;Session" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="-5" y="14" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow3" edge="1" parent="1" source="memory-md" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#155724;endArrow=classic;endFill=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="ephemeral-context" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1150" y="195" />
+              <mxPoint x="1150" y="80" />
+              <mxPoint x="40" y="80" />
+              <mxPoint x="40" y="322" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow3-label" connectable="0" parent="arrow3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#155724;" value="Snapshot&#xa;注入 System Prompt" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="80" y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow4" edge="1" parent="1" source="vector-db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#155724;endArrow=classic;endFill=1;dashed=1;entryX=0;entryY=0.75;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="ephemeral-context" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1150" y="335" />
+              <mxPoint x="1150" y="640" />
+              <mxPoint x="60" y="640" />
+              <mxPoint x="60" y="348" />
+            </Array>
+            <mxPoint x="870" y="360" as="sourcePoint" />
+            <mxPoint x="20" y="347.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow4-label" connectable="0" parent="arrow4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#155724;" value="Prefetch&#xa;瞬时召回" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="-586" y="-1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow5" edge="1" parent="1" source="skill-md" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#383D41;endArrow=classic;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="ephemeral-context" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="505" />
+              <mxPoint x="40" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow5-label" connectable="0" parent="arrow5" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#383D41;" value="按需加载&#xa;技能上下文" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="56" y="-1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow6" edge="1" parent="1" source="token-budget" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#DC3545;endArrow=classic;endFill=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="compressed-history" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="405" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow6-label" connectable="0" parent="arrow6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#DC3545;" value="超过限制&#xa;触发压缩" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="10" y="-5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow7" edge="1" parent="1" source="compressed-history" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#155724;endArrow=classic;endFill=1;dashed=1;" target="memory-md" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="335" />
+              <mxPoint x="780" y="195" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow7-label" connectable="0" parent="arrow7" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#155724;" value="提炼&#xa;事实性知识" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="1" y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#DEE2E6;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="140" width="270" x="850" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" value="图例 (Legend)" vertex="1">
+          <mxGeometry height="25" width="230" x="870" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-item1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF3CD;strokeColor=#856404;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="15" width="30" x="880" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11" value="工作记忆：易失性，不落盘" vertex="1">
+          <mxGeometry height="25" width="180" x="920" y="725" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-item2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D1ECF1;strokeColor=#0C5460;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="15" width="30" x="880" y="755" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11" value="情节记忆：时序性，持久化" vertex="1">
+          <mxGeometry height="25" width="170" x="920" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-item3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D4EDDA;strokeColor=#155724;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="15" width="30" x="880" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text3" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11" value="语义记忆：事实性，持久化" vertex="1">
+          <mxGeometry height="25" width="180" x="920" y="775" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-item4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E2E3E5;strokeColor=#383D41;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="15" width="30" x="880" y="805" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text4" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11" value="程序记忆：操作性，持久化" vertex="1">
+          <mxGeometry height="25" width="180" x="920" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="insights-container" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF;strokeColor=#6C757D;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="120" width="720" x="80" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="insights-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" value="💡 核心洞察 (Key Insights)" vertex="1">
+          <mxGeometry height="25" width="1000" x="100" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="insight1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11" value="1. 工作记忆容量有限，受 token budget 和 context window 约束，超过限制触发压缩" vertex="1">
+          <mxGeometry height="20" width="570" x="100" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="insight2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11" value="2. Ephemeral Context 完全不落盘，每次 API 调用前重新召回，避免污染长期记忆" vertex="1">
+          <mxGeometry height="20" width="550" x="100" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="insight3" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11" value="3. 情节记忆通过压缩提炼为语义记忆，形成从具体经验到抽象知识的转化路径" vertex="1">
+          <mxGeometry height="20" width="550" x="100" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="footer" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6C757D" value="生成时间: 2026-04-16 | 基于 Hermes Agent v0.8.0 架构分析" vertex="1">
+          <mxGeometry height="30" width="600" x="400" y="850" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

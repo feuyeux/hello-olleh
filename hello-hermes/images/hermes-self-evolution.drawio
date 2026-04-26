@@ -1,0 +1,313 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.6 Chrome/144.0.7559.236 Electron/40.8.4 Safari/537.36" version="29.6.6">
+  <diagram id="hermes-self-evolution-unified" name="Hermes Self-Evolution Unified">
+    <mxGraphModel dx="-61" dy="1394" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3400" pageHeight="2600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t3-llPBORnwt9jcTNyiU-123" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;fontSize=30;fontStyle=1;fontColor=#152637;" value="Hermes Self-Evolution" vertex="1">
+          <mxGeometry height="40" width="350" x="5150.000000000001" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-124" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=22;fontStyle=1;fontColor=#152637;" value="在线运行时闭环" vertex="1">
+          <mxGeometry height="30" width="260" x="3480.0000000000005" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-125" parent="1" style="shape=line;strokeColor=#c7d5e2;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1" width="2030" x="3480.0000000000005" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-126" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#5c7488;" value="在线层回答的问题：这次任务里产生的稳定事实、可复用方法、历史证据和反馈，如何在下一轮或下一会话继续发挥作用。" vertex="1">
+          <mxGeometry height="26" width="850" x="3670.0000000000005" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-127" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#5c7488;" value="CONTEXT / STORES" vertex="1">
+          <mxGeometry height="22" width="220" x="3480.0000000000005" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-128" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#5c7488;" value="AIAgent TURN CHAIN" vertex="1">
+          <mxGeometry height="22" width="240" x="4025.98" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-129" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#5c7488;" value="WRITEBACK / REVIEW / REUSE" vertex="1">
+          <mxGeometry height="22" width="280" x="4728.000000000001" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-130" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#5c7488;" value="READING AIDS" vertex="1">
+          <mxGeometry height="22" width="180" x="5320.000000000001" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-131" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Prompt / Identity Sources&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;load_soul_md + build_context_files_prompt + build_skills_system_prompt&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• SOUL.md 提供 agent identity&lt;br&gt;• .hermes.md / AGENTS.md / CLAUDE.md 提供项目约束&lt;br&gt;• skills 索引会在 system prompt 里暴露可复用方法&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="420" x="3480.0000000000005" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-132" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="PROMPT" vertex="1">
+          <mxGeometry height="24" width="110" x="3480.0000000000005" y="162" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-133" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#18a57e;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Durable Knowledge Layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;tools/memory_tool.py::MemoryStore + tools/skill_manager_tool.py::skill_manage&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• MEMORY.md / USER.md 保存显式记忆&lt;br&gt;• skills/ 保存程序性记忆 procedural memory&lt;br&gt;• load_from_disk() 会冻结 system prompt snapshot&lt;/font&gt;" vertex="1">
+          <mxGeometry height="129" width="450" x="3480.0000000000005" y="354" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-134" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#18a57e;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="MEMORY" vertex="1">
+          <mxGeometry height="24" width="116" x="3480.0000000000005" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-135" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8f63d2;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;History / Recall Sources&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;hermes_state.py::SessionDB + tools/session_search_tool.py + agent/memory_manager.py&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• state.db + session JSON 保存 transcript、FTS5 索引、token / cost、tool traces&lt;br&gt;• session_search 返回 focused recap，不是原始全文&lt;br&gt;• external provider recall 由 prefetch_all() 汇总&lt;/font&gt;" vertex="1">
+          <mxGeometry height="137" width="510" x="3480.0000000000005" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-136" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8f63d2;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="STORAGE" vertex="1">
+          <mxGeometry height="24" width="116" x="3480.0000000000005" y="492" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-137" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Stable Prompt Build&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;run_agent.py::_build_system_prompt&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• 拼装 identity、tool guidance、memory snapshot、skills、project context&lt;br&gt;• memory_manager.build_system_prompt() 追加 external memory block&lt;br&gt;• 只在 session 起始或压缩后重建，避免破坏 prefix cache&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="560" x="4025.98" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-138" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="SYSTEM PROMPT" vertex="1">
+          <mxGeometry height="24" width="150" x="4025.98" y="162" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-139" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Turn Start / Agent Loop&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;run_conversation + on_turn_start + prefetch_all + _build_api_kwargs&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• prefetch_all() 一次性取回 recall cache，再用 build_memory_context_block() 注入 API 请求&lt;br&gt;• 管理 budget、interrupt、sanitize、fallback、streaming&lt;br&gt;• 这里决定“当前回合怎么跑”&lt;/font&gt;" vertex="1">
+          <mxGeometry height="118" width="560" x="4025.98" y="354" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-140" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="TURN LOOP" vertex="1">
+          <mxGeometry height="24" width="116" x="4025.98" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-141" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Tool / Compression / Delegation Branch&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;_execute_tool_calls + _invoke_tool + _compress_context&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• memory_tool、skill_manage、session_search、provider tools 统一在这里分发&lt;br&gt;• delegate_task 可产生子结果，memory_manager.on_delegation() 可把结果喂给外部记忆&lt;br&gt;• _compress_context 负责长会话整理与 lineage 切分&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="560" x="4025.98" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-142" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="TOOL BRANCH" vertex="1">
+          <mxGeometry height="24" width="128" x="4025.98" y="492" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-143" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Persist, Sync, Review&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;_persist_session + _save_trajectory + sync_all + queue_prefetch_all + _spawn_background_review&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• 先把用户可见结果交付，再做 JSON / SQLite 持久化&lt;br&gt;• sync_all()、queue_prefetch_all() 形成“本轮写入，下轮可取回”&lt;br&gt;• background review 再筛一遍有没有值得沉淀的偏好、坑点、流程&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="562" x="4023.98" y="676" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-144" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2d8cff;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="PERSIST / REVIEW" vertex="1">
+          <mxGeometry height="24" width="154" x="4023.98" y="652" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-145" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#18a57e;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Explicit Writeback&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;memory_tool.add/replace/remove + skill_manage&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• durable facts 写进 MEMORY.md / USER.md&lt;br&gt;• reusable workflow 写进 skills/&lt;br&gt;• on_memory_write() 可以把 built-in memory 镜像给 external provider&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="440" x="4728.000000000001" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-146" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#18a57e;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="WRITEBACK" vertex="1">
+          <mxGeometry height="24" width="126" x="4728.000000000001" y="162" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-147" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#c99520;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Background Review Agent&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;_MEMORY_REVIEW_PROMPT / _SKILL_REVIEW_PROMPT / _COMBINED_REVIEW_PROMPT&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• _spawn_background_review fork silent review agent&lt;br&gt;• 复盘这次对话里哪些信息值得长期保留&lt;br&gt;• 这是最接近“在线自我复盘”的节点&lt;/font&gt;" vertex="1">
+          <mxGeometry height="119" width="622" x="4728.000000000001" y="354" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-148" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#c99520;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="REVIEW" vertex="1">
+          <mxGeometry height="24" width="96" x="4728.000000000001" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-149" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#18a57e;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Next Turn Reuse / Provider Hooks&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;memory_manager.sync_all + queue_prefetch_all + on_session_end + fact_feedback&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• 下一轮可通过 recall cache 直接拿回本轮沉淀&lt;br&gt;• provider 可在 on_session_end 抽取 profile/preferences/entities/patterns&lt;br&gt;• 有些 provider 还能用 feedback 调整 trust score&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="490" x="4728.000000000001" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-150" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#18a57e;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="REUSE" vertex="1">
+          <mxGeometry height="24" width="92" x="4730.000000000001" y="492" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-151" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8f63d2;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#152637;" value="&lt;b&gt;Runtime Trace Layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;SessionDB + session JSON + trajectories + tool stats + cost traces&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(39, 65, 86);&quot;&gt;• 这层同时服务 online recall 与 offline evolution&lt;br&gt;• 它就是两条闭环真正接上的地方&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="410" x="4728.000000000001" y="676" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-152" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8f63d2;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="TRACE" vertex="1">
+          <mxGeometry height="24" width="86" x="4728.000000000001" y="652" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-153" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffdf8;strokeColor=#d0bf8f;strokeWidth=1.6;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#7b611a;" value="&lt;b&gt;Boundary 1&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12.5px;color:#675522;&#39;&gt;memory 写盘后，frozen snapshot 未必立刻重建；这是为了保持 prefix cache 稳定。&lt;/font&gt;" vertex="1">
+          <mxGeometry height="91" width="280" x="5240.000000000001" y="212" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-154" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffdf8;strokeColor=#d0bf8f;strokeWidth=1.6;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#7b611a;" value="&lt;b&gt;Boundary 2&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12.5px;color:#675522;&#39;&gt;skills 保存的是 how-to，不是普通事实记忆。事实与流程最好分开沉淀。&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="270" x="5240.000000000001" y="443" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-155" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffdf8;strokeColor=#d0bf8f;strokeWidth=1.6;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#7b611a;" value="&lt;b&gt;Boundary 3&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12.5px;color:#675522;&#39;&gt;delegate_task 的子 Agent 默认不继承完整 memory；goal 与 context 必须写得自足。&lt;/font&gt;" vertex="1">
+          <mxGeometry height="95" width="280" x="5240.000000000001" y="558" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-156" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffdf8;strokeColor=#d0bf8f;strokeWidth=1.6;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#7b611a;" value="&lt;b&gt;Read This Page Like a Loop&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12.5px;color:#675522;&#39;&gt;上半区不是终点，它把痕迹送入中间桥接层；下半区也不是终点，它把批准后的改动再送回上半区的起始 surfaces。&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="280" x="5240.000000000001" y="693" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-157" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#336600;strokeWidth=2;dashed=1;arcSize=12;dashPattern=1 2;" value="" vertex="1">
+          <mxGeometry height="150" width="2090" x="3470.0000000000005" y="813" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-158" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#3a5367;" value="BRIDGE LAYER: 这不是第三套系统，而是两层 self-evolution 真正接上的接口面。" vertex="1">
+          <mxGeometry height="26" width="572" x="5008.000000000001" y="823" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-159" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#336600;strokeWidth=1.6;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=15;fontColor=#152637;" value="&lt;b&gt;Online -&amp;gt; Offline&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;运行痕迹变成离线数据集、失败簇、候选实验输入：SessionDB、JSON logs、saved trajectories、tool stats、memory / skills history。&lt;/font&gt;" vertex="1">
+          <mxGeometry height="64" width="1000" x="3510.0000000000005" y="869" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-160" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#336600;strokeWidth=1.6;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=15;fontColor=#152637;" value="&lt;b&gt;Offline -&amp;gt; Online&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;color: rgb(71, 97, 116);&quot;&gt;批准改动重新进入在线起始 surfaces：skills/、prompt_builder guidance、tool descriptions、部分代码文件。未来会话从更好的外壳出发。&lt;/font&gt;" vertex="1">
+          <mxGeometry height="64" width="1012" x="4528.000000000001" y="869" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-161" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=22;fontStyle=1;fontColor=#152637;" value="仓外离线进化闭环" vertex="1">
+          <mxGeometry height="30" width="320" x="3480.0000000000005" y="972" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-162" parent="1" style="shape=line;strokeColor=#c7d5e2;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1" width="2020" x="3480.0000000000005" y="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-163" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#5c7488;" value="离线层回答的问题：这些运行痕迹能否经过系统化实验，反哺 skills、prompt、tool descriptions，甚至部分代码，实现可测量、可回滚、可审查的 agent 外壳进化。" vertex="1">
+          <mxGeometry height="26" width="1700" x="3670.0000000000005" y="984" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-164" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#5c7488;" value="HERMES ASSETS" vertex="1">
+          <mxGeometry height="22" width="180" x="3480.0000000000005" y="1026" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-165" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#5c7488;" value="OFFLINE EVOLUTION REPO" vertex="1">
+          <mxGeometry height="22" width="240" x="4030.0000000000005" y="1026" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-166" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#5c7488;" value="SELECTION / REINTEGRATION" vertex="1">
+          <mxGeometry height="22" width="280" x="4570.000000000001" y="1026" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-167" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;fontColor=#5c7488;" value="WHY THIS COMPLETES THE LOOP" vertex="1">
+          <mxGeometry height="22" width="250" x="5240.000000000001" y="1026" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-168" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8f63d2;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=14;fontColor=#152637;" value="&lt;b&gt;Runtime Assets&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12px;color:#476174;&#39;&gt;SessionDB + trajectories + tool stats + cost traces + memory / skills history&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:13px;color:#274156;&#39;&gt;• 这些数据来自在线层真实使用，不是人造 benchmark 假设&lt;br&gt;• 因此离线层优化的是实际痛点，而不是空想优化目标&lt;/font&gt;" vertex="1">
+          <mxGeometry height="104" width="460" x="3480.0000000000005" y="1082" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-169" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8f63d2;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="ASSETS" vertex="1">
+          <mxGeometry height="24" width="90" x="3480.0000000000005" y="1058" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-170" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=14;fontColor=#152637;" value="&lt;b&gt;Mutation Targets&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12px;color:#476174;&#39;&gt;skills/ + tool descriptions + prompt_builder guidance + selected code files&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:13px;color:#274156;&#39;&gt;• 离线层优化的是 agent 外壳 surfaces，而不是训练权重&lt;br&gt;• 所以改动天然可 diff、可回滚、可人工审查&lt;/font&gt;" vertex="1">
+          <mxGeometry height="106" width="460" x="3480.0000000000005" y="1240" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-171" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="TARGETS" vertex="1">
+          <mxGeometry height="24" width="100" x="3480.0000000000005" y="1216" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-172" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=14;fontColor=#152637;" value="&lt;b&gt;Candidate Generation&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12px;color:#476174;&#39;&gt;DSPy + GEPA / MIPROv2 + Darwinian Evolver&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:13px;color:#274156;&#39;&gt;• 生成新的 skills、prompt 片段、tool descriptions、部分代码候选 diff&lt;br&gt;• 这些 candidate 默认不在主会话内生效，只进入离线实验台&lt;/font&gt;" vertex="1">
+          <mxGeometry height="104" width="430" x="4030.0000000000005" y="1082" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-173" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="CANDIDATES" vertex="1">
+          <mxGeometry height="24" width="120" x="4030.0000000000005" y="1058" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-174" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=14;fontColor=#152637;" value="&lt;b&gt;Offline Eval Loop&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12px;color:#476174;&#39;&gt;batch_runner + repo tests + Terminal-Bench 2 + TBLite + YC-Bench&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:13px;color:#274156;&#39;&gt;• 跑 baseline vs candidate，对比 pass rate、tool error、cost、稳健性、rubric&lt;br&gt;• 不过线的候选直接淘汰，不进入回灌通道&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="430" x="4030.0000000000005" y="1226" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-175" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="EVAL LOOP" vertex="1">
+          <mxGeometry height="24" width="106" x="4030.0000000000005" y="1202" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-176" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=14;fontColor=#152637;" value="&lt;b&gt;Selection Gate&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12px;color:#476174;&#39;&gt;benchmark gate + human review + PR workflow&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:13px;color:#274156;&#39;&gt;• 只有在效果、成本、回归风险都可接受时，candidate 才会进入主仓&lt;br&gt;• 这把“自改进”变成了可审计、可治理的工程流程&lt;/font&gt;" vertex="1">
+          <mxGeometry height="104" width="520" x="4570.000000000001" y="1082" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-177" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="SELECTION" vertex="1">
+          <mxGeometry height="24" width="100" x="4570.000000000001" y="1058" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-178" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=2;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=14;fontColor=#152637;" value="&lt;b&gt;Reintegration&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12px;color:#476174;&#39;&gt;approved diffs merge back into hermes-agent&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:13px;color:#274156;&#39;&gt;• merge 后，新 skills、prompt sections、tool docs、code 会进入未来安装与未来会话&lt;br&gt;• 在线层因此从更好的 surfaces 出发，再继续留下新的痕迹&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="520" x="4570.000000000001" y="1226" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-179" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#5c6f82;strokeWidth=1.6;arcSize=18;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#152637;" value="REINTEGRATION" vertex="1">
+          <mxGeometry height="24" width="126" x="4570.000000000001" y="1202" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-180" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffdf8;strokeColor=#d0bf8f;strokeWidth=1.6;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#7b611a;" value="&lt;b&gt;Why This Completes the Picture&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12.5px;color:#675522;&#39;&gt;在线层解决“下次能否记住并用上”；离线层解决“这些痕迹能否系统性反哺 agent 外壳”。两层拼起来，才是完整 self-evolution。&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="320" x="5215.000000000001" y="1066" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-181" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffdf8;strokeColor=#d0bf8f;strokeWidth=1.6;arcSize=12;spacing=12;align=left;verticalAlign=top;fontSize=13;fontColor=#7b611a;" value="&lt;b&gt;What Offline Is Not&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:12.5px;color:#675522;&#39;&gt;它不是新的 online memory，也不是在主会话里偷偷改行为；它是仓外、可评测、可回滚、可审查的独立优化管线。&lt;/font&gt;" vertex="1">
+          <mxGeometry height="110" width="320" x="5215.000000000001" y="1186" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-182" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-131" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#169a76;strokeWidth=3;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="t3-llPBORnwt9jcTNyiU-137">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-183" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-133" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#169a76;strokeWidth=3;edgeStyle=orthogonalEdgeStyle;exitX=1.004;exitY=0.443;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitPerimeter=0;" target="t3-llPBORnwt9jcTNyiU-137">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="3950" y="411" />
+              <mxPoint x="3950" y="244" />
+            </Array>
+            <mxPoint x="3894.0000000000005" y="407.5" as="sourcePoint" />
+            <mxPoint x="3989.98" y="244" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-184" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-135" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#8f63d2;strokeWidth=3;edgeStyle=orthogonalEdgeStyle;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="t3-llPBORnwt9jcTNyiU-139">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="4006.0000000000005" y="578" />
+              <mxPoint x="4006.0000000000005" y="413" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-185" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-137" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#2a7de1;strokeWidth=3.2;" target="t3-llPBORnwt9jcTNyiU-139">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-186" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-139" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#2a7de1;strokeWidth=3.2;" target="t3-llPBORnwt9jcTNyiU-141">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-187" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-141" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#2a7de1;strokeWidth=3.2;" target="t3-llPBORnwt9jcTNyiU-143">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-188" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-141" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#169a76;strokeWidth=3;edgeStyle=orthogonalEdgeStyle;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="t3-llPBORnwt9jcTNyiU-145">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-189" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-143" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#c38916;strokeWidth=3;edgeStyle=orthogonalEdgeStyle;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="t3-llPBORnwt9jcTNyiU-147">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="4690.000000000001" y="734" />
+              <mxPoint x="4690.000000000001" y="414" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-190" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-143" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#169a76;strokeWidth=3;edgeStyle=orthogonalEdgeStyle;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" target="t3-llPBORnwt9jcTNyiU-149">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="4690.000000000001" y="734" />
+              <mxPoint x="4690.000000000001" y="603" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-191" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-143" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#8f63d2;strokeWidth=3;" target="t3-llPBORnwt9jcTNyiU-151">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-192" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-149" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#169a76;strokeWidth=3;dashed=1;edgeStyle=orthogonalEdgeStyle;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;" target="t3-llPBORnwt9jcTNyiU-139">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="4640.000000000001" y="545" />
+              <mxPoint x="4640.000000000001" y="413" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-193" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-151" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#5e7387;strokeWidth=2.8;dashed=1;exitX=0.515;exitY=0.988;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="t3-llPBORnwt9jcTNyiU-159">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="4939.000000000001" y="833" />
+              <mxPoint x="3970.0000000000005" y="833" />
+            </Array>
+            <mxPoint x="4767.922535211269" y="693.0000000000002" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-194" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-159" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#5e7387;strokeWidth=2.8;dashed=1;dashPattern=9 8;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="t3-llPBORnwt9jcTNyiU-168">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="3510.0000000000005" y="903" />
+              <mxPoint x="3450.0000000000005" y="903" />
+              <mxPoint x="3450.0000000000005" y="1134" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-195" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-170" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#5e7387;strokeWidth=2.8;dashed=1;dashPattern=9 8;edgeStyle=orthogonalEdgeStyle;" target="t3-llPBORnwt9jcTNyiU-172">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="3980.0000000000005" y="1293" />
+              <mxPoint x="3980.0000000000005" y="1134" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-196" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-168" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#5e7387;strokeWidth=2.8;dashed=1;dashPattern=9 8;" target="t3-llPBORnwt9jcTNyiU-172">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-197" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-172" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#5e7387;strokeWidth=2.8;dashed=1;dashPattern=9 8;" target="t3-llPBORnwt9jcTNyiU-174">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-198" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-174" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#5e7387;strokeWidth=2.8;dashed=1;dashPattern=9 8;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;curved=0;" target="t3-llPBORnwt9jcTNyiU-176">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-199" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-176" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#5e7387;strokeWidth=2.8;dashed=1;dashPattern=9 8;" target="t3-llPBORnwt9jcTNyiU-178">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-200" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-178" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#5e7387;strokeWidth=2.8;dashed=1;dashPattern=9 8;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="t3-llPBORnwt9jcTNyiU-160">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="5120.000000000001" y="1286" />
+              <mxPoint x="5120.000000000001" y="1013" />
+              <mxPoint x="4730.000000000001" y="1013" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-201" edge="1" parent="1" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#2a7de1;strokeWidth=3;dashed=1;edgeStyle=orthogonalEdgeStyle;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="t3-llPBORnwt9jcTNyiU-137">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="4620.000000000001" y="869" />
+              <mxPoint x="4620.000000000001" y="244" />
+            </Array>
+            <mxPoint x="4620.000000000001" y="869" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t3-llPBORnwt9jcTNyiU-202" edge="1" parent="1" source="t3-llPBORnwt9jcTNyiU-160" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#169a76;strokeWidth=3;dashed=1;edgeStyle=orthogonalEdgeStyle;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.064;exitY=-0.026;exitDx=0;exitDy=0;exitPerimeter=0;" target="t3-llPBORnwt9jcTNyiU-133">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="4593.000000000001" y="803" />
+              <mxPoint x="3450.0000000000005" y="803" />
+              <mxPoint x="3450.0000000000005" y="418" />
+            </Array>
+            <mxPoint x="4530.000000000001" y="869" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
