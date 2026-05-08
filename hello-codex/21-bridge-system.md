@@ -141,3 +141,16 @@ core.on_event(|event| {
 - **BridgeCommand 枚举扩展成本高**：每添加新指令需同时修改 enum、发送端、处理端三处，无法插件化扩展。
 - **EventChannel 背压处理缺失**：消费端（TUI）渲染慢时通道可能积压大量事件，内存占用无上限。
 - **中断信号仅支持 Ctrl-C**：不支持 SIGTERM 等系统信号优雅退出，在容器环境中 pod 终止时可能丢失状态。
+
+## 横向对齐补强：Bridge 应归入 app-server/protocol 复用
+
+Codex 的 bridge 能力不应按“远程 UI 功能”单独理解，而应归入 app-server 和 JSON event protocol：外部宿主通过协议复用 Rust core，而不是复制 agent loop。
+
+| 对齐主题 | Codex 侧含义 |
+| --- | --- |
+| Bridge | 外部宿主连接 runtime 的协议面 |
+| SDK | 协议消费者，不是第二套 runtime |
+| Session | bridge 操作的持久对象 |
+| Thread event | UI/SDK 共同消费的状态投影 |
+
+横向看，Claude Code 的 bridge 更像 REPL/远程会话能力，OpenCode 的 bridge 更像 server contract，Gemini 的 bridge 更偏 IDE/headless 集成；Codex 的核心则是 Rust session protocol 的复用。

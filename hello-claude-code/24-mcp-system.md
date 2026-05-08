@@ -511,3 +511,26 @@ JSON Schema → Zod schema 的转换不是通用的。它处理常见的 JSON Sc
 - **工具名冲突无处理策略**：多个 MCP server 注册同名工具时，McpHub 路由行为（取第一个？报错？）未文档化，用户无法预期行为。
 - **callTool 无超时参数**：工具调用无调用级超时设置，全局超时无法适应不同工具时延差异。
 - **Resource/Prompt 功能利用率低**：MCP 协议的 Resource 和 Prompt 特性在 Claude Code 中未充分暴露给 LLM，仅 Tool 被主动使用。
+
+## 横向对齐补强：Claude MCP 与 Plugin/Settings 强耦合
+
+Claude Code 的 MCP 章节应比普通 MCP client 分析更宽：MCP server 可以来自用户配置、项目配置、plugin、SDK control message，并受企业策略和 permission rule 影响。
+
+| MCP 面 | 横向对比 |
+| --- | --- |
+| server 来源 | 比 Codex/Gemini 更多层 |
+| tool 权限 | 对应 Claude permission rule 和 enterprise allow/deny |
+| OAuth/XAA | 由 `24b-mcp-deep.md` 深挖 |
+| plugin MCP | 与 `14-plugin-system.md` 交叉 |
+
+后续本章应把 MCP server lifecycle、tool discovery、permission check、tool call result 四步写成统一调用链。
+
+## 源码锚点补强
+
+| MCP 子系统 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| OAuth 主流程 | `claude-code/src/services/mcp/auth.ts:847` | 远程 MCP 认证入口 |
+| XAA 流程 | `claude-code/src/services/mcp/auth.ts:664` | 共享 IdP cross-app access |
+| 动态 server reconciliation | `claude-code/src/cli/print.ts:1535`, `claude-code/src/cli/print.ts:5457` | SDK/control message 更新 MCP server |
+| plugin MCP diff | `claude-code/src/cli/print.ts:1795` | plugin 状态变化后重算 MCP |
+| MCP 权限规则 | `claude-code/src/utils/settings/permissionValidation.ts:102`, `claude-code/src/utils/permissions/permissions.ts:236` | MCP rule validation 与匹配 |

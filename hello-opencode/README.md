@@ -27,6 +27,8 @@ title: "OpenCode 源码分析 README"
 
 ## 章节索引
 
+> 横向对齐规则：`01-25` 是四个 AI Coding CLI 目录共享的主题主干；OpenCode 的 `26-38` 是 durable state、server routing、session loop、Effect-ts 等项目特有深挖附录。跨项目比较统一维护在 [`../hello-harness/15-topic-alignment-matrix.md`](../hello-harness/15-topic-alignment-matrix.md)。
+
 | 文件 | 主题 | 阅读目的 |
 | --- | --- | --- |
 | [01-architecture.md](./01-architecture.md) | 架构全景 | 目录、分层、核心抽象 |

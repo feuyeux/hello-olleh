@@ -519,3 +519,27 @@ registerNotificationHandlers(client, key)
 - **MCP 连接无全局超时**：等待 stdio server 握手时无超时上限，MCP server 启动慢会阻塞 `InstanceBootstrap()` 整个初始化过程。
 - **子进程清理问题**：MCP stdio server 以子进程运行，父进程崩溃时子进程可能成为孤儿进程，无 `SIGTERM` 传播保证。
 - **OAuth 令牌无持久化存储**：认证令牌在内存中管理，进程重启后需要重新 OAuth 授权，频繁重启场景体验差。
+
+## 横向对齐补强：OpenCode MCP 同时接入 Tool、Command 和 OAuth
+
+OpenCode 的 MCP 不只是 tool discovery。MCP prompt 可进入 command 系统，remote MCP 可走 OAuth，工具最终进入 ToolRegistry 并受 Permission/Plugin 影响。
+
+| MCP 面 | OpenCode 侧落点 | 横向对比 |
+| --- | --- | --- |
+| tools | ToolRegistry | 对应四项目工具池 |
+| prompts | Command 系统 | OpenCode 特色 |
+| resources | prompt/file part | 与 `11-prompt-system.md` 交叉 |
+| OAuth | `cli/cmd/mcp.ts`, config schema | 比 Gemini/Codex 更强调 CLI 管理 |
+| plugin influence | tool.definition hook | OpenCode 特色 |
+
+后续本章应补连接状态、auth 状态、工具 schema、permission 四者之间的关系表。
+
+## 源码锚点补强
+
+| MCP 面 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| MCP namespace | `opencode/packages/opencode/src/mcp/index.ts:28` | MCP 系统入口 |
+| Config schema | `opencode/packages/opencode/src/config/config.ts:565`, `opencode/packages/opencode/src/config/config.ts:601` | local/remote MCP 配置 |
+| MCP CLI | `opencode/packages/opencode/src/cli/cmd/mcp.ts:55`, `opencode/packages/opencode/src/cli/cmd/mcp.ts:140` | MCP 管理和 OAuth 命令 |
+| Command prompts | `opencode/packages/opencode/src/command/index.ts:117`, `opencode/packages/opencode/src/command/index.ts:124` | MCP prompts 进入 command |
+| Tool registry | `opencode/packages/opencode/src/tool/registry.ts:155` | MCP tool 最终并入工具集合 |

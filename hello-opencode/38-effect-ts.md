@@ -436,6 +436,17 @@ return rt.runPromise(service.use(fn), options)
 - 调试困难——Fiber 堆栈不直观，`yield*` 的调用链难以追踪
 - 与 Node.js 生态集成需要额外适配（如 `effect/unstable/process`）
 
+## 源码锚点补强：Effect-ts 入口要看 ServiceMap、Layer 和 InstanceState
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `opencode/packages/opencode/src/tool/registry.ts:52` | ToolRegistry ServiceMap 声明 | 对应工具服务注入 |
+| `opencode/packages/opencode/src/permission/index.ts:138` | Permission ServiceMap 声明 | 权限服务可替换/可注入 |
+| `opencode/packages/opencode/src/session/status.ts:53` | SessionStatus ServiceMap 声明 | 运行态服务化 |
+| `opencode/packages/opencode/src/effect/instance-state.ts:15` | `InstanceState.make()` | 多实例状态缓存入口 |
+| `opencode/packages/opencode/src/snapshot/index.ts:68` | Snapshot 使用 InstanceState | 说明快照服务和实例作用域绑定 |
+| `opencode/packages/opencode/src/project/instance.ts:117` | `Instance.state()` | 把 Effect 状态绑定到工作目录 |
+
 ## 8. 关键函数清单
 
 | 函数/类型 | 文件 | 行号 | 职责 |

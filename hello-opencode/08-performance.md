@@ -305,3 +305,16 @@ OpenCode 的设计哲学是：
 | LSP 懒启动 | `lsp/index.ts` |
 | MCP 连接复用 | `mcp/index.ts` |
 | 增量写 | `session/index.ts:778-789` |
+
+## 横向对齐补强：OpenCode 性能核心是 durable 写入成本
+
+OpenCode 的性能优势来自 server-first、SSE 和 durable state；风险也来自同一处：每个 message/part/tool event 都可能变成 SQLite 写入或 Bus/SSE 广播。
+
+| 路径 | 关注点 | 横向对比 |
+| --- | --- | --- |
+| `SessionProcessor.process()` | fullStream 到 part 的转换成本 | 对应 Claude/Gemini 的 stream event 处理 |
+| SQLite durable write | 高频 tool/text part 写入 | Codex 也持久化，但 OpenCode 更 durable-first |
+| Bus/SSE | 多端订阅广播成本 | 强于 Gemini 本地 EventEmitter |
+| Provider wrapper | SSE chunk timeout 和兼容层 | 对应 Codex client retry |
+
+后续本章应增加写放大分析：单个 tool call 会产生多少 DB 写、Bus event、SSE event，以及 crash 时哪些 delta 可恢复。

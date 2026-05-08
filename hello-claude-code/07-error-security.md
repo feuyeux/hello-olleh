@@ -442,3 +442,16 @@ flowchart LR
 - **`paramsFromContext()` 参数增长风险**：所有请求层标志（cache、thinking、betas、fast mode）都在此函数中处理，随时间参数列表可能无限增长，当前已经是高复杂度函数。
 - **`fastModeFailureCooldown` 缺乏配置化**：fast mode 失败后的 cooldown 时间硬编码在函数内，云端速率限制严格时无法外部调整，运维灵活性差。
 - **context overflow 修正逻辑与重试逻辑耦合**：`withRetry()` 同时承担了"重试"和"修正上下文"两种职责，若 context overflow 修正失败，错误路径与网络错误重试路径重叠，难以区分。
+
+## 横向对齐补强：Claude 的安全边界分散在请求层、权限层和配置层
+
+Claude Code 的错误与安全机制不应只看 provider retry。一次高风险动作会穿过 request 参数、permission context、tool execution、MCP policy 和 UI confirmation 多个边界。
+
+| 边界 | Claude 侧入口 | 横向对比 |
+| --- | --- | --- |
+| 请求错误 | `src/services/api/claude.ts`, `src/utils/api.ts` | 对应 Codex client retry、Gemini client stream、OpenCode provider wrapper |
+| 工具权限 | `src/hooks/useCanUseTool.tsx` | 对应 Codex approval、Gemini PolicyEngine、OpenCode Permission |
+| 文件安全 | `src/utils/permissions/filesystem.ts` | 对应 Codex sandbox/apply_patch 拦截 |
+| MCP 策略 | `src/utils/settings/permissionValidation.ts`, `src/utils/settings/types.ts` | Claude 特有的企业 allow/denylist 与 channel policy |
+
+后续维护本章时，要显式区分“模型请求失败恢复”和“本地动作安全治理”，避免把两类风险都写成 retry 问题。

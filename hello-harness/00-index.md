@@ -1,24 +1,24 @@
 ---
 layout: content
-title: "Hello Harness: 跨运行时上下文与记忆模块"
+title: "Hello Harness: 源码分析质量横向评估"
 ---
 
-# Hello Harness: 跨运行时上下文与记忆模块
+# Hello Harness: 源码分析质量横向评估
 
-> 为 AI Coding Agent 设计的运行时无关抽象层
+> 四套 AI Coding CLI 源码阅读文档的证据标准、横向对比和合并计划
 
 ---
 
 ## 项目概述
 
-Hello Harness 是一个可插拔的上下文管理和记忆系统设计，旨在让相同的业务逻辑能够在 **OpenCode**（TypeScript/Bun）和 **Hermes Agent**（Python）两个完全不同的运行时内核上无缝运行。
+Hello Harness 是 `hello-claude-code/`、`hello-codex/`、`hello-gemini-cli/`、`hello-opencode/` 的横向综合层。它不替代单项目源码细读，而是回答三个问题：这些 `hello-*` 文档是否真正回链源码、四个项目在相同主题上如何比较、后续应该如何补强和合并文档。
 
 ### 核心价值
 
-1. **运行时无关性**：一次编写，多处运行
-2. **可插拔架构**：压缩策略、记忆后端、存储层都可替换
-3. **保持各自优势**：不强求统一，而是提供能力契约
-4. **渐进式迁移**：可以先在一个系统实现，再移植到另一个
+1. **质量门禁**：统一覆盖度、证据密度、链路完整性、差异表达和维护性标准。
+2. **主题对齐**：用 `01-25` 共享主干保证四个项目可以按相同编号横向阅读。
+3. **证据闭环**：要求关键结论回链到 repo-root 源码路径或项目章节锚点。
+4. **合并路线**：把项目源码笔记和 Harness 横向结论分层维护，减少重复摘要。
 
 ---
 
@@ -28,269 +28,34 @@ Hello Harness 是一个可插拔的上下文管理和记忆系统设计，旨在
 
 | 文档 | 内容 | 状态 |
 |------|------|------|
+| [14-source-analysis-quality.md](14-source-analysis-quality.md) | 四套 `hello-*` 源码分析质量、证据密度和补强策略 | 完成 |
+| [15-topic-alignment-matrix.md](15-topic-alignment-matrix.md) | 四项目 `01-25` 共享主干与项目附录规则 | 完成 |
+| [16-tool-governance-comparison.md](16-tool-governance-comparison.md) | 工具注册、权限、审批、沙箱、结果回注横向对比 | 完成 |
+| [17-prompt-systems-comparison.md](17-prompt-systems-comparison.md) | Prompt 注入面、项目指令、工具 prompt 与 skill 注入对比 | 完成 |
+| [18-extension-mcp-comparison.md](18-extension-mcp-comparison.md) | Skill、Plugin、MCP、Command、Hook 扩展面分层 | 完成 |
+| [19-runtime-surface-comparison.md](19-runtime-surface-comparison.md) | 入口、传输、REPL、Bridge、Input Queue 合并视角 | 完成 |
+| [20-doc-merge-plan.md](20-doc-merge-plan.md) | 项目源码笔记与 Harness 横向结论的逐主题合并计划 | 完成 |
 | [40-pluggable-context-memory-module.md](40-pluggable-context-memory-module.md) | 统一抽象层设计、核心接口定义、适配器实现、使用示例 | ✅ 完成 |
 | [42-runtime-comparison.md](42-runtime-comparison.md) | OpenCode vs Hermes Agent 详细对比分析 | ✅ 完成 |
 | [pluggable-architecture.mermaid](pluggable-architecture.mermaid) | 分层架构可视化图表 | ✅ 完成 |
 
 ### 快速开始
 
-1. **理解问题**：阅读 [42-runtime-comparison.md](42-runtime-comparison.md) 了解两个运行时的差异
-2. **学习设计**：阅读 [40-pluggable-context-memory-module.md](40-pluggable-context-memory-module.md) 了解统一抽象层
-3. **查看架构**：查看 [pluggable-architecture.mermaid](pluggable-architecture.mermaid) 理解分层关系
+1. **先看质量标准**：阅读 [14-source-analysis-quality.md](14-source-analysis-quality.md)，确认四套 `hello-*` 文档的证据密度和剩余风险。
+2. **再看主题骨架**：阅读 [15-topic-alignment-matrix.md](15-topic-alignment-matrix.md)，按统一编号比较相同主题。
+3. **进入专题对比**：阅读 [16-tool-governance-comparison.md](16-tool-governance-comparison.md) 到 [19-runtime-surface-comparison.md](19-runtime-surface-comparison.md)，查看工具、Prompt、扩展和入口传输的横向结论。
+4. **最后看合并计划**：阅读 [20-doc-merge-plan.md](20-doc-merge-plan.md)，确认哪些内容留在项目章，哪些内容进入 Harness。
 
 ---
 
-## 核心抽象
+## 历史设计附录
 
-### 四大接口
+以下内容保留为 OpenCode/Hermes 跨运行时模块设计的历史附录，不是当前四项目源码分析质量评估的主入口。
 
-```typescript
-// 1. 上下文管理器
-interface IContextManager {
-  compileSystemPrompt(options: SystemPromptOptions): Promise<string>
-  compileMessages(history: Message[], options: CompileOptions): Promise<Message[]>
-  injectReminders(messages: Message[], context: RuntimeContext): Promise<Message[]>
-  resolveInstructions(directory: string): Promise<Instruction[]>
-}
+| 文档 | 内容 |
+| --- | --- |
+| [40-pluggable-context-memory-module.md](40-pluggable-context-memory-module.md) | 可插拔 context/memory 抽象层设计、接口和示例 |
+| [42-runtime-comparison.md](42-runtime-comparison.md) | OpenCode 与 Hermes Agent 的 runtime 对比 |
+| [pluggable-architecture.mermaid](pluggable-architecture.mermaid) | 历史模块设计的架构图 |
 
-// 2. 记忆提供者
-interface IMemoryProvider {
-  prefetch(query: string, sessionId: string): Promise<string>
-  syncTurn(userContent: string, assistantContent: string, sessionId: string): Promise<void>
-  write(target: string, content: string, metadata?: Record<string, any>): Promise<void>
-  search(query: string, options?: SearchOptions): Promise<MemoryEntry[]>
-}
-
-// 3. 压缩引擎
-interface ICompressionEngine {
-  shouldCompress(messages: Message[], tokenCount: number): boolean
-  compress(messages: Message[], options: CompressionOptions): Promise<Message[]>
-  updateTokenUsage(usage: TokenUsage): void
-}
-
-// 4. 消息存储
-interface IMessageStore {
-  createSession(sessionId: string, metadata: SessionMetadata): Promise<void>
-  writeMessage(sessionId: string, message: Message): Promise<string>
-  readMessages(sessionId: string, options?: ReadOptions): Promise<Message[]>
-  searchMessages(query: string, options?: SearchOptions): Promise<SearchResult[]>
-}
-```
-
----
-
-## 架构概览
-
-```
-┌─────────────────────────────────────────┐
-│     业务逻辑层（Runtime-Agnostic）        │
-│  自定义压缩策略 / 记忆检索算法 / 优先级规则 │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│        统一抽象层（Unified Interfaces）   │
-│  IContextManager / IMemoryProvider      │
-│  ICompressionEngine / IMessageStore     │
-└─────────────────────────────────────────┘
-                    ↓
-┌──────────────────┬──────────────────────┐
-│  OpenCode 适配器  │  Hermes Agent 适配器  │
-│  TypeScript/Bun  │  Python              │
-└──────────────────┴──────────────────────┘
-                    ↓
-┌──────────────────┬──────────────────────┐
-│  OpenCode 运行时  │  Hermes Agent 运行时  │
-└──────────────────┴──────────────────────┘
-```
-
----
-
-## 关键设计决策
-
-### 1. 消息模型
-
-**决策**：使用扁平 Message 列表作为统一接口
-
-**理由**：
-- Hermes 的扁平模型更通用
-- OpenCode 的 Part 粒度是实现细节
-- 通过 `metadata` 保留细粒度信息
-
-### 2. 上下文编译
-
-**决策**：分离 system prompt 编译和 message 编译
-
-**理由**：
-- 两个系统的 system prompt 组装逻辑差异大
-- Message 编译相对统一
-- 分离后可以独立优化
-
-### 3. 记忆系统
-
-**决策**：使用 Provider 抽象，支持多个 provider 并行
-
-**理由**：
-- Hermes 的 MemoryManager 设计成熟
-- OpenCode 可以扩展 session_diff
-- 支持外部记忆后端
-
-### 4. 压缩策略
-
-**决策**：使用 Engine 抽象，支持可插拔策略
-
-**理由**：
-- 两个系统的压缩触发机制差异大
-- Engine 抽象统一 token-based 和 agent-based
-- 支持第三方策略（LCM / DAG）
-
----
-
-## 实现路线图
-
-### Phase 1: 接口定义与验证（2 周）
-
-- [x] 完成核心接口定义
-- [x] 编写接口文档和使用示例
-- [ ] 在 OpenCode 上实现最小可行适配器
-- [ ] 验证接口设计完整性
-
-### Phase 2: OpenCode 完整适配（3 周）
-
-- [ ] 实现 OpenCodeContextManager
-- [ ] 实现 OpenCodeMemoryProvider
-- [ ] 实现 OpenCodeCompressionEngine
-- [ ] 实现 OpenCodeMessageStore
-- [ ] 编写单元测试和集成测试
-
-### Phase 3: Hermes Agent 完整适配（3 周）
-
-- [ ] 实现 HermesContextManager
-- [ ] 实现 HermesMemoryProvider
-- [ ] 实现 HermesCompressionEngine
-- [ ] 实现 HermesMessageStore
-- [ ] 编写单元测试和集成测试
-
-### Phase 4: 跨运行时验证（2 周）
-
-- [ ] 实现自定义压缩策略并在两个运行时运行
-- [ ] 实现自定义记忆提供者并在两个运行时运行
-- [ ] 性能基准测试和优化
-- [ ] 文档完善和示例代码
-
-### Phase 5: 生态扩展（持续）
-
-- [ ] 支持更多存储后端（PostgreSQL / Redis）
-- [ ] 支持更多压缩策略（DAG / Sliding Window）
-- [ ] 支持更多记忆提供者（Honcho / LangChain）
-- [ ] 提供 CLI 工具用于配置和迁移
-
----
-
-## 使用示例
-
-### 在 OpenCode 中使用
-
-```typescript
-const contextManager = new OpenCodeContextManager(session, prompt)
-const memoryProvider = new OpenCodeMemoryProvider(storage)
-const compressionEngine = new OpenCodeCompressionEngine(session)
-
-// 编译上下文
-const systemPrompt = await contextManager.compileSystemPrompt({
-  platform: 'cli',
-  userSystem: config.user.system
-})
-
-const messages = await contextManager.compileMessages(history, {
-  includeCompacted: false,
-  maxTokens: 100000
-})
-
-// 检查压缩
-if (compressionEngine.shouldCompress(messages, tokenCount)) {
-  messages = await compressionEngine.compress(messages, {
-    targetTokens: 80000,
-    strategy: 'summary'
-  })
-}
-```
-
-### 在 Hermes Agent 中使用
-
-```python
-context_manager = HermesContextManager(prompt_builder, context_engine)
-memory_provider = HermesMemoryProvider(memory_manager)
-compression_engine = HermesCompressionEngine(context_engine)
-
-# 预取记忆
-memory_context = await memory_provider.prefetch(user_message, session_id)
-
-# 编译上下文
-system_prompt = await context_manager.compile_system_prompt(
-    SystemPromptOptions(platform='telegram')
-)
-
-messages = await context_manager.compile_messages(history, CompileOptions())
-
-# 检查压缩
-if compression_engine.should_compress(messages, token_count):
-    messages = await compression_engine.compress(messages, CompressionOptions())
-```
-
----
-
-## 贡献指南
-
-### 如何贡献
-
-1. **设计反馈**：在 Issues 中讨论接口设计
-2. **实现适配器**：为 OpenCode 或 Hermes Agent 实现适配器
-3. **自定义策略**：编写跨运行时的压缩策略或记忆提供者
-4. **文档改进**：完善使用示例和最佳实践
-
-### 开发环境
-
-**OpenCode 环境**：
-```bash
-cd opencode
-bun install
-bun test
-```
-
-**Hermes Agent 环境**：
-```bash
-cd hermes-agent
-uv venv venv --python 3.11
-source venv/bin/activate
-uv pip install -e ".[all,dev]"
-python -m pytest tests/
-```
-
----
-
-## 相关资源
-
-### 上游项目
-
-- [OpenCode](https://github.com/stackblitz/opencode) - TypeScript/Bun AI coding agent
-- [Hermes Agent](https://github.com/NousResearch/hermes-agent) - Python AI agent with learning loop
-
-### 参考文档
-
-- [OpenCode Architecture](../hello-opencode/01-architecture.md)
-- [OpenCode State & Memory](../hello-opencode/04-state-session-memory.md)
-- [Hermes Agent README](../hermes-agent/README.md)
-
----
-
-## 许可证
-
-本设计文档遵循 MIT 许可证。
-
----
-
-*文档版本: 1.0*  
-*创建日期: 2026-04-17*  
-*最后更新: 2026-04-17*  
-*作者: Claude (Kiro)*
-
+当前主线只维护 `14-20` 的源码分析质量评估、主题对齐、横向对比和文档合并计划。

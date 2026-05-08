@@ -171,6 +171,19 @@ Gemini CLI 的优势是边界比较清楚、协议更分散也更可替换；代
 
 **风险与改进点**
 
+## 横向对齐补强：Bridge 包含 IDE、A2A 和 Headless 三类宿主
+
+Gemini CLI 的 bridge 不等同于 Claude Code 的远程 REPL bridge，也不等同于 OpenCode 的 Hono server contract。它更像多宿主适配层：IDE/headless/A2A server 复用 core client、tool registry 和 scheduler。
+
+| Bridge 面 | 典型源码 | 说明 |
+| --- | --- | --- |
+| Headless/non-interactive | `gemini-cli/packages/cli/src/nonInteractiveCli.ts` | 无 TUI 的单次或脚本化执行 |
+| SDK session | `gemini-cli/packages/sdk/src/session.ts` | 外部程序以库方式消费 stream |
+| A2A server | `gemini-cli/packages/a2a-server/src` | 将 Gemini CLI 能力转成远程 agent task |
+| IDE/外部集成 | `gemini-cli/packages/core/src/ide` | 与编辑器、诊断、上下文同步集成 |
+
+后续深化本章时，应把 bridge 与 `15-sdk-transport.md` 分工：`15` 讲协议和 stream，`21` 讲宿主场景和状态边界。
+
 - **A2A 仍处于实验状态**：`a2a-server.ts` 无稳定 API 保证，依赖其做生产集成风险较高。
 - **SDK 桥接无 Rate Limit 感知**：程序化调用时若外层频繁调用 `sendMessageStream()`，没有内建速率控制，会直接向 Gemini API 发送过多请求。
 - **IDE 桥接依赖 VS Code Companion extension**：非 VS Code 的 IDE 集成（如 JetBrains、Neovim）无官方支持，需要社区自行开发 MCP 适配器。

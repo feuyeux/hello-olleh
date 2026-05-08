@@ -97,8 +97,33 @@ flowchart LR
 
 ### 7.2 改进点
 - **`DiscoveredToolInvocation.execute()` 使用子进程 `spawn`**：`gemini-cli/packages/core/src/tools/tool-registry.ts:59` 通过子进程执行命令工具，存在参数边界风险，尽管 PolicyEngine 会预检，但建议对参数做二次结构化校验。
+
+## 8. 横向对齐补强：Gemini 的工具闭环是“流后调度”
+
+和 Claude Code 的流式工具执行、OpenCode 的 durable part 写回不同，Gemini CLI 的核心特征是模型流先由 `Turn.run()` 拆成事件，工具请求随后进入 `Scheduler`，完成后再作为 continuation 回注。
+
+| 阶段 | 源码入口 | 作用 |
+| --- | --- | --- |
+| 工具注册 | `gemini-cli/packages/core/src/tools/tool-registry.ts` | 注册内建、发现型和 MCP 工具 |
+| 策略判断 | `gemini-cli/packages/core/src/policy/policy-engine.ts` | 对 shell/tool 调用做 allow/deny/confirm |
+| 调度执行 | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | 管理确认、执行、结果状态 |
+| 策略适配 | `gemini-cli/packages/core/src/scheduler/policy.ts` | 将 scheduler 请求转给 PolicyEngine |
+| 回注模型 | `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts` | 完成工具后触发 continuation |
+
+横向读本章时，应优先关注 Scheduler 三阶段，而不是只看 ToolRegistry。ToolRegistry 解决“有哪些工具”，Scheduler 才解决“什么时候、以什么权限、如何执行并回注”。
 - **工具发现链路复杂**：`discoverAllTools()` 涉及文件系统扫描、MCPServer 连接、Shell 命令探测多个阶段，启动时延影响明显。
 - **输出蒸馏缺少基准**：未验证蒸馏后的压缩率与语义保真度，生产环境可能出现信息丢失。
+
+## 源码锚点补强：工具闭环要同时看 Registry、Scheduler 和 UI 回注
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `gemini-cli/packages/core/src/tools/tool-registry.ts:229` | `ToolRegistry` 主类 | 对应 Claude/OpenCode registry |
+| `gemini-cli/packages/core/src/tools/tool-registry.ts:269` | `registerTool()` 统一注册入口 | 内建、发现型、MCP 工具汇聚点 |
+| `gemini-cli/packages/core/src/tools/tool-registry.ts:635` | `getFunctionDeclarations()` 暴露给模型 | 对应 Prompt/模型请求工具声明 |
+| `gemini-cli/packages/core/src/scheduler/scheduler.ts:191` | `Scheduler.schedule()` 工具请求入口 | 对应 Codex orchestrator |
+| `gemini-cli/packages/core/src/scheduler/scheduler.ts:699` | `_execute()` 执行、审批和结果推进 | 对应 OpenCode tool part 状态机 |
+| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1822` | 完成工具后回注 continuation | Gemini 工具闭环的 UI 侧关键点 |
 
 ---
 

@@ -216,3 +216,27 @@ Claude Code **当前没有原生 LSP 集成**，主要通过：
 - **LSP 诊断异步推送导致竞争**：`publishDiagnostics` 是异步通知，文件保存后可能需要等待数百毫秒才有诊断，过早读取可能返回空诊断集。
 - **LSP server 崩溃无自动重启**：LSP server 子进程崩溃后 LspManager 无自动重启机制，后续文件操作将失去诊断反馈。
 - **多 workspace 下 LSP 作用域混乱**：monorepo 中多子项目各有 LSP root，LspManager 的 root 解析如果出错会导致补全/诊断范围不正确。
+
+## 横向对齐补强：Claude LSP 是代码理解侧通道
+
+Claude Code 的 LSP 能力应理解为工具和上下文增强侧通道，而不是 agent loop 的主状态源。
+
+| 能力 | 横向对比 |
+| --- | --- |
+| diagnostics | 强于 Gemini 文本工具，但弱于完整 IDE |
+| symbol lookup | 可辅助 Read/Edit/Agent |
+| workspace root | monorepo 风险点 |
+| crash recovery | 需要和 resilience 章节联读 |
+
+后续本章应补 LSP 结果如何进入 prompt、tool result 或 UI 状态。
+
+## 源码锚点补强：Claude 的代码理解要从诊断和 LSP 管理器看
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `claude-code/src/services/diagnosticTracking.ts:30` | 诊断跟踪命名空间 | 对应 IDE/LSP 诊断输入面 |
+| `claude-code/src/services/diagnosticTracking.ts:188` | diagnostic 状态变更处理 | 说明 Claude 也消费代码问题信号 |
+| `claude-code/src/services/diagnosticTracking.ts:352` | 诊断输出/聚合路径 | 可和 OpenCode LSP 章节对照 |
+| `claude-code/src/services/lsp/manager.ts:143` | LSP manager 连接管理 | 说明 Claude 不是纯文本工具链 |
+| `claude-code/src/services/lsp/LSPServerInstance.ts:343` | LSP server instance 生命周期 | 对应 OpenCode 的 language server runtime |
+| `claude-code/src/services/lsp/LSPServerInstance.ts:393` | LSP 请求/响应边界 | 用于补足“源码级能力边界” |

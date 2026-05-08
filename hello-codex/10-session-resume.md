@@ -151,3 +151,16 @@ Codex 的安全模型不是单一的 `sandbox=true/false`。
 - **Rollout 记录无压缩**：长会话的 rollout 记录会无限增长，大型代码库任务结束后 SQLite 文件可能数十 MB，无自动归档/压缩机制。
 - **Fork 独立快照内存占用双倍**：Fork 创建独立快照，内存中同时持有父线程和子线程的完整状态，内存压力随 Fork 数量线性增长。
 - **Resume 不恢复 pending approval**：从 rollout 恢复后，会话前一次中断时的 pending 工具调用和审批状态归零，需要模型重新推理，可能产生重复操作。
+
+## 横向对齐补强：Codex Resume 是 rollout/thread 重建
+
+Codex 的会话恢复应按 rollout reconstruction 和 thread state 读，而不是简单“加载聊天记录”。
+
+| 恢复对象 | Codex 侧含义 | 横向对比 |
+| --- | --- | --- |
+| rollout item | 可重放历史单元 | 比 Gemini JSON conversation 更结构化 |
+| thread/session | runtime 级对象 | 对应 OpenCode durable session |
+| ghost snapshot | 文件系统回滚/undo 支撑 | Codex 特有附录 `26-ghost-snapshot.md` |
+| pending approval | 当前恢复弱项 | 四项目都容易遗漏运行中状态 |
+
+后续本章应补一张 resume 后哪些状态恢复、哪些状态丢弃的表，特别是 pending tool、approval、cancel token、snapshot lifecycle。

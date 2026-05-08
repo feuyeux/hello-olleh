@@ -100,3 +100,16 @@ sequenceDiagram
 ---
 
 > 关联阅读：[01-architecture.md](./01-architecture.md) 了解扩展是如何被组装进全局 Config 的。
+
+## 7. 横向对齐补强：MCP 是工具发现层，不是独立 agent
+
+Gemini CLI 的 MCP 文档需要和 `13-skill-system.md`、`14-plugin-system.md` 分清边界：MCP 主要贡献工具、prompt/resource 能力；Skill 主要贡献模型可见指令；Plugin/配置则影响发现和信任边界。
+
+| 扩展面 | Gemini 侧关注点 | 对齐章节 |
+| --- | --- | --- |
+| MCP server | 工具发现、调用、连接状态、错误恢复 | `24-mcp-system.md` |
+| ToolRegistry | 把 MCP 工具并入统一工具集合 | `05-tool-system.md` |
+| PolicyEngine | MCP 工具执行前仍需要策略判断 | `07-error-security.md` |
+| PromptProvider | MCP 不是 system prompt 主模板来源 | `11-prompt-system.md` |
+
+横向看，Gemini CLI 的 MCP 路径比 OpenCode 少 durable state 负担，比 Codex 少 sandbox 耦合，比 Claude Code 少插件市场复杂度；后续应补足连接生命周期和失败恢复。

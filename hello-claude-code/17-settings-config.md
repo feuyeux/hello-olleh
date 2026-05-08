@@ -398,3 +398,17 @@ flowchart LR
 - **settings.json 格式版本无迁移机制**：新版本 Claude Code 增减配置字段时，旧 settings.json 无法自动迁移，可能出现未知字段警告或字段丢失。
 - **env 变量键名不一致**：部分配置通过 `ANTHROPIC_` 前缀读取，部分通过 `CLAUDE_` 前缀，前缀不统一增加记忆负担。
 - **projectSettings 无权限控制**：项目目录的任何人都可修改 `.claude/settings.json`，恶意配置可注入到所有使用该项目的用户。
+
+## 横向对齐补强：Claude 配置是多层 cascade
+
+Claude Code 的配置不是单一 settings 文件，而是 user/project/policy/plugin/managed settings 和 env/GrowthBook 的叠加。
+
+| 配置层 | 横向对比 |
+| --- | --- |
+| user/project settings | 对应 Codex config.toml、Gemini settings、OpenCode opencode config |
+| managed policy | Claude 企业治理特色 |
+| plugin settings | 与 OpenCode plugin config 类似 |
+| GrowthBook | Claude 特有远程门控 |
+| env vars | provider/auth/feature 开关 |
+
+后续本章应补优先级表和冲突案例，说明同一字段由多个层级设置时谁生效。

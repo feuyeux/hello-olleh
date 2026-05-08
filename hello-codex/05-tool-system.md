@@ -441,3 +441,27 @@ ResponseInputItem (回传给模型)
 - **沙箱能力依赖宿主 OS**：macOS Seatbelt 和 Linux seccomp 无法在对方平台使用，跨平台测试覆盖较难统一。
 - **工具输出 token 无上限**：文档未明确工具输出的 token 预算上限，超大输出可能撑爆上下文窗口。
 - **Dynamic tools 延迟加载**：`DynamicTool` 在工具调用时才解析 schema，若远程 MCP server 不可用，错误只在运行时暴露而非启动时。
+
+## 横向对齐补强：Codex 工具治理以 approval/sandbox 为中心
+
+Codex 工具系统的横向价值在于把 built-in、MCP、dynamic tools、network 和 patch 操作收束到同一套 Rust orchestration。
+
+| 层级 | Codex 侧对象 | 横向对比 |
+| --- | --- | --- |
+| 工具声明 | tool specs / dynamic tools | 对应 Claude/Gemini/OpenCode registry |
+| 执行编排 | `tools/orchestrator.rs` | 对应 Claude `runTools()`、Gemini Scheduler |
+| 审批沙箱 | `tools/sandboxing.rs` | Codex 安全核心 |
+| 输出归一 | ToolOutput / truncation | 对应 OpenCode durable part |
+
+后续本章应补“工具调用是否可并发、是否需要审批、是否进沙箱、输出如何截断”的统一矩阵。
+
+## 源码锚点补强：工具治理要同时看 Router、Orchestrator、Approval
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `codex/codex-rs/core/src/tools/spec.rs:32` | tool spec 类型定义入口 | 对应其他项目的工具 schema |
+| `codex/codex-rs/core/src/tools/context.rs:41` | `ToolInvocation` 统一调用上下文 | 对应 Claude `ToolUseContext` |
+| `codex/codex-rs/core/src/tools/orchestrator.rs:111` | orchestrator 接收审批策略和沙箱策略 | Codex 工具治理核心 |
+| `codex/codex-rs/core/src/tools/orchestrator.rs:122` | 工具执行前先走 approval | 对应 Gemini PolicyEngine / OpenCode Permission |
+| `codex/codex-rs/core/src/exec_policy.rs:234` | `create_exec_approval_requirement_for_command()` | 判断命令是否需要审批 |
+| `codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` | unified exec handler 执行入口 | 连接 sandbox 与 shell 执行 |

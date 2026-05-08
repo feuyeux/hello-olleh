@@ -1158,6 +1158,28 @@ Claude Code 反复把 prompt 设计成“弱结构化协议”。
 
 ## 16. 源码锚点索引
 
+### 16.6 横向对齐补强：Prompt 深读要显式标注证据等级
+
+Claude Code 的 Prompt 章节是四个项目里最深的一篇，但也最容易把“源码确认”和“设计解读”混在一起。后续维护建议按以下方式标注：
+
+| 内容类型 | 证据要求 |
+| --- | --- |
+| system prompt 静态 section | 指向 `src/constants/prompts.ts`、工具 `prompt.ts` 或实际拼装函数 |
+| 动态 context / memory | 指向 `src/utils/queryContext.ts`、memory/context 相关入口 |
+| tool prompt | 指向具体 `src/tools/*/prompt.ts` |
+| slash command prompt | 指向 `src/commands/*` 或 command loader |
+| agent prompt | 指向 `src/tools/AgentTool/*` 或相关 agent 配置 |
+| cache 稳定性判断 | 必须说明是源码事实、运行推断，还是 prompt engineering 解读 |
+
+横向看，Claude 的 Prompt 是产品行为控制面；Codex 是 typed runtime prompt；Gemini 是 PromptProvider 片段组合；OpenCode 是 durable user message 编译。Claude 章节应保留深度，但每个关键结论都要尽量带回源码入口。
+
+| 关键拼装点 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| query loop 请求前阶段 | `claude-code/src/query.ts:241`, `claude-code/src/query.ts:659` | `queryLoop()` 与模型调用入口 |
+| streaming tool 与 prompt 交错 | `claude-code/src/query.ts:562`, `claude-code/src/query.ts:841` | 流中发现 tool_use 并交给执行器 |
+| 工具 prompt 来源 | `claude-code/src/tools.ts:193`, `claude-code/src/tools.ts:345` | 内建工具和 MCP 工具合并为模型可见工具池 |
+| MCP OAuth prompt/认证面 | `claude-code/src/services/mcp/auth.ts:847` | MCP 认证流程会影响工具可用性 |
+
 ### 16.1 主系统提示与装配链
 
 - `src/constants/prompts.ts`

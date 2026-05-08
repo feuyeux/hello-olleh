@@ -146,3 +146,26 @@ DEBUG=1 claude --debug
 - **`--debug` 输出包含 API key 片段**：完整 API 请求 dump 可能包含 Authorization header，错误粘贴到 issue 时存在 key 泄漏风险。
 - **日志无结构化查询支持**：日志为纯文本，大量调试输出中定位特定问题依赖手动 grep，缺少如 jq 可查询的结构化格式。
 - **`SessionDumper` 访问权限无控制**：任何能执行命令的用户都可 dump session，完整历史包含可能敏感的对话内容。
+
+## 横向对齐补强：Claude 调试要覆盖反编译、TUI、MCP、Bridge
+
+Claude Code 的调试文档应特别标注反编译快照风险：源码路径和运行链路可能存在 stub、镜像和行号漂移。
+
+| 症状 | 优先检查 |
+| --- | --- |
+| query loop 异常 | `src/query.ts`、stream event |
+| 工具权限卡住 | permission hook / ToolUseContext |
+| MCP 连接失败 | MCP debug / settings policy |
+| Bridge 不同步 | bridge heartbeat / GrowthBook gate |
+| Prompt 异常 | prompt cache / dynamic boundary |
+
+后续本章应补脱敏规则，避免 debug dump 泄露 API key、transcript 或项目敏感路径。
+
+## 源码锚点补强
+
+| 调试目标 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| query loop | `claude-code/src/query.ts:241`, `claude-code/src/query.ts:307` | 主循环入口和无限循环 |
+| 工具执行 | `claude-code/src/services/tools/toolExecution.ts:337`, `claude-code/src/services/tools/toolExecution.ts:599` | 单工具生命周期 |
+| MCP debug | `claude-code/src/services/mcp/auth.ts:296`, `claude-code/src/services/mcp/auth.ts:847` | MCP debug log 与 OAuth 主流程 |
+| Bridge debug | `claude-code/src/bridge/initReplBridge.ts:397`, `claude-code/src/bridge/replBridge.ts:1532` | bridge gate 与 poll 配置 |

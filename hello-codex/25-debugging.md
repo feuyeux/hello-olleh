@@ -147,3 +147,28 @@ codex sandbox linux -- your command
 - **调试日志缺少结构化查询工具**：`RUST_LOG=debug` 输出纯文本，无内置日志聚合或查询 UI，大量日志中定位问题依赖手动 grep。
 - **`DebugDump` 包含敏感信息**：dump 输出包含完整的对话历史和 API key（若通过 env），无脱敏处理，不宜直接分享。
 - **`--replay` 依赖历史文件格式稳定**：histor 文件格式变更会导致旧 `--replay` 文件失效，影响历史 bug 复现能力。
+
+## 横向对齐补强：Codex 调试应围绕 thread event 和 Rust tracing
+
+Codex 调试路径要把 Rust tracing、thread/turn events、tool approval、sandbox failure 和 SDK JSON protocol 串起来。
+
+| 调试目标 | 推荐入口 |
+| --- | --- |
+| turn loop | `RUST_LOG` + session/turn event |
+| tool/sandbox | approval/sandboxing/orchestrator logs |
+| transport | client.rs request/stream logs |
+| resume/replay | rollout/session reconstruction |
+| SDK | JSON event protocol dump |
+
+后续本章应补“按症状定位”的表：卡在审批、工具无输出、stream 断开、resume 异常、sandbox 失败分别看哪里。
+
+## 源码锚点补强：调试应从 tracing、debug 子命令和 app-server 事件开始
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `codex/codex-rs/tui/src/lib.rs:913` | TUI tracing / `RUST_LOG` 配置 | 对应 Gemini `debugLogger` |
+| `codex/codex-rs/tui/src/lib.rs:952` | OpenTelemetry provider 初始化 | 对应可观测性章节 |
+| `codex/codex-rs/core/src/otel_init.rs:13` | OTEL provider 构造入口 | 说明 core 也有结构化遥测 |
+| `codex/codex-rs/cli/src/main.rs:201` | `debug` 子命令结构 | 调试入口不是只靠日志 |
+| `codex/codex-rs/cli/src/main.rs:1241` | `debug prompt-input` 执行入口 | 对应输入解析调试 |
+| `codex/codex-rs/app-server/src/app_server_tracing.rs:87` | app-server transport tracing 维度 | 对应 SDK/Transport 调试 |

@@ -154,6 +154,20 @@ export async function runNonInteractive(flags: CliFlags) {
 
 **风险与改进点**
 
+## 横向对齐补强：REPL 状态由 CLI hook 聚合
+
+Gemini CLI 的交互状态主要分布在 Ink UI、`useGeminiStream`、Scheduler 状态和 core client 流事件之间。它不是 OpenCode 那种 durable DB 真相，也不是 Codex 那种 Rust thread event 真相。
+
+| 状态来源 | 职责 |
+| --- | --- |
+| Ink UI state | 输入框、渲染、用户确认、进度显示 |
+| `useGeminiStream` | 把用户输入、模型流、工具结果和 continuation 串起来 |
+| Scheduler state | 管理待确认、执行中、完成/失败工具 |
+| Core client stream | 提供模型事件和 tool call 请求 |
+| LoopDetectionService | 在 turn 前和流处理中插入自愈/中断信号 |
+
+横向看，Gemini 的状态模型可读但分散；完善文档时要避免只讲 UI hook，而要把 Scheduler 和 core client 放进同一张状态图。
+
 - **Ink 渲染性能瓶颈**：长会话下 `UIStateContext` 持有大量历史消息，每次状态更新触发全量 Context re-render，无虚拟化列表机制，可能导致UI 卡顿。
 - **Headless 模式无流式输出**：非交互模式等待完整响应后才输出，对长输出场景用户体验差，无法像交互模式那样看到逐字流式结果。
 - **`useGeminiStream` 与 `UIStateContext` 双向依赖**：hook 内部同时读写 Context，组件重渲后触发 hook 重新运行可能产生循环更新，需要依赖 `useCallback`/`useMemo` 谨慎防范。

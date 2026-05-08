@@ -97,3 +97,17 @@ flowchart TD
 ---
 
 > 关联阅读：[01-architecture.md](./01-architecture.md) 了解整体结构。
+
+## 横向对齐补强：Gemini 性能要关注 core/cli 跨层往返
+
+Gemini CLI 的性能瓶颈不只在模型请求，也在 core client、Scheduler、Ink UI 和文件型会话存储之间的往返。
+
+| 路径 | 关注点 |
+| --- | --- |
+| `sendMessageStream()` | 首 token 延迟、stream event 粒度 |
+| `Scheduler` | 工具确认、执行、结果回注的等待时间 |
+| `useGeminiStream` | continuation 触发和 UI state 更新成本 |
+| JSON session store | 长会话读写、resume 文件大小 |
+| Ink render | 长历史消息导致的重绘成本 |
+
+横向看，Gemini 的优势是 TypeScript 调用链可读；短板是 durable/transaction 能力不如 OpenCode 和 Codex，长会话性能应重点补测试。

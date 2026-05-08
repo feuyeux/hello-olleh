@@ -440,3 +440,16 @@ Codex 的敏感文件保护不是靠单点过滤，而是**多层约束**：
 - **`SandboxManager::transform()` 无超时**：沙箱规则计算在工具执行关键路径上，若规则复杂度增长，可能形成隐性延迟，缺少超时或复杂度预算。
 - **`merge_permission_profiles()` 冲突语义不透明**：多个 profile 合并时，哪种策略优先、冲突如何解决，文档和代码注释都不充分，维护者难以自信地添加新 profile。
 - **`backoff()` 硬编码策略**：退避逻辑（等待时间、最大次数）写在函数体内，调整需要改代码，无法通过配置覆盖，对网络环境差或速率限制严格的场景不够灵活。
+
+## 横向对齐补强：Codex 的安全优势来自统一 runtime 闸门
+
+Codex 的错误与安全章节应突出“Rust runtime 统一治理”：shell、apply_patch、network、MCP 和 agent 工具都要回到 approval/sandbox/orchestrator。
+
+| 安全面 | Codex 侧入口 | 横向对比 |
+| --- | --- | --- |
+| 命令审批 | `codex/codex-rs/core/src/tools/sandboxing.rs` | 强于 Gemini 的策略层，接近 OpenCode Permission 但更偏 sandbox |
+| 执行编排 | `codex/codex-rs/core/src/tools/orchestrator.rs` | 对应 Claude `runTools()`、Gemini Scheduler、OpenCode tool execution |
+| patch 保护 | `codex/codex-rs/core/src/apply_patch.rs` | Codex 特有的补丁层二次拦截 |
+| network 审批 | `codex/codex-rs/core/src/tools/network_approval.rs` | 将网络访问显式纳入工具治理 |
+
+横向看，Codex 本章应作为四项目安全治理的基准章节：其他项目可以更灵活，但 Codex 的 approval/sandbox 组合最适合做安全模型对照。

@@ -254,3 +254,16 @@ shell、loop、task tool 都会监听这个 abort signal。
 - **Compaction 触发阈值硬编码**：`isOverflow()` 的 token 阈值通常是魔法数字，不同模型的上下文窗口差异大，静态阈值可能过早或过晚触发。
 - **`SessionRevert.cleanup()` 异步异常静默**：cleanup 若在会话关闭时失败，清理残留状态可能在下次启动时引发难以追踪的问题。
 - **Snapshot 存储无大小上限**：长时间运行的会话会积累大量文件快照，缺少 GC 策略，可能导致磁盘持续膨胀。
+
+## 横向对齐补强：OpenCode 安全要和 durable state 一起读
+
+OpenCode 的安全边界不只是 Permission rule。它的每次高风险动作都会留下 durable message/part、Bus event 或 snapshot 痕迹，因此可审计性强，但也带来存储和并发治理压力。
+
+| 安全面 | OpenCode 侧入口 | 横向对比 |
+| --- | --- | --- |
+| 权限规则 | `opencode/packages/opencode/src/permission` | 对应 Codex approval、Gemini PolicyEngine、Claude permission hook |
+| Agent 权限合并 | `opencode/packages/opencode/src/agent/agent.ts` | 按 agent/persona 叠加 permission |
+| Server 闸门 | `opencode/packages/opencode/src/server/routes/session.ts` | prompt、loop、permission reply 都经 server route |
+| Snapshot/Revert | `opencode/packages/opencode/src/session` | 安全恢复和 durable history 绑定 |
+
+横向看，OpenCode 的风险不在“没有记录”，而在记录太多后如何 GC、压缩和避免 SQLite 压力。

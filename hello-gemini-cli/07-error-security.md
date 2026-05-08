@@ -98,3 +98,16 @@ flowchart LR
 ---
 
 > 关联阅读：[08-performance.md](./08-performance.md) 了解安全检查对系统性能的影响。
+
+## 7. 横向对齐补强：安全边界集中在 PolicyEngine + Scheduler
+
+Gemini CLI 的安全模型不能只看 shell sandbox。模型发出的工具调用会先进入 Scheduler，再由 PolicyEngine 判断是否允许、拒绝或需要确认。
+
+| 安全面 | 源码入口 | 横向对比 |
+| --- | --- | --- |
+| 策略判断 | `gemini-cli/packages/core/src/policy/policy-engine.ts` | 对应 Codex approval policy、OpenCode Permission、Claude permission hook |
+| 调度闸门 | `gemini-cli/packages/core/src/scheduler/policy.ts` | 把 tool request 映射为策略请求 |
+| 执行状态 | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | 承担确认、执行、失败回传 |
+| 循环保护 | `gemini-cli/packages/core/src/services/loopDetectionService.ts` | Gemini 特有的 turn 前/流中 loop detection |
+
+横向看，Gemini 的安全优势是 TypeScript 路径清楚；弱点是 sandbox 强度不如 Codex，需要文档明确哪些风险由 PolicyEngine 管，哪些风险仍落在具体工具实现。

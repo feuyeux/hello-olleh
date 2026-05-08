@@ -251,3 +251,26 @@ sequenceDiagram
 - **工具名冲突处理不透明**：MCP 工具和内置工具同名时的合并/覆盖策略不明确，难以预测哪个生效。
 - **工具 schema 验证缺失**：工具参数通过 Zod schema 定义，但 MCP 工具的 schema 来自外部服务，没有运行时校验，恶意或格式错误的 schema 可能导致静默异常。
 - **`tool.execute.after` 的副作用不可撤销**：Hook 对 output/metadata 的修改在执行后无法回滚，若 hook 产生问题，调试成本较高。
+
+## 横向对齐补强：OpenCode 工具系统以 durable part 为结果中心
+
+OpenCode 的工具闭环和其他项目的关键差异是结果会写回 durable part，而不仅是下一轮 prompt 的临时 tool result。
+
+| 层级 | OpenCode 侧对象 | 横向对比 |
+| --- | --- | --- |
+| 工具注册 | `ToolRegistry.tools()` | 对应 Gemini ToolRegistry、Claude tools.ts、Codex tool specs |
+| 权限 | `Permission.evaluate()` | 对应 Codex approval、Gemini PolicyEngine |
+| 执行上下文 | `Tool.Context` | 提供 ask、session、agent、abort 等能力 |
+| 结果写回 | MessageV2/Part | OpenCode durable-first 特色 |
+
+后续本章应补 tool part 状态机表，说明 pending/running/completed/error 如何映射到 UI 和 resume。
+
+## 源码锚点补强
+
+| 主题 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| ToolRegistry | `opencode/packages/opencode/src/tool/registry.ts:36`, `opencode/packages/opencode/src/tool/registry.ts:155` | 工具注册命名空间与工具集合导出 |
+| Permission evaluate | `opencode/packages/opencode/src/permission/evaluate.ts:9`, `opencode/packages/opencode/src/permission/index.ts:133` | rule 匹配入口 |
+| Permission ask/reply | `opencode/packages/opencode/src/permission/index.ts:166`, `opencode/packages/opencode/src/permission/index.ts:203` | 交互式审批 |
+| Session permission | `opencode/packages/opencode/src/session/index.ts:423` | session 级 permission 写回 |
+| Tool in prompt loop | `opencode/packages/opencode/src/session/prompt.ts:813` | loop 中收集可用工具 |

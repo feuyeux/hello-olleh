@@ -246,3 +246,27 @@ JetBrains 如果要看同样的日志，把下面这段放到 `Arguments` / `Pro
 - **调试文档极薄（仅 4 节）**：相比系统的功能复杂度，调试文档缺少 MCP 通信调试、Tool 执行调试、durable history 查看等常用场景的具体指引。
 - **JetBrains 调试配置依赖 Bun 插件**：JetBrains 系列 IDE 对 Bun 的支持依赖第三方插件，非 Node.js 标准 attach 方式，配置复杂度高于 VS Code。
 - **无 REPL 或热重载调试模式**：修改插件或工具逻辑后需要完整重启进程，无法在会话中即时验证代码改动，调试迭代速度较慢。
+
+## 横向对齐补强：OpenCode 调试应从 durable history 开始
+
+OpenCode 的调试优势是状态可查：message、part、session、Bus/SSE 都能回到 durable history 或 server route。
+
+| 症状 | 优先检查 |
+| --- | --- |
+| prompt 未进入模型 | `SessionPrompt.prompt()` 和 message/part rows |
+| tool 卡住 | ToolRegistry / Permission / tool part |
+| stream 异常 | `SessionProcessor.process()` / provider wrapper |
+| UI 不更新 | Bus/SSE route |
+| MCP 失败 | MCP status / config / auth |
+
+后续本章应补 SQLite 查询、Bus event 订阅、MCP protocol dump 和 provider request dump 的操作步骤。
+
+## 源码锚点补强
+
+| 调试目标 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| prompt 编译 | `opencode/packages/opencode/src/session/prompt.ts:162`, `opencode/packages/opencode/src/session/prompt.ts:986` | 输入是否写成 message/part |
+| loop/stream | `opencode/packages/opencode/src/session/prompt.ts:278`, `opencode/packages/opencode/src/session/processor.ts:46` | loop 和 processor |
+| tool/permission | `opencode/packages/opencode/src/tool/registry.ts:155`, `opencode/packages/opencode/src/permission/index.ts:166` | 工具可用性和审批 |
+| SSE/UI | `opencode/packages/opencode/src/server/routes/event.ts:35`, `opencode/packages/opencode/src/server/routes/global.ts:73` | UI 是否收到事件 |
+| server prompt route | `opencode/packages/opencode/src/server/routes/session.ts:819`, `opencode/packages/opencode/src/server/routes/session.ts:851` | blocking/async prompt 路由 |

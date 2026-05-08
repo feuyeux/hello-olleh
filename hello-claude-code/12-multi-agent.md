@@ -637,3 +637,16 @@ flowchart TB
 - **`runAgent()` 是超 400 行的单函数**：子代理执行器包含了 fork 路径、worktree 路径、async 路径、foreground 路径等多条分支逻辑，复杂度集中，维护风险高。
 - **多代理无全局 context 共享**：子代理独立启动，主代理已知的工作区信息（如已读文件、已做分析）不自动共享给子代理，导致子代理可能重复探索。
 - **后台 agent 完成时无通知机制**：`registerAsyncAgent()` 注册的后台任务结束后，无 push 事件通知主会话，用户需要主动询问或轮询结果。
+
+## 横向对齐补强：Claude 多代理以 AgentTool 为核心
+
+Claude Code 的多代理是工具系统的一部分：主 agent 通过 `AgentTool` 生成子代理任务，子代理有自己的 prompt、工具上下文和执行路径。
+
+| 维度 | Claude 侧含义 | 横向对比 |
+| --- | --- | --- |
+| 创建入口 | `AgentTool` / `runAgent()` | 对应 Codex multi-agent handlers、OpenCode task tool |
+| Prompt 隔离 | 子代理 system prompt | 比 Gemini A2A 更偏本地 task delegation |
+| 工具权限 | 继承/裁剪 ToolUseContext | 需和 `05-tool-system.md` 联读 |
+| 结果回传 | tool result 进入主循环 | 仍回到 `queryLoop()` |
+
+后续应补“前台/后台/远程/worker”四种路径的状态表，避免多代理章节和 bridge 章节重叠。

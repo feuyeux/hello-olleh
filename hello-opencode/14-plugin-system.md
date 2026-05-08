@@ -599,3 +599,16 @@ OpenCode 的 plugin 体系本质上不是“可插拔附件”，而是 **runtim
 - **`trigger()` 串行且无超时**：所有 plugin hook 串行 await，慢 hook 会阻塞整个工具执行链，无超时保护。
 - **auth 覆盖可清空内建认证**：用户 plugin 的 auth hook 可以覆盖内建认证插件的结果，若 plugin 实现有误，可能导致 provider 认证完全失效。
 - **Hook 执行顺序依赖加载顺序（无优先级）**：多 plugin 注册同名 hook 时，执行顺序由加载顺序决定，无显式优先级配置，后来 plugin 静默覆盖前者结果。
+
+## 横向对齐补强：OpenCode Plugin 是运行时 Hook 系统
+
+OpenCode 的 plugin 不是只贡献命令或工具，而是可以通过 hook 改写 provider、auth、tool definition、chat params/message 等运行时行为。
+
+| Hook 面 | 影响 |
+| --- | --- |
+| auth | provider 认证来源 |
+| tool.definition | 模型可见工具声明 |
+| tool.execute.before/after | 工具执行参数和结果 |
+| chat.params/message | 模型请求和用户消息 |
+
+横向看，OpenCode plugin 最接近真正 runtime hook；因此本章应重点写 hook 顺序、超时、冲突和信任边界。

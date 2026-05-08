@@ -396,3 +396,26 @@ flowchart LR
 - **前置钩子中止语义不明确**：钩子退出非零码时是否中止工具调用未在文档中明确说明，用户需实验确认行为。
 - **钩子无沙盒隔离**：钩子以宿主进程权限执行外部命令，恶意项目 settings.json 注入的钩子可执行任意本地命令。
 - **生命周期事件无顺序保证文档化**：多个钩子注册同一事件时，执行顺序依赖注册顺序，但顺序规则未公开文档化。
+
+## 横向对齐补强：Claude Hooks 是权限和工作流之间的拦截层
+
+Claude Code 的 hooks 既可影响工具调用，也可影响 stop/continuation、plugin lifecycle 和 skill/command 工作流。
+
+| Hook 面 | 横向对比 |
+| --- | --- |
+| tool before/after | 对应 OpenCode tool hooks |
+| stop hook | Claude 特色 |
+| plugin hook | 与 plugin 系统交叉 |
+| skill hook | 与 skill 注入交叉 |
+
+后续本章应补 hook 顺序、超时、失败策略和是否进入 transcript 的表。
+
+## 源码锚点补强：Hooks 要同时看配置、快照和执行器
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `claude-code/src/utils/hooks/hooksConfigManager.ts:41` | hooks 配置管理入口 | 对应 OpenCode 插件 hook 配置 |
+| `claude-code/src/utils/hooks/hooksConfigManager.ts:92` | 配置读取/合并路径 | 说明 hooks 不是单一来源 |
+| `claude-code/src/utils/hooks/hooksConfigManager.ts:130` | hook 快照/缓存相关逻辑 | 对应运行时 policy snapshot |
+| `claude-code/src/utils/hooks/execAgentHook.ts:53` | agent hook 执行入口 | 对比 OpenCode plugin hook |
+| `claude-code/src/utils/hooks/execAgentHook.ts:108` | hook 命令执行和结果处理 | 用于分析 stop / pre-tool / post-tool 语义 |

@@ -142,3 +142,16 @@ Gemini CLI 并没有一个“按关键词自动命中 skill”的中心注册器
 - **`activate_skill` 无 token 预算检查**：激活 skill 时会把完整 skill 指令注入 `<activated_skill>` 标签，若 skill 文件过大，可能推低当前轮可用 context 窗口。
 - **技能发现无并发保护**：多个会话同时扫描技能目录时，若目录被写入，可能读到部分更新的 skill 文件。
 - **`SKILL.md` 格式无 schema 校验**：skill 文件格式纯粹约定俗成，无 lint 工具，错误格式在运行时才被发现，调试成本高。
+
+## 横向对齐补强：Gemini Skill 是“发现后按需激活”
+
+Gemini CLI 的 skill 设计重点不是全量注入，而是先暴露可用 skill，再通过 `activate_skill` 按需加载完整说明。
+
+| 阶段 | 作用 | 横向对比 |
+| --- | --- | --- |
+| 发现 | 扫描 global/extension/project skill | 对齐 Claude/OpenCode 的 skill 目录发现 |
+| 可见性提示 | 在 prompt 中列出可用 skill 名称 | 比 Claude 全谱 prompt 更节制 token |
+| 激活 | `activate_skill` 将完整 skill 注入当前上下文 | 对应 Codex skill dependency 和 OpenCode skill permission |
+| 权限 | 仍需经过工具/策略路径约束 | 不应绕过 PolicyEngine |
+
+后续完善本章时，应补 `activate_skill` 与 PromptProvider、ToolRegistry、Scheduler 的交叉链路，避免把 skill 误解成单纯 Markdown 文件。

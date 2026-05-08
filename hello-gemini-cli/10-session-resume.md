@@ -194,3 +194,16 @@ Gemini CLI 的 session 机制本质上是“conversation 文件 + resume 解析 
 - **会话存储为 JSON 文件**：JSON 文件无原子写入保证，多进程并发写同一文件时存在竞态风险，相比 SQLite 事务安全性低。
 - **无 Thread 协议抽象**：恢复语义是"续写 conversation 文件"，不是重建完整 runtime 对象图，部分工具调用上下文（如待审批、运行中 tool）无法恢复。
 - **无并发会话支持**：单进程模型，无法同时运行多个独立 session，相比 OpenCode thread 并发能力弱。
+
+## 横向对齐补强：Gemini Resume 是文件会话续写
+
+Gemini CLI 的 resume 语义更接近“选择一个历史 conversation 文件继续写”，而不是 Codex/OpenCode 的 runtime object reconstruction。
+
+| 恢复对象 | Gemini 侧含义 | 横向对比 |
+| --- | --- | --- |
+| conversation JSON | 历史消息主载体 | 简单可读，但事务性弱 |
+| checkpoint | 可选 Git 工作区恢复 | 对应 Codex ghost snapshot、OpenCode revert |
+| tool context | 多数运行中状态不恢复 | 比 durable runtime 弱 |
+| UI state | 启动后重新派生 | 不像 OpenCode 多端共享 durable projection |
+
+后续本章应明确“恢复的是历史上下文，不是运行中 turn”，避免读者期待 pending tool 或审批能无损恢复。

@@ -230,3 +230,16 @@ Subagent、command、compaction 看起来是高级能力，但在实现上都被
 - **`loop()` 函数体庞大（500+ 行）**：四条主分支和所有边界处理集中在单函数中，嵌套层级深，修改某条分支时容易引入边界效应。
 - **父 session 感知子 session 结果依赖 Bus 事件**：若 Bus 事件因进程异常丢失，父 session 可能永远等待不到子 session 完成通知，无超时机制。
 - **`hiddenAgent` 语义不透明**：内部隐藏角色的触发条件和行为未在公开文档中说明，外部 plugin 难以预测其与 `loop()` 的交互。
+
+## 横向对齐补强：OpenCode 多代理通过 task tool 回到 session loop
+
+OpenCode 的多代理不应理解为独立调度器，而是 `task` 工具创建/驱动子 session，最终仍回到 durable session loop。
+
+| 维度 | OpenCode 侧含义 | 横向对比 |
+| --- | --- | --- |
+| 子任务入口 | `tool/task.ts` | 对应 Claude AgentTool、Codex multi-agent handlers |
+| 权限 | task permission / agent permission | OpenCode 权限粒度更持久 |
+| 状态 | 子 session / Bus event | 比 Gemini A2A 更 durable |
+| 回传 | message/part 写回 | 与主 loop 同构 |
+
+后续本章应补父子 session 关系图，说明哪些状态共享、哪些隔离。

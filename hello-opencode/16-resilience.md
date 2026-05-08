@@ -242,3 +242,16 @@ shell、loop、task tool 都会监听这个 abort signal。
 - **重试策略依赖 provider 错误 header**：若 provider 返回非标准错误格式（如无 `Retry-After` header），重试策略退化为固定退避，可能与实际速率限制不匹配。
 - **Compaction 自愈是重量级操作**：触发 compact 时需要调用 LLM 生成 summary，在高负载时可能进一步加剧 API 速率限制问题。
 - **doom_loop 检测阈值不可配置**：连续错误次数超过固定阈值才标记 doom_loop，不同场景下的阈值可能需要不同设置，当前硬编码无法调整。
+
+## 横向对齐补强：OpenCode 韧性来自 durable retry + loop 分支
+
+OpenCode 的韧性机制要和 `SessionPrompt.loop()`、`SessionProcessor.process()`、provider wrapper 和 compaction 一起读。
+
+| 机制 | OpenCode 侧含义 | 横向对比 |
+| --- | --- | --- |
+| provider retry | wrapper/AI SDK 层处理 | 对应 Codex client retry |
+| overflow/compact | loop 分支触发 | 四项目共享 |
+| doom loop | processor 检测异常循环 | Gemini 也有 loop detection |
+| durable history | 崩溃后可重新推导 | OpenCode 强项 |
+
+后续本章应明确哪些错误会写 durable part，哪些只通过 Bus/Error 事件通知。

@@ -403,3 +403,27 @@ Codex 的输入层特点：
 - **命令解析与输入处理耦合**：`CommandParser` 嵌入 `InputQueue` 处理流程，难以在集成测试中独立测试命令解析逻辑。
 - **无 shell-style tab 补全**：斜杠命令无 Tab 补全，命令名需要完整输入，不如 fish/zsh 交互友好。
 - **PromptInput 附件无大小限制**：内联文件引用时未限制文件大小，大文件注入可能超出 LLM context window。
+
+## 横向对齐补强：Codex 输入队列要包含 Mailbox 和多代理消息
+
+Codex 的输入队列复杂度高于其他项目，因为普通用户 prompt、slash command、child-agent mailbox、approval response 都可能进入同一 session/turn 调度面。
+
+| 输入类型 | Codex 侧处理 | 横向对比 |
+| --- | --- | --- |
+| 用户 prompt | submission loop -> turn | 四项目共享 |
+| slash command | 解析后规范化为 submission | 对应 Gemini/OpenCode command |
+| child-agent message | mailbox / multi-agent handler | Codex 特有复杂度 |
+| approval response | 工具运行时等待用户决策 | 对应工具治理章节 |
+
+后续本章应补“哪些输入会中断当前 turn，哪些排队到下一 turn”的表，便于和 Claude/Gemini/OpenCode 对齐。
+
+## 源码锚点补强：输入命令队列从 TUI 进入 Protocol，再进 core
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `codex/codex-rs/tui/src/lib.rs:664` | TUI `run_main()` 交互入口 | 对应 Gemini `interactiveCli.tsx` |
+| `codex/codex-rs/tui/src/app.rs:1812` | `submit_thread_op()` 提交用户操作 | 输入进入 app/core 边界 |
+| `codex/codex-rs/tui/src/app_server_session.rs:397` | `turn_start()` 包装 app-server 请求 | 对应 OpenCode server route |
+| `codex/codex-rs/protocol/src/protocol.rs` | Submission/Event 协议类型 | Codex 输入队列的类型化边界 |
+| `codex/codex-rs/protocol/src/parse_command.rs` | slash / command parsing | 对应 Claude slash parser、Gemini CommandService |
+| `codex/codex-rs/core/src/codex.rs:697` | `submit_with_trace()` 生成 core submission | 连接 Agent loop |

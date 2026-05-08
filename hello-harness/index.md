@@ -25,6 +25,13 @@ title: "Harness Engineering Framework 源码分析"
     <a class="chapter-card" href="11-extensibility"><div class="chapter-number">11</div><div class="chapter-title">Extensibility 扩展性</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="12-synthesis"><div class="chapter-number">12</div><div class="chapter-title">Synthesis 综合</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="13-agent-loop"><div class="chapter-number">13</div><div class="chapter-title">Agent Loop 闭环拓扑</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="14-source-analysis-quality"><div class="chapter-number">14</div><div class="chapter-title">源码分析质量横向评估</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="15-topic-alignment-matrix"><div class="chapter-number">15</div><div class="chapter-title">篇章主题对齐矩阵</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="16-tool-governance-comparison"><div class="chapter-number">16</div><div class="chapter-title">工具治理横向对比</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="17-prompt-systems-comparison"><div class="chapter-number">17</div><div class="chapter-title">Prompt 系统横向对比</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="18-extension-mcp-comparison"><div class="chapter-number">18</div><div class="chapter-title">扩展与 MCP 横向对比</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="19-runtime-surface-comparison"><div class="chapter-number">19</div><div class="chapter-title">入口、传输与 UI 状态横向对比</div><span class="chapter-arrow">&#8599;</span></a>
+    <a class="chapter-card" href="20-doc-merge-plan"><div class="chapter-number">20</div><div class="chapter-title">文档合并执行计划</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="40-pluggable-context-memory-module"><div class="chapter-number">40</div><div class="chapter-title">可插拔 Context / Memory 模块设计</div><span class="chapter-arrow">&#8599;</span></a>
     <a class="chapter-card" href="42-runtime-comparison"><div class="chapter-number">42</div><div class="chapter-title">OpenCode 与 Hermes Runtime 对比</div><span class="chapter-arrow">&#8599;</span></a>
   </div>

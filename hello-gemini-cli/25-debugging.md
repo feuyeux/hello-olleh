@@ -136,3 +136,29 @@ npm test -- --testNamePattern="mcp"
 - **无结构化调试日志格式**：`--debug` 输出是非结构化的 `console.log`，无法被 log 聚合工具（如 Elasticsearch/Loki）直接解析，生产问题排查成本高。
 - **调试标志无持久化**：`--debug` 需要每次启动时手动添加，无法在配置文件中持久化，开发调试 session 重启后需要重新指定。
 - **MCP server 调试无专用工具**：调试 MCP server 通信（stdio 协议）需要手动解析工具日志，缺少 MCP 专用 inspector 或协议录制工具。
+
+## 横向对齐补强：Gemini 调试要覆盖 core、Scheduler、MCP、Ink 四层
+
+Gemini CLI 的问题定位经常跨 `packages/core` 和 `packages/cli`，调试文档应按层分流。
+
+| 症状 | 优先检查 |
+| --- | --- |
+| 模型流断开 | `GeminiClient.sendMessageStream()` |
+| 工具不执行 | Scheduler / PolicyEngine |
+| MCP 工具消失 | MCP manager / ToolRegistry |
+| UI 卡顿 | Ink state / `useGeminiStream` |
+| session 恢复异常 | JSON store / checkpoint |
+
+后续本章应补最小复现命令和日志开关表。
+
+## 源码锚点补强：调试入口覆盖 debug logger、core stream 和 CLI hook
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `gemini-cli/packages/core/src/utils/debugLogger.ts` | core debug logger | 对应 Codex tracing、Claude debug log |
+| `gemini-cli/packages/core/src/core/client.ts:883` | `sendMessageStream()` 流式入口 | 模型流断开优先看这里 |
+| `gemini-cli/packages/core/src/core/turn.ts:253` | `Turn.run()` 事件拆解 | 定位 tool call / content event |
+| `gemini-cli/packages/core/src/scheduler/scheduler.ts:191` | 工具调度入口 | 工具不执行优先看这里 |
+| `gemini-cli/packages/core/src/services/chatRecordingService.ts:249` | 会话录制服务 | session 恢复和复现入口 |
+| `gemini-cli/packages/cli/src/config/config.ts:171` | CLI debug 选项 | 用户可见调试开关 |
+| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1426` | UI 侧 stream event 分发 | Ink/UI 状态异常定位点 |

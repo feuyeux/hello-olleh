@@ -175,3 +175,17 @@ mode = "full-auto"  # 在 CI 中使用全自动模式
 - **配置 schema 无版本管理**：config.toml 格式变更时无兼容性检查，旧配置文件的失效字段被静默忽略。
 - **env override 键名无前缀规范**：环境变量名不够 namespaced（如 `MODEL` 可能与其他工具冲突），建议统一 `CODEX_` 前缀。
 - **CLI flag 与配置字段无双向映射文档**：用户难以知道哪些 CLI flag 对应哪个 config.toml 键，缺少自动生成的对照表。
+
+## 横向对齐补强：配置是 Rust runtime 的策略输入
+
+Codex 配置不只是 CLI 参数集合，而是影响 turn loop、approval、sandbox、AGENTS.md、compact prompt、transport 和工具集的策略输入。
+
+| 配置面 | 源码入口 | 影响 |
+| --- | --- | --- |
+| TOML/Profiles | `codex/codex-rs/core/src/config` | 模型、approval、sandbox、feature、provider |
+| AGENTS.md 限制 | `codex/codex-rs/core/src/agents_md.rs` | 项目指令搜索、合并、最大字节数 |
+| approval/sandbox | `codex/codex-rs/core/src/tools/sandboxing.rs` | 决定 shell/apply_patch/network 是否需要审批 |
+| compact prompt | `codex/codex-rs/core/src/compact.rs` | 长会话摘要策略 |
+| session 配置 | `codex/codex-rs/core/src/session/session.rs` | 每个 session 的运行时参数快照 |
+
+横向看，Codex 配置的优势是类型化和测试覆盖强；代价是很多行为需要跨 config、session、tools 三层才能看完整。

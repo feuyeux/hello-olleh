@@ -229,6 +229,18 @@ Storage.write(["session_diff", sessionID], diffs)
 
 这就是 OpenCode 当前 durable runtime 能成立的基础设施前提。
 
+## 源码锚点补强：Infra 由 SQLite、Storage、Bus、Instance 共同支撑
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `opencode/packages/opencode/src/storage/db.ts:29` | 数据库模块入口 | 对比 Claude JSONL / Gemini 文件存储 |
+| `opencode/packages/opencode/src/storage/storage.ts:13` | Storage 抽象入口 | 说明 SQLite 外还有文件存储层 |
+| `opencode/packages/opencode/src/bus/index.ts:7` | Bus 模块入口 | 对应 Claude stream events |
+| `opencode/packages/opencode/src/bus/index.ts:66` | bus publish / subscribe 核心 | 说明 UI/server 通过事件投影 |
+| `opencode/packages/opencode/src/bus/index.ts:85` | GlobalBus 相关实现 | 对应跨实例事件 |
+| `opencode/packages/opencode/src/project/instance.ts:64` | `Instance` 单例上下文 | 解释请求如何落到工作目录 |
+| `opencode/packages/opencode/src/control-plane/workspace-context.ts:10` | workspace context | 说明 server/control-plane 还有工作区维度 |
+
 
 ---
 

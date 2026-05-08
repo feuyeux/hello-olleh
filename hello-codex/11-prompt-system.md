@@ -162,3 +162,27 @@ pub fn all_tools(config: &Config) -> Vec<Tool> {
 - **`AGENTS.md` 层叠规则仅做追加合并**：不同层的 instructions 简单拼接，若全局和项目 `AGENTS.md` 存在语义冲突，模型需要自行判断优先级，行为不确定。
 - **工具声明无 token 预算隔离**：工具描述随注册工具数量增长，无独立的 tool-declarations token budget，大量 MCP 工具时可能显著压缩可用 context。
 - **无 Prompt 版本管理**：`AGENTS.md` 内容变更对会话历史的影响不可知，session resume 时使用新 prompt 可能与历史对话产生语义不连贯。
+
+## 横向对齐补强：Prompt 在 Codex 生命周期中的位置
+
+为了和 Claude Code、Gemini CLI、OpenCode 的 `11-prompt-system.md` 对齐，本章应把 Codex Prompt 理解为 `run_turn()` 内部的“采样请求输入编译层”，而不是独立模板系统。
+
+| 生命周期阶段 | Codex 侧入口 | 作用 | 横向对比 |
+| --- | --- | --- | --- |
+| 项目指令发现 | `codex/codex-rs/core/src/agents_md.rs` | 发现并合并 `AGENTS.md` / `AGENTS.override.md` | 对应 Claude 的 `CLAUDE.md`、Gemini 的 `GEMINI.md`、OpenCode 的 config/command prompt |
+| Turn 输入编译 | `codex/codex-rs/core/src/session/turn.rs` | 把 history、用户输入、developer sections、工具声明合成 `Prompt` | 对应 Claude 的 `query()` 请求前组装和 Gemini 的 `PromptProvider` |
+| 历史裁剪 | `codex/codex-rs/core/src/context_manager/history.rs` | 决定哪些 thread item 进入模型输入 | 对应 OpenCode 的 durable history 重建和 Claude 的 compaction |
+| 压缩提示词 | `codex/codex-rs/core/src/compact.rs` | 使用专用 compact prompt 生成摘要 | 对应四项目共同的长会话治理层 |
+| 客户端请求 | `codex/codex-rs/core/src/client.rs` | 将 `Prompt` 转成 Responses/WebSocket 请求 | 对应 Gemini 的 `sendMessageStream()` 和 OpenCode 的 `LLM.stream()` |
+
+**补强后的判断**：Codex 的 Prompt 系统强项不在“大段系统提示词资产”，而在 Rust runtime 把指令、历史、工具、记忆和审批上下文收束成一个类型化 `Prompt`。后续若继续深化本章，优先补 `build_prompt()` 的字段级解释，以及 `Prompt.input`、`base_instructions`、`tools`、`parallel_tool_calls` 如何影响采样请求。
+
+## 源码锚点补强：Prompt 是 turn 内部的类型化请求编译层
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `codex/codex-rs/core/src/agents_md.rs` | 项目指令发现与合并 | 对应 Claude `CLAUDE.md`、Gemini `GEMINI.md` |
+| `codex/codex-rs/core/src/session/turn.rs` | turn 输入与历史编译 | 对应 OpenCode `MessageV2.toModelMessages()` |
+| `codex/codex-rs/core/src/context_manager/history.rs` | 历史裁剪和上下文选择 | 对应四项目 compaction 前置层 |
+| `codex/codex-rs/core/src/compact.rs` | compact prompt 和摘要生成 | 长会话治理共同主题 |
+| `codex/codex-rs/core/src/client.rs:1485` | `ModelClientSession::stream()` 发出最终模型请求 | 说明 Prompt 最终进入 Responses/WebSocket |

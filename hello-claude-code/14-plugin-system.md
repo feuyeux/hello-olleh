@@ -191,3 +191,17 @@ Plugin 可以在工具调用生命周期中注入逻辑：
 - **McpHub 为单例**：单例模式下 MCP server 状态跨 session 共享，一个 session 的重置不会断开 server 连接，可能影响其他 session。
 - **子进程 MCP server 无泄漏保护**：进程异常退出时 stdio 模式的子进程 MCP server 可能成为孤儿进程，无 cleanup hook。
 - **MCP 工具 schema 无差异检测**：MCP server 更新工具 schema 后 Claude Code 无法感知变更，已缓存的旧 schema 可能导致调用失败。
+
+## 横向对齐补强：Claude Plugin 同时影响设置、Hook 和 MCP
+
+Claude Code 的 plugin 不是单纯命令扩展。它可以影响 settings、hooks、commands、skills、MCP server，最终改变 prompt 和工具池。
+
+| 插件影响面 | 对齐章节 |
+| --- | --- |
+| settings cascade | `17-settings-config.md` |
+| hook matcher | `19-hooks-lifecycle.md` |
+| command/skill | `13-skill-system.md`, `23-input-command-queue.md` |
+| MCP server | `24-mcp-system.md` |
+| tool availability | `05-tool-system.md` |
+
+横向看，Claude 的 plugin 深度强于 Gemini，接近 OpenCode plugin hook，但需要更明确的信任和冲突策略。

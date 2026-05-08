@@ -181,3 +181,16 @@ Skills 是 Claude Code 扩展体系中门槛最低的一层：不需要编写代
 - **skill 内容直接注入 system prompt**：CLAUDE.md 内容未经 sanitization 注入 prompt，恶意或格式错误的 CLAUDE.md 可产生 prompt injection 攻击。
 - **多层合并策略不透明**：用户难以知道最终 system prompt 中 skill 内容的精确顺序和覆盖规则，调试时需打印完整 prompt。
 - **`@import` 循环引用无检测**：CLAUDE.md A import B，B import A 时可能导致无限循环或堆栈溢出，缺少循环检测。
+
+## 横向对齐补强：Claude Skill 是 prompt 能力层
+
+Claude 的 Skill 更接近可复用 prompt/command 能力包，而不是 Codex 那种 runtime dependency graph。
+
+| 阶段 | Claude 侧含义 | 横向对比 |
+| --- | --- | --- |
+| 发现 | 用户/项目/插件 skill 目录 | 对应 Gemini/OpenCode skill discovery |
+| 注入 | system prompt 或 tool prompt | Claude 更容易消耗 token |
+| 调用 | SkillTool / slash command | 对应 Gemini `activate_skill` |
+| 清理 | clear caches / skill watcher | Claude 有动态变更检测需求 |
+
+后续本章应明确 skill 与 CLAUDE.md、slash command、plugin command 的边界。

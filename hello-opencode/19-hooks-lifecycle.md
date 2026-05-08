@@ -140,3 +140,16 @@ OpenCode 的生命周期完全由 Effect-ts 类型系统保证，资源泄漏在
 - **Effect-ts 学习曲线陡峭**：`Layer/Effect/Scope` 的心智模型与传统 OOP 差异大，贡献者上手成本高，生命周期 debug 信息可读性差。
 - **生命周期 hook 无标准顺序文档**：`InstanceBootstrap()` 中各 service 的注册顺序隐式决定了生命周期启动/关闭顺序，无公开的依赖图文档。
 - **Bus 事件无优先级**：订阅者接收同一事件的顺序依赖注册顺序，若两个 subscriber 修改同一状态，后注册者静默覆盖前者，无冲突检测。
+
+## 横向对齐补强：OpenCode 生命周期由 Effect Layer 和 Bus 共同表达
+
+OpenCode 的 lifecycle 不只是 plugin hook。Effect-ts Layer/Scope 决定服务启动和释放，Bus 决定运行时事件传播。
+
+| 生命周期面 | 说明 |
+| --- | --- |
+| Effect Layer | service dependency 和资源生命周期 |
+| InstanceBootstrap | workspace/session 级装配 |
+| Plugin trigger | 运行时扩展 hook |
+| Bus event | 状态投影和订阅 |
+
+横向看，OpenCode lifecycle 最工程化，但学习曲线最高；文档应补依赖图和关闭顺序。

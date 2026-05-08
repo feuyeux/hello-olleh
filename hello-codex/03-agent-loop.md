@@ -914,3 +914,14 @@ if retries >= max_retries && client_session.try_switch_fallback_transport(...) {
 - **`needs_follow_up` 单标志位**：下一轮是否继续推理完全由 `bool needs_follow_up` 决定，没有携带结构化的"退出原因"，复杂决策逻辑难以扩展。
 - **ghost snapshot 与 cancel token 生命周期耦合**：`maybe_start_ghost_snapshot` 接收的 `child_token` 生命周期与 turn 挂钩，若 turn 异常提前终止，snapshot 清理依赖 cancel 传播的正确性，存在遗漏风险。
 - **并发工具结果缺乏超时保护**：`FuturesOrdered` 会一直等待最慢的工具，如果某个工具挂起，整个 turn 会阻塞直到外层 cancel 触发。
+
+## 源码锚点补强：Codex Loop 是 core submission 到 sampling 的四层闭环
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `codex/codex-rs/core/src/codex.rs:4289` | `submission_loop()` 消费 core submission 队列 | 对应 Claude `query()`、OpenCode `loop()` |
+| `codex/codex-rs/core/src/codex.rs:5584` | `run_turn()` 单轮控制器 | 对应 Gemini `processTurn()` |
+| `codex/codex-rs/core/src/codex.rs:6363` | `run_sampling_request()` 组装并发起模型请求 | 对应 OpenCode `LLM.stream()` 调用前 |
+| `codex/codex-rs/core/src/codex.rs:7176` | `try_run_sampling_request()` 消费 streaming 响应并调度工具 | 对应 Gemini `Turn.run()` |
+| `codex/codex-rs/tui/src/app.rs:1812` | TUI 把用户操作转成 thread op | 说明 UI 不是直接进入模型 |
+| `codex/codex-rs/app-server/src/codex_message_processor.rs:2157` | app-server 将请求提交到 core | 连接 SDK/transport 章节 |

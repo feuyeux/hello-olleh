@@ -349,3 +349,16 @@ transcript 不是“顺便记一下”，而是会直接影响：
 - **无性能基准（benchmark）**：当前代码库没有系统化的流式吞吐量和首屏渲染延迟 benchmark，性能改进无实测依据。
 - **`compact` 触发时机非显而易见**：compact 由 token 阈值触发，阈值调整会直接影响用户感知的响应速度，当前没有运行时可观测指标暴露 compact 频率。
 - **prefetch 无幂等保护**：若用户极快地多次触发会话，多个并发的 prefetch 可能产生重复请求，没有 dedup 机制。
+
+## 横向对齐补强：Claude 性能重点在 prompt cache 和 React TUI
+
+Claude Code 的性能分析要围绕 prompt cache 稳定性、context compaction、streaming tool execution 和 React/Ink 渲染成本展开。
+
+| 路径 | Claude 侧关注点 | 横向对比 |
+| --- | --- | --- |
+| Prompt cache | dynamic boundary / cache TTL | 比 Gemini/Codex 更重视缓存稳定性 |
+| Streaming tool | 工具可边流边执行 | 与 Gemini 流后调度不同 |
+| React TUI | 高频 token 触发渲染 | 对应 Gemini Ink、Codex Ratatui |
+| Compaction | token 阈值和摘要质量 | 四项目共享长会话瓶颈 |
+
+后续应补基准：首 token 延迟、工具并发耗时、React 渲染延迟、compact 频率。

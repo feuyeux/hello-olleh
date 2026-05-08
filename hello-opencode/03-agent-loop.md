@@ -460,5 +460,28 @@ if (part.state.status === "completed") {
 
 - **Effect-ts 学习曲线高**：整个 loop 依赖 Effect fiber + Layer 的依赖注入体系，新贡献者上手成本较高，错误栈的可读性也比 Promise 链差。
 - **SQLite 写入为关键路径**：流事件实时写库增加了 I/O 延迟；在写密集场景（高频 token 流）下，若磁盘 I/O 成为瓶颈，会直接影响 LLM 响应呈现速度。
+
+## 横向对齐补强：本章定位为总览，深挖分流到 27-29
+
+为避免 OpenCode 文档和其他项目横向阅读时篇幅失衡，`03-agent-loop.md` 只保留主链路总览：`SessionPrompt.prompt()`、`SessionPrompt.loop()`、`SessionProcessor.process()`、`LLM.stream()`、durable part 写回。
+
+| 深挖主题 | 迁移/保留位置 |
+| --- | --- |
+| loop 状态机、历史回放、并发闸门 | `27-session-loop.md` |
+| AI SDK fullStream、part 状态机、doom loop | `28-stream-processor.md` |
+| provider、system prompt、工具集、模型参数晚绑定 | `29-llm-request.md` |
+| 对象模型、SQLite、Storage、Bus | `30-model.md`、`31-infra.md` |
+
+横向比较时，本章对应其他项目的 `03-agent-loop.md`；OpenCode 特有的 `27-31` 是附录深挖，不应再被视为额外主干章节。
+
+## 源码锚点补强
+
+| 阶段 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| Prompt 入口 | `opencode/packages/opencode/src/session/prompt.ts:162` | `SessionPrompt.prompt()` |
+| Loop 入口 | `opencode/packages/opencode/src/session/prompt.ts:278` | `SessionPrompt.loop()` |
+| Processor | `opencode/packages/opencode/src/session/processor.ts:46`, `opencode/packages/opencode/src/session/processor.ts:54` | fullStream 处理和 `LLM.stream()` 调用 |
+| LLM 请求 | `opencode/packages/opencode/src/session/prompt.ts:2013` | prompt 侧直接调用 `LLM.stream()` 的路径 |
+| Server route | `opencode/packages/opencode/src/server/routes/session.ts:819`, `opencode/packages/opencode/src/server/routes/session.ts:544` | HTTP prompt 与 loop 触发点 |
 - **`loop()` 是单一大函数**：`prompt.ts:242-756` 超过 500 行，承载了 subtask / compaction / overflow / normal round 四条分支，测试和局部修改的代价较高。
 - **工具结果缺乏结构化错误分类**：工具执行失败后只有字符串错误信息，模型无法据此区分"工具崩溃"还是"工具返回无效结果"，影响 loop 的自愈路径。

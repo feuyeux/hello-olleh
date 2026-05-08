@@ -228,3 +228,16 @@ Codex 的韧性机制并不只停留在“重试 + 沙箱”：
 - **重试最大次数硬编码**：默认重试次数内嵌代码，用户无法通过配置文件调整，高延迟环境可能需要更多重试。
 - **checkpoint 恢复路径未充分测试**：崩溃恢复逻辑分支在正常运行路径外，测试覆盖率低，实际崩溃时行为不可预期。
 - **rate limit 状态无跨进程共享**：`RateLimitState` 存在内存中，多个 codex 实例共享同一 API key 时无法协调限流窗口。
+
+## 横向对齐补强：Codex 韧性覆盖 client、turn 和 filesystem 三层
+
+Codex 韧性不只包括 LLM retry，也包括 sandbox fallback、ghost snapshot、compact 和 rollout reconstruction。
+
+| 层级 | Codex 侧机制 | 横向对比 |
+| --- | --- | --- |
+| Client | retry/backoff/transport fallback | 对应 Gemini/OpenCode provider retry |
+| Turn | compact、needs_follow_up、cancel token | 对应 Claude query state |
+| Tools | sandbox retry / approval escalation | Codex 强项 |
+| Filesystem | ghost snapshot / undo | Codex 特有 |
+
+后续本章应补“异常发生后是否能继续同一 turn、是否需要新 turn、是否能回滚文件”的表。

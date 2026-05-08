@@ -488,3 +488,27 @@ Codex 的 MCP 系统特点：
 - **MCP server 健康检查间隔过长**：server 崩溃后 codex 可能在下一个健康检查周期前仍尝试调用，导致工具调用失败。
 - **stdio 传输无消息边界处理**：依赖 newline 分隔 JSON-RPC 消息，server 输出截断时解析器行为未定义。
 - **多 MCP server 并发调用无隔离**：不同 server 的工具调用共享同一 tokio runtime，一个 server 阻塞可能影响其他 server 的响应。
+
+## 横向对齐补强：MCP 必须和 approval/sandbox 一起读
+
+Codex 的 MCP 不只是“连接外部 server 并发现工具”。真正的横向差异在于 MCP 工具进入同一套 Rust tool orchestration 后，会被 approval policy、sandbox、network approval 和 output truncation 统一治理。
+
+| 问题 | Codex 侧落点 |
+| --- | --- |
+| MCP 工具如何进入模型可见列表 | turn 前构建 tool specs，与内建工具一起进入 prompt/request |
+| MCP 调用是否绕过审批 | 不应绕过；需要回到 `tools/orchestrator.rs` 和 `tools/sandboxing.rs` 判断 |
+| MCP 结果如何回注 | 转为 tool output/thread item，进入下一轮 prompt |
+| MCP dependency 如何影响 session | `state/session.rs` 记录 dependency prompt 状态 |
+
+横向看，Codex MCP 的优势是治理统一；短板是读者需要跨 `06`、`13`、`14`、`24` 和工具章节才能看完整闭环。后续文档应在 `24` 中补一张 MCP tool call 到 `run_turn()` 的调用链图。
+
+## 源码锚点补强：MCP 必须串起配置、连接、工具调用和审批
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `codex/codex-rs/config/src/mcp_types.rs:118` | `McpServerConfig` 配置结构 | 对应 Claude/Gemini MCP server config |
+| `codex/codex-rs/core/src/mcp_connection_manager.rs:183` | MCP server 启动/连接管理 | 连接扩展与运行时 |
+| `codex/codex-rs/core/src/mcp_connection_manager.rs:579` | MCP 工具/资源状态聚合 | 对应 OpenCode MCP status |
+| `codex/codex-rs/core/src/mcp_tool_call.rs` | MCP tool call 执行路径 | 对应 Gemini `mcp-client.ts` |
+| `codex/codex-rs/core/src/tools/handlers/mcp.rs` | MCP tool handler 入口 | 说明 MCP 最终进入工具治理 |
+| `codex/codex-rs/protocol/src/mcp.rs` | MCP 协议类型 | 对应 app-server / protocol 暴露面 |

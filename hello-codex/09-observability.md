@@ -198,3 +198,16 @@ Codex 的可观测性相比 OpenCode 较为基础：
 - **JS 层日志与 Rust 层 tracing 不统一**：JS 侧使用 `console.log`，Rust 侧使用 `tracing`，跨边界的调试需要同时看两套日志，关联困难。
 - **`tracing` 输出默认不暴露给用户**：开发者需主动配置 subscriber 才能看到 trace 输出，默认 release 构建中 trace 信息被编译优化掉，生产调试能力弱。
 - **无全局 Trace ID**：单次请求跨越 JS→Rust 边界、submission_loop、多工具并发时，没有统一的 trace_id 关联所有事件，多层调试需手动对齐时间戳。
+
+## 横向对齐补强：Codex 需要统一 Rust event 与外部 SDK 日志
+
+Codex 的可观测性强在 runtime event 结构，弱在跨边界关联。后续应围绕 trace id 统一 CLI/TUI/app-server/SDK。
+
+| 信号 | Codex 侧来源 | 对齐对象 |
+| --- | --- | --- |
+| thread event | Rust session/thread state | OpenCode durable event、Claude stream event |
+| tracing | Rust core internal diagnostics | Gemini console/log service |
+| approval event | tools/sandboxing/orchestrator | 四项目工具治理共用指标 |
+| SDK event | JSON protocol consumer | bridge/transport 横向章节 |
+
+横向看，Codex 最需要补“跨协议相关性”：一次用户 prompt 应能串起 input、turn、LLM request、tool call、approval、final event。

@@ -137,3 +137,16 @@ Codex 的这种设计体现了"配置即代码"（Configuration as Code）的哲
 - **skill 无结构校验**：AGENTS.md 为自由文本，无法在加载时验证规则格式是否被 LLM 正确理解，误配置无提示。
 - **skill 内容直接注入 prompt**：skill 内容未经 sanitization 直接追加到 system prompt，恶意项目的 AGENTS.md 可执行 prompt injection。
 - **hot-reload 作用域有限**：skill 文件变化后重载只影响新 session，已运行的 session 无法动态更新 skill 集。
+
+## 横向对齐补强：Codex Skill 更接近“运行时依赖声明”
+
+Codex 的 skill 不应只按 `AGENTS.md` 文本注入理解。它同时影响 prompt、MCP dependency、tool availability 和 turn 前置准备。
+
+| 关注点 | Codex 源码入口 | 横向对齐 |
+| --- | --- | --- |
+| 指令来源 | `codex/codex-rs/core/src/agents_md.rs` | 对齐 Claude/Gemini 的项目指令文件 |
+| Skill dependency | `codex/codex-rs/core/src/session/turn.rs` | 在 turn 前解析并注入依赖 |
+| MCP 依赖提示 | `codex/codex-rs/core/src/mcp_skill_dependencies.rs` | Codex 特有：skill 可触发 MCP 依赖安装/提示 |
+| 状态记忆 | `codex/codex-rs/core/src/state/session.rs` | 记录已提示过的 MCP dependency，避免重复打扰 |
+
+横向看，Claude/Gemini/OpenCode 的 skill 更像模型可见能力说明；Codex 的 skill 更接近运行时 dependency graph 的一部分，因此文档应补充“skill 如何改变工具集合和依赖提示”，而不只讲 Markdown 注入。

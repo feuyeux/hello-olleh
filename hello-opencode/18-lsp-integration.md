@@ -632,3 +632,16 @@ OpenCode 当前对 LSP 的使用方式，可以压成四句话：
 - **符号能力被显式限制**：注释中明确标注符号能力"用得很克制（experimental）"，说明 LSP 符号查询的稳定性和精确度存在未解问题，依赖此功能的高级分析不可靠。
 - **Root 发现成功率影响 LSP 效果**：`root.discover()` 失败时 LSP server 以当前目录为 root，可能导致 monorepo 场景下 LSP 上下文不准确（如 Go workspace 跨模块引用失配）。
 - **多语言 LSP server 进程管理开销大**：大型 monorepo 可能启动 3-5 个 LSP server 进程，无进程池或资源上限，可能在内存受限环境下造成资源竞争。
+
+## 横向对齐补强：OpenCode LSP 和 prompt part 编译相连
+
+OpenCode 的 LSP 不只是独立工具。`SessionPrompt.prompt()` 处理 file URL start/end 时可能借助 LSP symbol range 做补偿，因此 LSP 会影响输入上下文编译质量。
+
+| 能力 | OpenCode 侧意义 | 横向对比 |
+| --- | --- | --- |
+| diagnostics | Bus event / LSP client | 强于 Gemini 文本工具 |
+| symbol range | prompt file part 补偿 | OpenCode 特色 |
+| root discovery | monorepo 准确性 | 四项目共同难点 |
+| lazy startup | 性能与准确性折中 | 对应性能章节 |
+
+后续本章应补 LSP 失败时 prompt/file part 如何降级。

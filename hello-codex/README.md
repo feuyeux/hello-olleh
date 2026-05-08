@@ -29,6 +29,8 @@ title: "Codex 源码分析 README"
 
 ## 章节索引
 
+> 横向对齐规则：`01-25` 是四个 AI Coding CLI 目录共享的主题主干；Codex 特有的 `26-ghost-snapshot.md` 作为附录保留。跨项目比较统一维护在 [`../hello-harness/15-topic-alignment-matrix.md`](../hello-harness/15-topic-alignment-matrix.md)。
+
 | 文件 | 主题 | 阅读目的 |
 | --- | --- | --- |
 | [01-architecture.md](./01-architecture.md) | 架构全景 | 判断 Rust/TS 边界、crate 拓扑和核心抽象 |

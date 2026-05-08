@@ -329,3 +329,28 @@ Gemini CLI 的输入层特点：
 - **消息队列无限速机制**：若用户快速粘贴大量输入，队列可能积压过多消息，当前无 backpressure 或输入速率限制。
 - **Slash 命令实现分散**：各 slash command 的 handler 分布在多个文件中，没有统一的 command package 边界，维护时查找成本高。
 - **CommandService 无命令超时**：长时间运行的命令（如需要等待 MCP server 响应的命令）没有超时，会无限阻塞 CLI。
+
+## 横向对齐补强：Gemini 输入队列核心在 UI hook 到 continuation
+
+Gemini CLI 的输入链路要把自然语言、slash command、工具确认和 continuation 统一看：工具完成后会触发下一次 `sendMessageStream()`，因此“输入队列”不只来自用户键盘。
+
+| 输入类型 | Gemini 侧处理 | 横向对比 |
+| --- | --- | --- |
+| 用户 prompt | Ink UI / `useGeminiStream` | 对应 Claude REPL、Codex TUI、OpenCode server route |
+| slash command | command service/handler | 对应 OpenCode command route |
+| tool confirmation | Scheduler state | 对应 PolicyEngine 安全章节 |
+| continuation | 工具结果回注后再次调用 stream | Gemini 相比 OpenCode durable loop 的关键差异 |
+
+后续本章应补 UI hook、Scheduler、CommandService 三者的调用关系，避免把队列只写成命令解析。
+
+## 源码锚点补强：输入队列跨 CommandService、UI hook 和 Scheduler
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `gemini-cli/packages/cli/src/interactiveCli.tsx:154` | 交互式 CLI 入口 | 对应 Codex TUI |
+| `gemini-cli/packages/cli/src/services/CommandService.ts:23` | `CommandService` 命令加载服务 | 对应 Claude slash command registry |
+| `gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 忙碌时消息队列 | 对应 Claude queued command |
+| `gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash command 执行路径 | 对应 OpenCode command |
+| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:908` | `prepareQueryForGemini()` 处理用户输入 | 输入进入模型前的编译点 |
+| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1551` | `submitQuery()` 发起模型流 | 连接 agent loop |
+| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1822` | 工具完成后 continuation 回注 | 说明队列不只来自键盘 |

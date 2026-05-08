@@ -414,3 +414,26 @@ flowchart TB
 - **`loadSkillsDir()` 无并发保护**：扫描目录时若被多个 session 并发调用，在文件系统侧无锁机制，可能读取到部分写入的 skill 文件。
 - **MCP server 连接无全局超时限制**：`connectMcpServer()` 等待外部进程 stdio 握手，若 server 启动慢，启动时会无限等待，影响整体启动延迟。
 - **`processSkillPrompt()` 无 token 预算**：skill 注入到 system prompt 不检查 total token，大量 skill 激活时可能超出 context 限制，导致静默截断。
+
+## 横向对齐补强：Claude 扩展面最宽，必须分层阅读
+
+Claude Code 的扩展面同时包含 Skill、Plugin、MCP、Hooks、slash command 和配置策略。横向比较时，`06` 应只做总览，细节分流到 `13`、`14`、`24`。
+
+| 扩展层 | Claude 侧对象 | 对齐章节 |
+| --- | --- | --- |
+| 指令层 | Skill / CLAUDE.md | `13-skill-system.md` |
+| 运行时插件 | Plugin / hooks | `14-plugin-system.md`, `19-hooks-lifecycle.md` |
+| 外部工具 | MCP server/tool/resource | `24-mcp-system.md` |
+| 企业策略 | managed settings / allowlist | `17-settings-config.md`, `07-error-security.md` |
+
+横向看，Claude 的优势是扩展能力丰富；风险是扩展路径多，文档必须避免把 MCP、Plugin、Skill 混成同一层。
+
+## 源码锚点补强
+
+| 主题 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| headless plugin/MCP 刷新 | `claude-code/src/cli/print.ts:1707`, `claude-code/src/cli/print.ts:1795` | headless 模式安装 plugin 并同步 MCP diff |
+| plugin 热刷新 | `claude-code/src/cli/print.ts:1763`, `claude-code/src/cli/print.ts:1917` | refresh 与 hook hot reload |
+| MCP OAuth | `claude-code/src/services/mcp/auth.ts:847` | `performMCPOAuthFlow()` |
+| MCP XAA | `claude-code/src/services/mcp/auth.ts:664` | cross-app access 认证 |
+| settings 中 MCP/Plugin schema | `claude-code/src/utils/settings/types.ts:112`, `claude-code/src/utils/settings/types.ts:559` | MCP policy 与 enabled plugin 配置 |

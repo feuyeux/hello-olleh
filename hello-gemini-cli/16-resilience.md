@@ -185,3 +185,16 @@ Gemini CLI 的另一个现实风险不是“报错”，而是上下文逐轮膨
 - **重试与压缩行为对用户不透明**：哪些操作触发了重试、触发了压缩，终端 UI 没有明确信号，用户不知道系统在"处于韧性状态"还是"正常运行"。
 - **循环检测无法覆盖跨 session 的重复**：`LoopDetectionService` 仅在单次运行内有效，跨会话的相同任务陷入循环无法被检测到。
 - **Checkpoint 恢复语义不完整**：Git checkpoint 恢复的是工作区文件变更，不能恢复 tool call 状态、pending approval、内存中的运行时对象图。
+
+## 横向对齐补强：Gemini 韧性核心是 loop detection + checkpoint
+
+Gemini CLI 的韧性应围绕三类机制写：模型/stream 错误恢复、LoopDetectionService、Git checkpoint。
+
+| 机制 | 横向对比 |
+| --- | --- |
+| LoopDetectionService | Gemini 特色，OpenCode 有 doom loop 类似机制 |
+| checkpoint | 对应 Codex ghost snapshot、OpenCode revert |
+| retry | 对应 Codex/OpenCode provider retry |
+| policy confirmation | 工具安全韧性 |
+
+后续本章应明确 checkpoint 恢复的是文件，不是完整 runtime 状态。

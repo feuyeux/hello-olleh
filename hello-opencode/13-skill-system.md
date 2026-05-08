@@ -330,3 +330,16 @@ OpenCode 当前的 Skill 系统可以压成四句话：
 - **远端 skill 无签名验证**：从 URL 下载的 skill pack 没有签名校验，存在供应链攻击风险，恶意 index 可以注入任意 skill 指令。
 - **`skill` tool 无 token 预算检查**：加载完整 skill 文件注入 context 时无大小限制，超大 skill 指令文件会显著压缩可用 context 窗口。
 - **Skill 缓存无过期机制**：远端 skill 下载后无 TTL 或版本校验，缓存内容不会自动更新除非手动清理。
+
+## 横向对齐补强：OpenCode Skill 受 Permission 管理
+
+OpenCode 的 skill 和 Claude/Gemini 的最大差异是会进入 Permission 评估路径；skill 是否可见和可用不是纯 prompt 问题。
+
+| 阶段 | OpenCode 侧含义 | 横向对比 |
+| --- | --- | --- |
+| 发现 | `skill/index.ts` | 对应 Claude/Gemini skill discovery |
+| 过滤 | `Permission.evaluate("skill", ...)` | OpenCode 特色 |
+| 注入 | prompt/tool context | 与 durable prompt 编译相关 |
+| 远端来源 | skill pack / URL | 供应链风险高于本地 Markdown |
+
+后续本章应补 skill 来源、权限、缓存、token budget 四张小表。

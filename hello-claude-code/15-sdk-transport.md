@@ -832,3 +832,25 @@ flowchart LR
 - **SDK 版本升级可能引入 breaking change**：`@anthropic-ai/sdk` 未锁定 patch 版本，次版本升级可能导致流事件格式变化。
 - **重试逻辑依赖 SDK 内置策略**：SDK 内置重试参数（maxRetries）固定，高延迟/高波动环境可能需要更激进的退避策略，但无法从外部覆盖。
 - **stream 取消信号不统一**：ApiStream 的取消机制（AbortController）与 SDK 内部重试的取消时机存在竞态，可能导致取消后仍有 event 流出。
+
+## 横向对齐补强：Claude SDK/Transport 要区分模型 SDK 和 Agent SDK
+
+Claude Code 有模型请求层 transport，也有 headless/Agent SDK/bridge 等外部控制面。横向阅读时要分清“调用 LLM”与“外部宿主驱动 Claude Code”。
+
+| 传输面 | Claude 侧含义 | 横向对比 |
+| --- | --- | --- |
+| 模型 SDK | Anthropic SDK stream | 对应 Codex/Gemini/OpenCode provider client |
+| Headless SDK | print/headless mode | 对应 Codex TypeScript SDK、Gemini SDK |
+| Bridge | 远程 REPL/IDE | 对应 OpenCode server contract |
+| MCP transport | stdio/http/sse | 外部工具传输 |
+
+后续本章应补一张 transport 分层图，避免把 provider stream 和 Agent SDK stream 混在一起。
+
+## 源码锚点补强
+
+| 传输面 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| 模型流调用 | `claude-code/src/query.ts:659` | `deps.callModel()` 消费模型流 |
+| SDK/headless 初始化 | `claude-code/src/cli/print.ts:563`, `claude-code/src/cli/print.ts:1251` | GrowthBook 初始化与 SDK MCP client cache |
+| MCP control message | `claude-code/src/cli/print.ts:1535`, `claude-code/src/cli/print.ts:2868` | 动态 MCP server 变更和 SDK server placeholder |
+| Bridge gate | `claude-code/src/bridge/bridgeEnabled.ts:120`, `claude-code/src/bridge/initReplBridge.ts:397` | bridge feature flag 与 REPL bridge 初始化 |

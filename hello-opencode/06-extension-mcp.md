@@ -270,3 +270,17 @@ result[sanitizedClientName + "_" + sanitizedToolName] = await convertMcpTool(mcp
 - **Plugin hook 串行且无超时**：`Plugin.trigger()` 串行 await 所有 hook，第三方 plugin 写操作慢或死循环会阻塞整条 tool 执行链，缺乏超时或 abort 保护。
 - **hook 冲突策略"后写覆盖"语义隐蔽**：多 plugin 同时改写 `chat.params` 时，后注册 plugin 静默覆盖前者，冲突无日志、无报警，排查困难。
 - **MCP tool name sanitize 不可逆**：`clientName_toolName` 拼接后若 sanitize 结果碰撞（不同 server 产生同名工具），后注册者会静默覆盖前者，无冲突检测。
+
+## 横向对齐补强：OpenCode 扩展面最终都落到 server contract
+
+OpenCode 的 Plugin、MCP、Command、Skill 和 Custom Tool 看起来分散，但最终都要通过 server/session/tool/durable state 骨架落地。
+
+| 扩展面 | OpenCode 侧落点 | 横向对比 |
+| --- | --- | --- |
+| Plugin hook | `plugin/index.ts` | 比 Gemini extension 更运行时化 |
+| MCP tool | `mcp/index.ts` -> ToolRegistry | 对应 Codex/Gemini MCP |
+| Command | `command/index.ts` / `SessionPrompt.command()` | 对应 slash command |
+| Skill | `skill/index.ts` | 受 Permission 约束 |
+| Custom tool | Plugin ToolDefinition | 写回 durable part |
+
+横向看，OpenCode 扩展性强，但第三方代码信任边界更高，应在文档里持续强调 sandbox 缺口。

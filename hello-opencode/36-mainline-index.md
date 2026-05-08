@@ -163,3 +163,18 @@ sequenceDiagram
 - **索引文档与实际文件数量需保持同步**：随后续分析章节增删，索引中的链接和章节描述需手动维护，易产生漂移。
 - **部分深度分析章节依赖推断而非实际源码验证**：某些内部实现细节（如 processor 重试逻辑）基于架构推断，需定期与源码对比校验。
 - **文档系列缺乏版本标注**：opencode v1.3.2 分析文档未在索引中注明版本号，未来版本升级时难以判断哪些章节需要更新。
+
+## 横向对齐补强：36 只做导航，不承载新结论
+
+为保持 `01-25` 与其他项目主题一致，`36-mainline-index.md` 的职责固定为“OpenCode 深挖导航页”。新的源码判断应写回对应专题：
+
+| 判断类型 | 写入位置 |
+| --- | --- |
+| Agent loop 主线 | `03-agent-loop.md` 或 `27-session-loop.md` |
+| 流事件和 part 写回 | `28-stream-processor.md` |
+| 模型请求和 provider | `29-llm-request.md` |
+| Durable state 对象模型 | `30-model.md` |
+| SQLite/Storage/Bus | `31-infra.md` |
+| 横向对比 | `../hello-harness/13-agent-loop.md` 或 `../hello-harness/15-topic-alignment-matrix.md` |
+
+这样 OpenCode 仍保留深挖优势，但不会破坏四项目“同编号同主题”的横向阅读方式。

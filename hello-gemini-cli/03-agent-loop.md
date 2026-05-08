@@ -506,3 +506,14 @@ private _isParallelizable(request: ToolCallRequestInfo): boolean {
 ---
 
 > 关联阅读：[04-tool-system.md](./05-tool-system.md)（工具注册、权限策略与执行器实现）
+
+## 源码锚点补强：Gemini Loop 是 core stream 事件到 UI continuation 的闭环
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `gemini-cli/packages/core/src/core/client.ts:92` | `GeminiClient` 会话编排对象 | 对应 Claude query / Codex turn controller |
+| `gemini-cli/packages/core/src/core/client.ts:585` | `processTurn()` 主控制流 | 对应 Codex `run_turn()` |
+| `gemini-cli/packages/core/src/core/client.ts:868` | `sendMessageStream()` 对外流式入口 | 对应 OpenCode `LLM.stream()` 调用链 |
+| `gemini-cli/packages/core/src/core/turn.ts:253` | `Turn.run()` 消费模型流并产出事件 | 对应 Codex streaming consumer |
+| `gemini-cli/packages/core/src/scheduler/scheduler.ts:191` | `Scheduler.schedule()` 接收工具请求 | 工具调度不在模型流内直接完成 |
+| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1822` | `handleCompletedTools()` 回注工具结果 | Gemini continuation 的关键差异 |

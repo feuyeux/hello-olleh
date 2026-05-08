@@ -148,3 +148,16 @@ Gemini CLI 的并行不只是“未来可以做”，当前就已经有相当明
 - **LocalAgentExecutor 禁止 agent 嵌套**：通过权限控制阻止子代理再调用其他代理，虽然避免了递归套娃，但也限制了合法的多层任务分解场景。
 - **远程 agent 调用默认需要确认**：`getConfirmationDetails()` 要求用户确认，在批量自动化 headless 场景下会阻塞流程，无法配置跳过。
 - **`AgentRegistry` 无热更新**：agent 定义在启动时加载，会话中新增 agent（如动态安装 extension）需要重启生效，无法动态注册。
+
+## 横向对齐补强：Gemini 多代理分成本地 agent 与 A2A
+
+Gemini CLI 的多代理能力比 Codex/Claude 更明显分成两层：本地 LocalAgentExecutor 和远程 A2A server/client。
+
+| 层级 | Gemini 侧对象 | 横向对比 |
+| --- | --- | --- |
+| 本地 agent | LocalAgentExecutor / AgentRegistry | 对应 Claude AgentTool |
+| 远程 agent | A2A server/client | Gemini 特色 |
+| 权限 | confirmation / policy | 仍需和 Scheduler/PolicyEngine 联读 |
+| 输入输出 | sendMessageStream / task event | 与 core client 复用 |
+
+后续本章应补“本地 agent、browser agent、A2A agent”的能力和隔离矩阵。

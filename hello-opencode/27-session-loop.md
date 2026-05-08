@@ -522,6 +522,17 @@ loop 最后会重新扫描 durable history：
 
 `loop()` 可以视为基于 durable history 的 session orchestration kernel。A05 接着说明 `SessionProcessor.process()` 如何把单轮 `LLM.stream()` 事件翻译成 durable parts。
 
+## 源码锚点补强：loop 的真相在 `session/prompt.ts`
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `opencode/packages/opencode/src/session/prompt.ts:278` | session loop 入口附近 | 对应 Claude `query()`、Codex turn loop |
+| `opencode/packages/opencode/src/session/prompt.ts:299` | `SessionStatus` 切为 busy | 说明 OpenCode 有显式运行态 |
+| `opencode/packages/opencode/src/session/prompt.ts:302` | 从 `MessageV2.filterCompacted(MessageV2.stream())` 重建历史 | 对比 Claude transcript / Gemini conversation |
+| `opencode/packages/opencode/src/session/prompt.ts:591` | 创建 `SessionProcessor` | loop 与 processor 分层边界 |
+| `opencode/packages/opencode/src/session/prompt.ts:695` | 投影为模型消息 | 对应四项目 prompt assembly |
+| `opencode/packages/opencode/src/session/prompt.ts:747` | 最终再次遍历 durable history | 说明结果以数据库历史为准 |
+
 
 ---
 

@@ -265,3 +265,16 @@ PRAGMA auto_vacuum = INCREMENTAL;  -- 增量空间回收
 3. **性能基准建立**：无基准则无优化方向，需要流式吞吐量和渲染延迟的持续监控
 
 **生产就绪度**：高。Codex 在流式传输、沙箱安全、状态持久化方面都有精心的工程设计，适合作为本地代理系统的参考架构。
+
+## 横向对齐补强：Codex 性能瓶颈主要在 Rust runtime 内部
+
+Codex 的性能分析应围绕四个关键路径展开：prompt/history 构造、模型流消费、工具并发、TUI/event 投影。
+
+| 路径 | 关注点 | 横向对比 |
+| --- | --- | --- |
+| history/context | `context_manager/history.rs` | 对应 OpenCode durable history 重建 |
+| streaming client | `client.rs` | 对应 Gemini `sendMessageStream()`、OpenCode provider stream |
+| tool futures | `tools/orchestrator.rs` | 比 Gemini Scheduler 更靠近 runtime |
+| TUI projection | `tui` / app-server events | 与 Claude React state、OpenCode Bus/SSE 不同 |
+
+后续补强本章时，应增加基准维度：首 token 延迟、工具并发吞吐、history 编译耗时、TUI 渲染延迟。

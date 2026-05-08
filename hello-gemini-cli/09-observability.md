@@ -273,3 +273,16 @@ Gemini CLI 的可观测性相比 OpenCode 较为基础：
 - **MessageBus 仅本地 EventEmitter**：无法跨进程广播，不支持多 session 全局事件（相比 OpenCode GlobalBus 功能弱）。
 - **日志无结构化格式与文件轮转**：仅使用 `console.log/error`，无 timestamp、level、service tag，也无自动日志清理机制，长期运行 log 会无限增长。
 - **UIStateContext 无虚拟化**：长会话下持有大量历史消息的 Context 会导致 Ink 组件频繁全量 re-render，存在性能瓶颈。
+
+## 横向对齐补强：Gemini 可观测性要补结构化事件
+
+Gemini CLI 的可观测性目前更偏开发者调试，而不是运行时审计。它需要把 core client、Scheduler、PolicyEngine、UI hook 的事件统一成可关联结构。
+
+| 信号 | Gemini 侧来源 | 缺口 |
+| --- | --- | --- |
+| model stream | `GeminiClient.sendMessageStream()` | 需要 trace id |
+| tool lifecycle | `Scheduler` | 需要状态转移日志 |
+| policy decision | `PolicyEngine` | 需要解释为什么 allow/deny/confirm |
+| UI state | Ink/React Context | 需要长会话虚拟化和渲染指标 |
+
+横向看，Gemini 可读性好，但审计能力弱于 OpenCode durable Bus 和 Codex thread events。

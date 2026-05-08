@@ -491,6 +491,18 @@ processor 的返回值承担控制信号角色。
 
 因此，processor 承担“单轮流事件 durable writer”的职责。`loop()` 与 `processor` 分层后，session 级调度和单轮事件写回各自独立。
 
+## 源码锚点补强：processor 是 AI SDK stream 到 durable part 的翻译器
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `opencode/packages/opencode/src/session/processor.ts:20` | `SessionProcessor` 命名空间 | 对应 Claude streaming tool / Codex stream consumer |
+| `opencode/packages/opencode/src/session/processor.ts:46` | `process()` 主入口 | 单轮模型事件处理边界 |
+| `opencode/packages/opencode/src/session/processor.ts:54` | 调用 `LLM.stream()` | 与 `29-llm-request.md` 衔接 |
+| `opencode/packages/opencode/src/session/processor.ts:79` | reasoning part 写入 | 说明 reasoning 是 durable part |
+| `opencode/packages/opencode/src/session/processor.ts:113` | tool input / tool part 分支 | 对应工具状态机 |
+| `opencode/packages/opencode/src/session/processor.ts:303` | text part 增量写入 | 对比 Claude stream event |
+| `opencode/packages/opencode/src/session/processor.ts:391` | retry / overflow / fatal 分支 | 对应韧性章节 |
+
 
 ---
 

@@ -445,3 +445,27 @@ slash command 是前置控制层，而不是单纯的文本宏。
 - **`@filepath` 无大小检查**：引用大文件（如编译产物）时直接内联，可能意外将 MB 级内容注入 prompt，耗尽 context window。
 - **CommandParser 与 InputQueue 耦合**：斜杠命令检测嵌入输入处理流程，难以在单元测试中独立测试命令解析逻辑。
 - **命令无 Tab 补全**：内置命令需完整输入，无像 fish shell 的模糊补全，命令拼写错误时静默或提示不友好。
+
+## 横向对齐补强：Claude 输入队列要覆盖自然语言、Slash、附件和 MCP 控制
+
+Claude Code 的输入不只是文本框提交。Slash command、`@file` 附件、MCP control message、permission prompt 和 queued command 都会影响下一轮 `queryLoop()`。
+
+| 输入面 | 横向对比 |
+| --- | --- |
+| slash command | 对应 Gemini/OpenCode command |
+| attachment/context | 对应 OpenCode prompt part 编译 |
+| permission response | 对应 Codex/Gemini/OpenCode tool approval |
+| MCP dynamic server update | Claude 特色控制面 |
+
+后续本章应补“输入是否立即进入模型、是否先变成 command、是否改变工具池”的分类表。
+
+## 源码锚点补强：输入层要从解析、队列和 UI 三处核验
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `claude-code/src/utils/slashCommandParsing.ts:15` | slash command parser 入口 | 对应 Gemini / OpenCode command parsing |
+| `claude-code/src/utils/slashCommandParsing.ts:45` | 命令名和参数解析 | 说明 slash 不是简单字符串前缀 |
+| `claude-code/src/cli/print.ts:2917` | CLI 输入处理相关分支 | 对应 Codex TUI input event |
+| `claude-code/src/cli/print.ts:3023` | 输入提交后的 dispatch 路径 | 连接 query 和 command queue |
+| `claude-code/src/components/PromptInput/PromptInputQueuedCommands.tsx:71` | queued command UI 组件 | 说明队列是用户可见状态 |
+| `claude-code/src/components/PromptInput/PromptInputQueuedCommands.tsx:116` | queued command 组件导出 | 可和“忙碌时排队”语义对应 |

@@ -150,3 +150,17 @@ Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extensi
 - **Extension MCP server 启动慢影响整体**：Extension 中的 MCP server 在 `Config.initialize()` 阶段同步初始化，若某个 MCP server 响应慢，会阻塞整个 CLI 启动流程。
 - **Extension 热重载不支持**：Extension 配置变更需要重启 CLI 才能生效，开发调试 extension 时 DX 较差。
 - **Extension 命名空间冲突**：多个 extension 可能注册同名工具，当前缺少冲突检测和明确的覆盖策略，行为不确定。
+
+## 横向对齐补强：Gemini Plugin 应写成 Extension 装配模型
+
+Gemini CLI 没有像 OpenCode 那样的运行时 plugin hook 系统，也不像 Claude Code 有复杂 plugin marketplace。它更适合按 Extension 装配模型来写：配置发现、MCP server、skill、command、tool registry 和 policy 串在一起。
+
+| 扩展对象 | 文档归属 | 说明 |
+| --- | --- | --- |
+| MCP server | `24-mcp-system.md` | 贡献外部工具和资源 |
+| Skill | `13-skill-system.md` | 贡献可激活提示词能力 |
+| Tool | `05-tool-system.md` | 最终进入 ToolRegistry/Scheduler |
+| Policy | `07-error-security.md` | 决定扩展工具是否可执行 |
+| Config | `17-settings-config.md` | 决定 extension 是否启用 |
+
+横向比较时，Gemini 的插件系统应强调“组合式扩展装配”，而不是单独寻找一个 plugin runtime。

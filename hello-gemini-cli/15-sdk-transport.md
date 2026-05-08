@@ -156,6 +156,30 @@ flowchart LR
 
 **风险与改进点**
 
+## 横向对齐补强：SDK 复用 core，而不是复制 CLI
+
+Gemini CLI 的 SDK/transport 应按 `packages/core` 为中心阅读。CLI、SDK、A2A server 都是 core 能力的不同宿主。
+
+| 宿主 | 源码入口 | 复用方式 |
+| --- | --- | --- |
+| CLI | `gemini-cli/packages/cli/src` | Ink/TUI 或 non-interactive 调用 core client |
+| SDK | `gemini-cli/packages/sdk/src/session.ts` | 包装 `GeminiClient.sendMessageStream()` 并处理工具结果 |
+| A2A server | `gemini-cli/packages/a2a-server/src` | 把 core client 和 Scheduler 暴露为远程任务接口 |
+| Core client | `gemini-cli/packages/core/src/core/client.ts` | 统一模型流、tool call、loop detection 基础能力 |
+
+这使 Gemini CLI 的横向定位介于 Codex 和 OpenCode 之间：它不像 Codex 那样由 Rust runtime 统摄，也不像 OpenCode 那样 server-first，而是 TypeScript core-first。
+
 - **`GeminiChat` 对话历史无分页加载**：所有历史存在内存中，长会话下内存占用随会话长度线性增长，无 lazy load 机制。
 - **传输层无背压机制**：SSE 流式响应时若 UI 消费慢，没有流量控制来避免大量 chunk 在内存中积压。
 - **SDK 分发依赖 `@google/genai`**：直接依赖 Google 的 SDK，版本升级时可能带来不兼容变更，且无法在 API 层做 mock 测试而不修改源码。
+
+## 源码锚点补强：Transport 是 TypeScript core-first
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `gemini-cli/packages/core/src/core/client.ts:92` | `GeminiClient` 统一 core 能力 | 对应 Codex Rust core |
+| `gemini-cli/packages/core/src/core/geminiChat.ts:245` | `GeminiChat` 模型聊天适配层 | 最贴近 Google SDK |
+| `gemini-cli/packages/core/src/core/geminiChat.ts:304` | `sendMessageStream()` 底层模型流 | 对应 Codex/OpenCode streaming |
+| `gemini-cli/packages/cli/src/nonInteractiveCli.ts:308` | 非交互宿主入口 | 对应 Codex `exec` |
+| `gemini-cli/packages/cli/src/interactiveCli.tsx:154` | Ink/TUI 宿主入口 | 对应 Claude/Codex TUI |
+| `gemini-cli/packages/core/src/services/chatRecordingService.ts:249` | conversation 持久化服务 | 连接 resume/transport 状态 |

@@ -313,3 +313,17 @@ OpenCode 当前的扩展系统可以压成四句话：
 - **Plugin 无沙箱隔离**：Plugin 运行在信任代码假设下，第三方 plugin 可以直接访问进程文件系统和环境变量，无向外隔离。
 - **MCP tool name sanitize 后碰撞无检测**：不同 MCP server 产生同名工具时（`clientName_toolName` 碰撞），后注册者静默覆盖前者，无冲突报警。
 - **ACP 协议无认证**：ACP 端点无 token 或证书验证，局域网内任何客户端都可以调用 ACP API 控制 session。
+
+## 横向对齐补强：OpenCode Bridge 是多表面统一接入
+
+OpenCode 的 bridge/集成能力本质是 server contract：Plugin、MCP、Command、Skill、ACP、TUI/Web 都围绕同一 session runtime。
+
+| 接入面 | 说明 |
+| --- | --- |
+| Plugin | 进程内 hook |
+| MCP | 外部 tool/resource/prompt |
+| ACP | 远程/编辑器协议 |
+| TUI/Web/Desktop | UI 表面 |
+| Command/Skill | prompt 编译表面 |
+
+横向看，OpenCode bridge 最统一，但也最需要认证、协议版本和权限隔离。

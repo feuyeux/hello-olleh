@@ -452,3 +452,27 @@ flowchart LR
 - **approval UI 与执行路径耦合**：`checkPermissionsAndCallTool()` 里既有 permission 逻辑又有 UI 弹出，难以在无 UI 场景（headless mode）中复用。
 - **工具并发结果无顺序保证**：若工具间有隐式执行依赖（如先写文件再读），并发执行可能导致竞态。
 - **`ToolUseContext` 字段过多**：随着 Claude 功能迭代，`ToolUseContext` 持续添加新字段（cache/thinking/betas），成为了变相的"上帝对象"。
+
+## 横向对齐补强：Claude 工具系统要区分协议、权限和执行器
+
+Claude Code 的工具系统比“工具列表”更复杂：`Tool` 协议定义模型可见形态，permission hook 决定是否执行，`runTools()`/`StreamingToolExecutor` 决定批处理或流式执行。
+
+| 层级 | Claude 侧对象 | 横向对比 |
+| --- | --- | --- |
+| 工具协议 | `src/tools/Tool.ts` | 对应 Codex tool spec、Gemini ToolRegistry、OpenCode Tool.Info |
+| 工具池装配 | `src/tools.ts` | 对应 Gemini/OpenCode registry |
+| 权限判断 | `src/hooks/useCanUseTool.tsx` | 对应 Codex approval、Gemini PolicyEngine、OpenCode Permission |
+| 执行编排 | `src/services/tools/toolOrchestration.ts` | 对应 Codex ToolOrchestrator、Gemini Scheduler、OpenCode tool part |
+| 流式执行 | `src/services/tools/StreamingToolExecutor.ts` | Claude 相比 Gemini 的关键差异 |
+
+横向读本章时，重点是“工具执行可以和模型流交错”。这和 Gemini 的流后调度、OpenCode 的 durable part 写回、Codex 的 Rust turn loop 编排都不同。
+
+## 源码锚点补强
+
+| 主题 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| 工具池装配 | `claude-code/src/tools.ts:193`, `claude-code/src/tools.ts:271`, `claude-code/src/tools.ts:345` | 基础工具、权限过滤后的工具池、MCP 合并入口 |
+| 权限判断 | `claude-code/src/hooks/useCanUseTool.tsx:27`, `claude-code/src/hooks/useCanUseTool.tsx:28` | `CanUseToolFn` 与 React hook 权限入口 |
+| 批处理执行 | `claude-code/src/services/tools/toolOrchestration.ts:19`, `claude-code/src/services/tools/toolOrchestration.ts:91` | `runTools()` 与 `partitionToolCalls()` |
+| 单工具执行 | `claude-code/src/services/tools/toolExecution.ts:337`, `claude-code/src/services/tools/toolExecution.ts:599` | `runToolUse()` 与 permission+call 主体 |
+| 流式执行接入 | `claude-code/src/query.ts:562`, `claude-code/src/query.ts:1385` | `StreamingToolExecutor` 与 `runTools()` 的选择点 |

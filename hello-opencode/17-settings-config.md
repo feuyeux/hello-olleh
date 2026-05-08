@@ -372,3 +372,17 @@ OpenCode 当前的启动/配置链可以压成四句话：
 - **import 阶段副作用不可见**：Effect service 注册在 module 加载时发生，若某个 service 初始化失败，错误可能在调用栈深处才被发现，不如显式 `bootstrap()` 调用直观。
 - **`InstanceBootstrap()` 串行装配无超时**：所有服务（tools/MCP/LSP）按顺序初始化，若某个 MCP server 响应慢，整个启动流程会无限等待。
 - **多 workspace 配置隔离依赖文件路径约定**：不同 workspace 的配置完全依赖目录结构区分，若用户在相同 workspace 目录打开多个 project，可能误用同一份配置。
+
+## 横向对齐补强：OpenCode 配置参与 InstanceBootstrap
+
+OpenCode 的配置不是静态读入，而是影响 Instance、Agent、Permission、MCP、Plugin、Provider 的启动装配。
+
+| 配置面 | 影响 |
+| --- | --- |
+| agent | 权限、模型、system prompt |
+| permission | tool/skill/task 可用性 |
+| plugin | hook 和 custom tool |
+| mcp | server 启动和工具发现 |
+| provider | auth/model/compat wrapper |
+
+横向看，OpenCode 配置与运行时依赖注入耦合更深；文档应补启动顺序和失败边界。

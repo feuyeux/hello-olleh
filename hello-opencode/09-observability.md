@@ -253,3 +253,16 @@ const state = Instance.state(
 - **GlobalBus 无持久化**：跨 instance 的全局事件仅在内存中传播，进程重启后全局事件历史丢失，无法重放。
 - **Log 输出无文件轮转**：结构化 log 写入文件时，无自动轮转和清理机制，长期运行的 server 模式下 log 文件会无限增长。
 - **`effect()` 缓存无失效机制**：状态缓存在实例生命周期内有效，若外部状态（如 MCP server 断连）改变，缓存可能返回过时值。
+
+## 横向对齐补强：OpenCode 的可观测性核心是 Bus + Durable History
+
+OpenCode 的可观测性比其他项目更接近事件溯源：Bus 负责实时投影，SQLite durable history 负责恢复和审计。
+
+| 信号 | OpenCode 侧入口 | 横向对比 |
+| --- | --- | --- |
+| Bus event | `opencode/packages/opencode/src/bus` | 强于 Gemini 本地状态，类似 Codex thread event |
+| SSE | `server/routes/*` | 多端订阅能力强 |
+| durable part | `session/*` / storage | crash 后可恢复粒度高 |
+| plugin hook | `plugin/index.ts` | 可观察扩展对消息/工具的改写 |
+
+后续本章应补 trace id 和 event schema 表，说明一次 prompt 从 HTTP route 到 Bus/SSE 的事件序列。

@@ -195,3 +195,29 @@ async function executeWithTimeout(tool: Tool, input: unknown): Promise<unknown> 
 - **压缩 LLM 调用无熔断器**：压缩调用失败时（如 API 过载）无回退策略，可能在高压情况下级联失败。
 - **重试窗口无全局协调**：多个 session 并发重试 429 时，各 session 的退避时钟独立，无法基于共享 rate limit 信息协调重试时机。
 - **Ctrl-C 中断无状态保存**：用户中断时正在执行的工具调用结果丢失，下次恢复后可能重复执行某些操作。
+
+## 横向对齐补强：Claude 韧性主要靠 retry、compact 和 fallback
+
+Claude Code 的韧性来自 provider retry、streaming fallback、context overflow 修正、compact 和 stop hook。
+
+| 机制 | 横向对比 |
+| --- | --- |
+| retry/fallback | 对应 Codex client retry、OpenCode provider retry |
+| context overflow | 对应四项目 compaction |
+| stop hook | Claude 特有的人类/插件干预路径 |
+| tool failure isolation | 对应 Codex/Gemini/OpenCode 工具结果归一 |
+
+后续应把“可自动恢复”和“需要用户重新提交”的错误分开列，避免韧性章节只描述机制不说明边界。
+
+## 源码锚点补强：Claude 韧性分散在 API、query 和 streaming tool
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `claude-code/src/services/api/claude.ts:844` | API 客户端错误和重试相关路径 | 对应 Codex/Gemini provider client |
+| `claude-code/src/services/api/claude.ts:1779` | provider 请求异常处理 | 用于判断哪些错误可自动恢复 |
+| `claude-code/src/services/api/claude.ts:2604` | 长请求链路中的 fallback/错误分支 | 对应 OpenCode `LLM.stream()` 兼容层 |
+| `claude-code/src/query.ts:1123` | query 层恢复和控制流分支 | 说明韧性不只在 API 层 |
+| `claude-code/src/query.ts:1220` | context / stream 异常处理点 | 对应四项目 compaction / overflow |
+| `claude-code/src/query.ts:1249` | query 继续或退出的边界 | 便于标注“需用户重新提交”的场景 |
+| `claude-code/src/services/tools/StreamingToolExecutor.ts:294` | streaming tool 执行错误处理 | 对应 OpenCode processor 的 tool part 收敛 |
+| `claude-code/src/services/tools/StreamingToolExecutor.ts:362` | 工具流收尾和异常兜底 | 说明工具失败隔离属于韧性面 |

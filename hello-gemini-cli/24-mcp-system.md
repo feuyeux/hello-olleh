@@ -405,6 +405,31 @@ stateDiagram-v2
 
 **风险与改进点**
 
+## 横向对齐补强：MCP 要落回 ToolRegistry/Scheduler
+
+Gemini CLI 的 MCP 系统最终必须回答两个问题：MCP server 发现的工具如何进入 ToolRegistry，MCP tool call 如何经过 Scheduler 和 PolicyEngine 执行。否则 MCP 章节会和扩展概念停留在配置层。
+
+| 问题 | 需要回链的章节 |
+| --- | --- |
+| MCP server 如何配置、连接、失败恢复 | `06-extension-mcp.md`、`17-settings-config.md` |
+| MCP tool 如何进入工具池 | `05-tool-system.md` |
+| MCP tool 调用前是否需要确认 | `07-error-security.md`、`05-tool-system.md` |
+| MCP tool 结果如何回到模型 | `03-agent-loop.md`、`23-input-command-queue.md` |
+
+横向看，Gemini 的 MCP 文档应比 Codex 少讲 sandbox，比 OpenCode 少讲 durable part，但必须补清楚 Scheduler 这一跳。
+
 - **MCP server 连接无全局超时**：`McpClientManager` 等待 stdio server 握手时无超时上限，MCP server 启动慢会阻塞整个 CLI 初始化。
 - **认证令牌存储在进程内存**：OAuth2 令牌由 `mcp/auth.ts` 管理，进程重启后需要重新认证，无持久化 token 缓存机制。
 - **工具名称 sanitize 后无冲突检测**：多个 MCP server 产生同名工具时，后注册的会静默覆盖前者，无冲突日志或报警。
+
+## 源码锚点补强：MCP 工具最终要进入 ToolRegistry 和 Scheduler
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `gemini-cli/packages/core/src/tools/mcp-client-manager.ts` | MCP client 生命周期管理 | 对应 Codex connection manager |
+| `gemini-cli/packages/core/src/tools/mcp-client.ts` | 单 server MCP 连接和调用 | 对应 Claude MCP client |
+| `gemini-cli/packages/core/src/mcp/auth-provider.ts` | MCP auth 抽象 | 对应 OAuth/credential 层 |
+| `gemini-cli/packages/core/src/mcp/oauth-provider.ts` | OAuth provider 实现 | 横向安全/认证维度 |
+| `gemini-cli/packages/core/src/tools/tool-registry.ts:269` | MCP tool 注册回 ToolRegistry | 连接工具章节 |
+| `gemini-cli/packages/core/src/scheduler/scheduler.ts:191` | MCP tool call 仍进入 Scheduler | 说明 MCP 不绕过工具治理 |
+| `gemini-cli/packages/cli/src/services/McpPromptLoader.ts` | MCP prompt 转 slash 命令 | 连接输入队列章节 |

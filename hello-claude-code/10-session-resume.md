@@ -348,3 +348,27 @@ flowchart LR
 - **大文件上的链恢复性能**：`loadTranscriptFile()` 在大文件中恢复 `parentUuid` 链时需全文扫描，长会话对话文件可达 MB 级，加载延迟显著。
 - **`progress` 事件排除在持久化之外**：进度指示器状态不持久化，Session resume 后 UI 中的"已完成步骤"视觉反馈丢失，用户体验断层。
 - **文件延迟 materialize 引发"假空"**：transcript 文件在第一条消息写入前不存在，`--resume` 指定未写入的 session ID 时会静默失败，错误提示不够明确。
+
+## 横向对齐补强：Claude Resume 是 transcript 链恢复
+
+Claude Code 的会话恢复核心是 transcript 和 `parentUuid` 链，而不是数据库对象重建。
+
+| 恢复对象 | Claude 侧含义 | 横向对比 |
+| --- | --- | --- |
+| transcript | JSONL/消息历史 | 比 Gemini JSON conversation 更细，但不如 OpenCode durable part |
+| parentUuid | 会话链路恢复 | 对应 Codex rollout reconstruction |
+| progress/UI | 多数不持久化 | 四项目恢复弱点 |
+| tool state | 运行中工具通常不可恢复 | 需要和工具治理章节联读 |
+
+后续本章应列出恢复边界：哪些 message 恢复、哪些 tool/progress/approval 状态丢失。
+
+## 源码锚点补强：恢复不是读文件，而是重建链
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `claude-code/src/utils/sessionStorage.ts:3311` | transcript parent 前缀和链式关系处理 | 对应 Codex rollout reconstruction |
+| `claude-code/src/utils/sessionStorage.ts:3414` | 依据 `parentUuid` 遍历历史链 | 说明 Claude 恢复依赖消息拓扑 |
+| `claude-code/src/utils/sessionStorage.ts:3473` | `loadTranscriptFile` 加载 JSONL transcript | 对应 Gemini 文件式 conversation |
+| `claude-code/src/utils/sessionStorage.ts:3709` | resume 候选叶子节点收集 | 对比 OpenCode 从 durable message/part 恢复 |
+| `claude-code/src/utils/sessionRestore.ts:96` | session restore 入口类型与状态 | 说明恢复结果要重新注入 runtime |
+| `claude-code/src/main.tsx:3355` | CLI resume 流程接入点 | 对应其他工具的启动期 session 选择 |

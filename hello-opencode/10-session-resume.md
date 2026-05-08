@@ -982,3 +982,16 @@ flowchart TD
 - **`SessionStatus` 运行态不进入 durable**：session 运行状态存在内存中，崩溃后 status 归零，恢复会话时 UI 无法还原"已完成步骤"的视觉状态。
 - **`Database.effect()` 批处理延迟不可控**：effect 队列在主事务后才执行，若事务量大，批处理延迟可能使前端 SSE 推送滞后，影响实时感知。
 - **大量并发写导致 SQLite WAL 压力**：多工具并发调用时，每个工具结果分别触发 durable 写，SQLite WAL 文件在高并发下可能快速增长。
+
+## 横向对齐补强：OpenCode Resume 是 durable-first 的基准实现
+
+OpenCode 的恢复能力是四项目中最适合做 durable state 对照的：message、part、session、Bus/SSE projection 都围绕 SQLite durable history 设计。
+
+| 恢复对象 | OpenCode 侧含义 | 横向对比 |
+| --- | --- | --- |
+| Session | durable row | 比 Gemini 文件会话更可查询 |
+| MessageV2/Part | 细粒度历史对象 | 比 Codex thread item 更 UI/part 化 |
+| Processor state | 运行态部分仍在内存 | crash 后仍需重新推导 |
+| Bus/SSE | 从 durable history 投影到 UI | 多端一致性强 |
+
+后续本章应把“durable 的”和“非 durable 的”分成两张表，特别说明 status、in-flight stream、pending permission 是否可恢复。

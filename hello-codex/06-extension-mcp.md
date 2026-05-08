@@ -462,3 +462,16 @@ pub async fn list_accessible_connectors_from_mcp_tools(
 - **Plugin `RwLock` 阻塞读写**：并发请求场景下，force reload 会独占写锁导致所有读请求阻塞，可考虑 per-plugin 细粒度锁。
 - **Skill 文件信任边界模糊**：Skill 是 `.md` + prompt 注入，文件内容直接注入 system prompt，若 skill 文件被篡改，后果等价于 prompt injection。
 - **动态工具 schema 无版本校验**：远程 MCP 工具升级 schema 后，客户端无感知更新，可能在工具调用时才发生参数类型不兼容。
+
+## 横向对齐补强：Codex 扩展入口最终回到工具和 prompt
+
+Codex 的扩展体系要按三条线阅读：AGENTS/skill 改变 prompt，MCP 改变工具集合，hooks 改变 turn 前后控制流。
+
+| 扩展线 | Codex 侧对象 | 对齐章节 |
+| --- | --- | --- |
+| 指令扩展 | `AGENTS.md`, skills | `11`, `13` |
+| 工具扩展 | MCP / dynamic tools | `05`, `24` |
+| 生命周期扩展 | hooks | `19` |
+| 安全治理 | approval/sandbox | `07` |
+
+横向看，Codex 没有复杂 plugin marketplace，但扩展进入 runtime 后治理最集中。

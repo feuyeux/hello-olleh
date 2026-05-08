@@ -138,3 +138,16 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 - **Hook 执行顺序依赖注册顺序**：多个 hook 监听同一阶段时，执行顺序由注册时序决定，无显式优先级控制，重构时容易引入顺序敏感 bug。
 - **生命周期事件无完整文档态**：哪些 hook 属于"稳定 API"、哪些是"内部实现细节"没有明确界定，extension 开发者可能依赖不稳定 hook 点。
 - **`coreEvents` 无背压保护**：若事件消费者处理慢，事件可能在内存中积压，高频工具调用场景（如多工具并发）存在性能风险。
+
+## 横向对齐补强：Gemini Hooks 更像事件总线
+
+Gemini CLI 的 hooks/lifecycle 应按 core events、Scheduler events、UI hook 和 extension lifecycle 分层，而不是寻找单一 plugin hook runtime。
+
+| 事件面 | 说明 |
+| --- | --- |
+| coreEvents | core 层事件广播 |
+| Scheduler | tool call 生命周期 |
+| UI hooks | stream/input/render 状态 |
+| Extension | 启动时装配，热更新弱 |
+
+横向看，Gemini lifecycle 比 OpenCode plugin hook 更轻，比 Claude hooks 更分散；文档应补稳定 API 与内部事件的边界。

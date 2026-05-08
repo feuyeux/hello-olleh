@@ -200,3 +200,26 @@ Claude Code 将完整会话 Transcript 持久化到本地：
 - **遥测数据无本地持久化**：telemetry 以 in-process sink 发送，进程崩溃时在途数据丢失，历史指标无本地存储可供事后分析。
 - **`Logger` 无日志文件轮转**：debug 日志输出到文件时，无自动轮转和清理机制，长期运行的 Claude Code Server 模式下日志文件会无限增长。
 - **`SessionStatus` 枚举粒度粗**：当前状态只区分 4 种大状态，无法区分"等待工具审批"、"等待 MCP 响应"、"暂停等待人工干预"等细粒度状态，监控报警精度受限。
+
+## 横向对齐补强：Claude 可观测性要补事件关联
+
+Claude Code 有 stream event、telemetry、debug log、MCP debug 和 TUI 状态，但缺少贯穿一次 turn 的统一 trace id。
+
+| 信号 | Claude 侧对象 | 横向对比 |
+| --- | --- | --- |
+| stream event | query/model/tool 事件 | 对应 Codex thread event、OpenCode Bus |
+| telemetry | analytics / GrowthBook 相关事件 | Claude 特有 feature flag 观察面 |
+| MCP debug | MCP connection/tool logs | 对应 OpenCode MCP status |
+| TUI state | React state | 比 durable state 更难事后重放 |
+
+后续应增加“单次 prompt trace”视角，串起输入、模型请求、工具调用、权限、MCP 和最终渲染。
+
+## 源码锚点补强：把日志、诊断和 query 事件串起来
+
+| 源码位置 | 说明 | 横向意义 |
+| --- | --- | --- |
+| `claude-code/src/utils/log.ts:158` | `logError` 统一错误日志出口 | 对应 Codex tracing / OpenCode Log 服务 |
+| `claude-code/src/services/diagnosticTracking.ts:30` | 诊断跟踪模块入口 | 说明 Claude 还有 IDE/LSP 诊断面 |
+| `claude-code/src/services/diagnosticTracking.ts:132` | diagnostic 事件处理 | 对应 OpenCode 的 Bus 事件投影 |
+| `claude-code/src/query.ts:478` | query 主循环中的事件/错误处理点 | 可和 `03-agent-loop.md`、`25-debugging.md` 联读 |
+| `claude-code/src/query.ts:1528` | 长流程尾部的状态记录点 | 用于解释为什么 Claude 可观测性分散在 query 层 |
