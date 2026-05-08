@@ -30,7 +30,7 @@ flowchart TD
 
     subgraph Search["搜索优化"]
         Grep["grep_search<br/>RipGrepTool"] --> Ripgrep["ripgrep 二进制<br/>跳过 node_modules/dist/.git"]
-        Ripgrep --> Parallel["Scheduler: 并行调度<br/>只读工具并行 @ scheduler.ts:191"]
+        Ripgrep --> Parallel["Scheduler: 并行调度<br/>只读工具并行 @ gemini-cli/packages/core/src/scheduler/scheduler.ts:191"]
     end
 
     subgraph Stream["流式传输"]
@@ -42,14 +42,14 @@ flowchart TD
 
 | 函数/类 | 文件路径 | 行号 | 性能相关职责 |
 |---|---|---|---|
-| `RipGrepTool.execute()` | `packages/core/src/tools/ripGrep.ts` | — | 调用 ripgrep 二进制，跳过 node_modules |
-| `GrepTool.execute()` | `packages/core/src/tools/grep.ts` | — | fallback grep 实现 |
-| `ToolExecutor.execute()` | `packages/core/src/scheduler/tool-executor.ts` | — | 检测输出大小，超阈值触发蒸馏 |
-| `ToolOutputDistillationService` | `packages/core/src/tools/` | — | 调用模型对大输出进行摘要压缩 |
-| `Scheduler.schedule()` | `packages/core/src/scheduler/scheduler.ts` | :191 | 只读工具并行调度 |
-| `sendMessageStream()` | `packages/core/src/core/geminiChat.ts` | :303 | AsyncGenerator 流式 yield |
-| `tokenLimit.check()` | `packages/core/src/core/tokenLimits.ts` | — | Token 数量预估与截断 |
-| `canUseRipgrep()` | `packages/core/src/tools/ripGrep.ts` | — | 检测 ripgrep 可用性 |
+| `RipGrepTool.execute()` | `gemini-cli/packages/core/src/tools/ripGrep.ts` | — | 调用 ripgrep 二进制，跳过 node_modules |
+| `GrepTool.execute()` | `gemini-cli/packages/core/src/tools/grep.ts` | — | fallback grep 实现 |
+| `ToolExecutor.execute()` | `gemini-cli/packages/core/src/scheduler/tool-executor.ts` | — | 检测输出大小，超阈值触发蒸馏 |
+| `ToolOutputDistillationService` | `gemini-cli/packages/core/src/tools/` | — | 调用模型对大输出进行摘要压缩 |
+| `Scheduler.schedule()` | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | :191 | 只读工具并行调度 |
+| `sendMessageStream()` | `gemini-cli/packages/core/src/core/geminiChat.ts` | :303 | AsyncGenerator 流式 yield |
+| `tokenLimit.check()` | `gemini-cli/packages/core/src/core/tokenLimits.ts` | — | Token 数量预估与截断 |
+| `canUseRipgrep()` | `gemini-cli/packages/core/src/tools/ripGrep.ts` | — | 检测 ripgrep 可用性 |
 
 ## 3. 大文件与大输出的处理优化
 

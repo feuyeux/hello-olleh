@@ -21,7 +21,7 @@ title: "Gemini CLI 多代理与远程模式：本地子代理、A2A 远程代理
 
 ## 1. Agent 不是一个，而是一套注册表
 
-多代理能力的入口是 `packages/core/src/agents/registry.ts` 中的 `AgentRegistry`。
+多代理能力的入口是 `gemini-cli/packages/core/src/agents/registry.ts` 中的 `AgentRegistry`。
 
 它会加载四类 agent：
 
@@ -42,7 +42,7 @@ title: "Gemini CLI 多代理与远程模式：本地子代理、A2A 远程代理
 
 ## 2. 子代理会被暴露成普通工具
 
-`packages/core/src/agents/subagent-tool.ts` 里的 `SubagentTool` 会把 agent definition 包装成一个普通 declarative tool：
+`gemini-cli/packages/core/src/agents/subagent-tool.ts` 里的 `SubagentTool` 会把 agent definition 包装成一个普通 declarative tool：
 
 - 名称沿用 agent 名称
 - 输入参数来自 agent 的 JSON Schema
@@ -53,7 +53,7 @@ title: "Gemini CLI 多代理与远程模式：本地子代理、A2A 远程代理
 
 ## 3. 本地子代理有独立执行环境
 
-本地 agent 的真正执行者是 `packages/core/src/agents/local-executor.ts`。
+本地 agent 的真正执行者是 `gemini-cli/packages/core/src/agents/local-executor.ts`。
 
 它不是简单复用主代理状态，而是显式创建隔离环境：
 
@@ -75,7 +75,7 @@ title: "Gemini CLI 多代理与远程模式：本地子代理、A2A 远程代理
 
 ## 4. 远程代理通过 A2A 调用
 
-Gemini CLI 也并非完全没有远程代理。远程分支在 `packages/core/src/agents/remote-invocation.ts`：
+Gemini CLI 也并非完全没有远程代理。远程分支在 `gemini-cli/packages/core/src/agents/remote-invocation.ts`：
 
 - 使用 `A2AClientManager` 连接远端 agent
 - 支持认证 provider
@@ -94,9 +94,9 @@ Gemini CLI 也并非完全没有远程代理。远程分支在 `packages/core/sr
 
 Gemini CLI 的并行不只是“未来可以做”，当前就已经有相当明确的调度实现：
 
-- 主线调度器：`packages/core/src/scheduler/scheduler.ts`
-- 子代理调度入口：`packages/core/src/agents/agent-scheduler.ts`
-- 并行测试：`packages/core/src/scheduler/scheduler_parallel.test.ts`
+- 主线调度器：`gemini-cli/packages/core/src/scheduler/scheduler.ts`
+- 子代理调度入口：`gemini-cli/packages/core/src/agents/agent-scheduler.ts`
+- 并行测试：`gemini-cli/packages/core/src/scheduler/scheduler_parallel.test.ts`
 
 这说明当前仓库已经具备工具级并行的真实实现基础，而不是纯串行执行模型。
 
@@ -113,12 +113,12 @@ Gemini CLI 的并行不只是“未来可以做”，当前就已经有相当明
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Agent 注册 | `packages/core/src/agents/registry.ts` | 发现并注册本地/远程 agent |
-| 子代理工具封装 | `packages/core/src/agents/subagent-tool.ts` | 把 agent 暴露成普通工具 |
-| 本地子代理执行 | `packages/core/src/agents/local-executor.ts` | 隔离 registry、message bus 与执行循环 |
-| 远程代理调用 | `packages/core/src/agents/remote-invocation.ts` | A2A 远程 agent 流式调用 |
-| 子代理调度 | `packages/core/src/agents/agent-scheduler.ts` | 把 agent 工具调用接入调度器 |
-| 主调度器 | `packages/core/src/scheduler/scheduler.ts` | 主/子代理共用的调度基础设施 |
+| Agent 注册 | `gemini-cli/packages/core/src/agents/registry.ts` | 发现并注册本地/远程 agent |
+| 子代理工具封装 | `gemini-cli/packages/core/src/agents/subagent-tool.ts` | 把 agent 暴露成普通工具 |
+| 本地子代理执行 | `gemini-cli/packages/core/src/agents/local-executor.ts` | 隔离 registry、message bus 与执行循环 |
+| 远程代理调用 | `gemini-cli/packages/core/src/agents/remote-invocation.ts` | A2A 远程 agent 流式调用 |
+| 子代理调度 | `gemini-cli/packages/core/src/agents/agent-scheduler.ts` | 把 agent 工具调用接入调度器 |
+| 主调度器 | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | 主/子代理共用的调度基础设施 |
 
 ---
 
@@ -126,12 +126,12 @@ Gemini CLI 的并行不只是“未来可以做”，当前就已经有相当明
 
 | 函数/类型 | 文件 | 职责 |
 |----------|------|------|
-| `AgentRegistry` | `packages/core/src/agents/registry.ts` | 加载内建/用户级/项目级/extension agent 定义，提供统一注册表 |
-| `SubagentTool` | `packages/core/src/agents/subagent-tool.ts` | 将 agent 定义包装成标准 declarative tool，调用前做 schema 校验 |
-| `LocalAgentExecutor` | `packages/core/src/agents/local-executor.ts` | 创建隔离执行环境（独立 ToolRegistry/PromptRegistry/MessageBus），阻止递归 |
-| `A2AClientManager` | `packages/core/src/agents/remote-invocation.ts` | 连接远端 agent，维护 contextId/taskId，流式接收执行进度 |
-| `Scheduler.scheduleAgentTools()` | `packages/core/src/scheduler/scheduler.ts` | 将子代理工具调用接入主调度器的并发与审批链路 |
-| `SubagentToolWrapper.getConfirmationDetails()` | `packages/core/src/agents/subagent-tool.ts` | 决定远程 agent 调用是否需要用户确认 |
+| `AgentRegistry` | `gemini-cli/packages/core/src/agents/registry.ts` | 加载内建/用户级/项目级/extension agent 定义，提供统一注册表 |
+| `SubagentTool` | `gemini-cli/packages/core/src/agents/subagent-tool.ts` | 将 agent 定义包装成标准 declarative tool，调用前做 schema 校验 |
+| `LocalAgentExecutor` | `gemini-cli/packages/core/src/agents/local-executor.ts` | 创建隔离执行环境（独立 ToolRegistry/PromptRegistry/MessageBus），阻止递归 |
+| `A2AClientManager` | `gemini-cli/packages/core/src/agents/remote-invocation.ts` | 连接远端 agent，维护 contextId/taskId，流式接收执行进度 |
+| `Scheduler.scheduleAgentTools()` | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | 将子代理工具调用接入主调度器的并发与审批链路 |
+| `SubagentToolWrapper.getConfirmationDetails()` | `gemini-cli/packages/core/src/agents/subagent-tool.ts` | 决定远程 agent 调用是否需要用户确认 |
 
 ---
 

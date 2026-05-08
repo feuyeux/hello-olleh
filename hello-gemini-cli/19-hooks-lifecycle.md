@@ -34,7 +34,7 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 ## 2. HookSystem 是显式的生命周期扩展点
 
-核心实现位于 `packages/core/src/hooks/hookSystem.ts`。
+核心实现位于 `gemini-cli/packages/core/src/hooks/hookSystem.ts`。
 
 它不是单文件硬编码逻辑，而是由几部分协作：
 
@@ -62,7 +62,7 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 ## 3. `coreEvents` 负责全局可观察性
 
-`packages/core/src/utils/events.ts` 里的 `coreEvents` 更像全局事件汇聚点，主要服务于 UI、日志和宿主反馈。
+`gemini-cli/packages/core/src/utils/events.ts` 里的 `coreEvents` 更像全局事件汇聚点，主要服务于 UI、日志和宿主反馈。
 
 当前 `CoreEvent` 至少包括：
 
@@ -84,7 +84,7 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 ## 4. `MessageBus` 负责确认与策略闭环
 
-工具确认和策略检查走的是另一条线：`packages/core/src/confirmation-bus/message-bus.ts`。
+工具确认和策略检查走的是另一条线：`gemini-cli/packages/core/src/confirmation-bus/message-bus.ts`。
 
 `MessageBus` 的特点是：
 
@@ -100,8 +100,8 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 旧文里把 `ToolExecutor` 写在 `tools` 目录下已经不对。当前真实位置是：
 
-- `packages/core/src/scheduler/tool-executor.ts`
-- `packages/core/src/scheduler/scheduler.ts`
+- `gemini-cli/packages/core/src/scheduler/tool-executor.ts`
+- `gemini-cli/packages/core/src/scheduler/scheduler.ts`
 
 调度器负责：
 
@@ -116,12 +116,12 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Hook 总入口 | `packages/core/src/hooks/hookSystem.ts` | 统一暴露生命周期 hook |
-| Hook 事件处理 | `packages/core/src/hooks/hookEventHandler.ts` | 各类 hook 的具体分发 |
-| 全局事件总线 | `packages/core/src/utils/events.ts` | UI / 宿主侧状态广播 |
-| 工具确认总线 | `packages/core/src/confirmation-bus/message-bus.ts` | 策略检查、确认请求、子代理作用域 |
-| 调度器 | `packages/core/src/scheduler/scheduler.ts` | 工具执行主编排 |
-| 工具执行器 | `packages/core/src/scheduler/tool-executor.ts` | 单次工具调用执行 |
+| Hook 总入口 | `gemini-cli/packages/core/src/hooks/hookSystem.ts` | 统一暴露生命周期 hook |
+| Hook 事件处理 | `gemini-cli/packages/core/src/hooks/hookEventHandler.ts` | 各类 hook 的具体分发 |
+| 全局事件总线 | `gemini-cli/packages/core/src/utils/events.ts` | UI / 宿主侧状态广播 |
+| 工具确认总线 | `gemini-cli/packages/core/src/confirmation-bus/message-bus.ts` | 策略检查、确认请求、子代理作用域 |
+| 调度器 | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | 工具执行主编排 |
+| 工具执行器 | `gemini-cli/packages/core/src/scheduler/tool-executor.ts` | 单次工具调用执行 |
 
 ---
 

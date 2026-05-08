@@ -24,15 +24,15 @@ Gemini CLI 的韧性并不集中在单一的“恢复管理器”里，而是分
 
 | 层次 | 代码锚点 | 主要职责 |
 | --- | --- | --- |
-| 请求重试 | `packages/core/src/utils/retry.ts`、`packages/core/src/core/client.ts` | 处理 429、499、5xx 和部分网络错误 |
-| 流式恢复 | `packages/core/src/core/geminiChat.ts` | 处理中途断流、无效内容、异常 tool call |
-| 循环自愈 | `packages/core/src/services/loopDetectionService.ts`、`packages/core/src/core/client.ts` | 检测卡死模式并向模型注入恢复反馈 |
-| 上下文减压 | `packages/core/src/services/chatCompressionService.ts`、`packages/core/src/services/toolOutputMaskingService.ts` | 压缩旧历史、截断大工具输出、防止上下文爆炸 |
-| 持久化恢复 | `packages/core/src/services/chatRecordingService.ts`、`packages/cli/src/ui/hooks/useSessionResume.ts` | 会话落盘、恢复聊天、可选 checkpoint 回滚 |
+| 请求重试 | `gemini-cli/packages/core/src/utils/retry.ts`、`gemini-cli/packages/core/src/core/client.ts` | 处理 429、499、5xx 和部分网络错误 |
+| 流式恢复 | `gemini-cli/packages/core/src/core/geminiChat.ts` | 处理中途断流、无效内容、异常 tool call |
+| 循环自愈 | `gemini-cli/packages/core/src/services/loopDetectionService.ts`、`gemini-cli/packages/core/src/core/client.ts` | 检测卡死模式并向模型注入恢复反馈 |
+| 上下文减压 | `gemini-cli/packages/core/src/services/chatCompressionService.ts`、`gemini-cli/packages/core/src/services/toolOutputMaskingService.ts` | 压缩旧历史、截断大工具输出、防止上下文爆炸 |
+| 持久化恢复 | `gemini-cli/packages/core/src/services/chatRecordingService.ts`、`gemini-cli/packages/cli/src/ui/hooks/useSessionResume.ts` | 会话落盘、恢复聊天、可选 checkpoint 回滚 |
 
 ## 2. API 请求层的重试
 
-Gemini CLI 的通用重试工具是 `retryWithBackoff()`，默认参数定义在 `packages/core/src/utils/retry.ts`：
+Gemini CLI 的通用重试工具是 `retryWithBackoff()`，默认参数定义在 `gemini-cli/packages/core/src/utils/retry.ts`：
 
 - 默认最多 `10` 次尝试
 - 初始延迟 `5000ms`
@@ -163,12 +163,12 @@ Gemini CLI 的另一个现实风险不是“报错”，而是上下文逐轮膨
 
 | 函数/类型 | 文件 | 职责 |
 |----------|------|------|
-| `GeminiClient.retryRequest()` | `packages/core/src/core/client.ts` | API 重试：指数退避 + 可重试错误判断 |
-| `ChatCompressionService.compress()` | `packages/core/src/services/chatCompressionService.ts` | 上下文压缩：50% 阈值触发，保留最近 30% 历史 |
-| `LoopDetectionService.detect()` | `packages/core/src/services/loopDetectionService.ts` | 三层循环检测（工具重复/内容重复/LLM 辅助），支持 session 级禁用 |
-| `ToolOutputMaskingService` | `packages/core/src/services/` | 历史中大工具输出二次瘦身 |
-| `SessionSelector.resolveSession()` | `packages/cli/src/utils/sessionUtils.ts` | `--resume` 解析：找到目标 conversation 文件 |
-| `GitService.restore()` | `packages/core/src/commands/restore.ts` | Git checkpoint 恢复工作区变更 |
+| `GeminiClient.retryRequest()` | `gemini-cli/packages/core/src/core/client.ts` | API 重试：指数退避 + 可重试错误判断 |
+| `ChatCompressionService.compress()` | `gemini-cli/packages/core/src/services/chatCompressionService.ts` | 上下文压缩：50% 阈值触发，保留最近 30% 历史 |
+| `LoopDetectionService.detect()` | `gemini-cli/packages/core/src/services/loopDetectionService.ts` | 三层循环检测（工具重复/内容重复/LLM 辅助），支持 session 级禁用 |
+| `ToolOutputMaskingService` | `gemini-cli/packages/core/src/services/` | 历史中大工具输出二次瘦身 |
+| `SessionSelector.resolveSession()` | `gemini-cli/packages/cli/src/utils/sessionUtils.ts` | `--resume` 解析：找到目标 conversation 文件 |
+| `GitService.restore()` | `gemini-cli/packages/core/src/commands/restore.ts` | Git checkpoint 恢复工作区变更 |
 
 ---
 

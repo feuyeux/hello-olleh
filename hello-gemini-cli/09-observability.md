@@ -1,4 +1,4 @@
-﻿---
+---
 layout: content
 title: "Gemini CLI 可观测性：日志、MessageBus 与 UI 状态追踪"
 ---
@@ -71,7 +71,7 @@ import { Text } from 'ink'
 
 ### 3.1 MessageBus 架构
 
-`packages/core/src/confirmation-bus/message-bus.ts`：
+`gemini-cli/packages/core/src/confirmation-bus/message-bus.ts`：
 
 ```typescript
 class MessageBus extends EventEmitter {
@@ -224,10 +224,10 @@ messageBus.on('turn:end', async ({ turnId, result }) => {
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| MessageBus | `packages/core/src/confirmation-bus/message-bus.ts` | 事件总线 |
-| UIStateContext | `packages/cli/src/ui/contexts/UIStateContext.tsx` | UI 状态 |
-| Storage | `packages/core/src/config/storage.ts` | 持久化根目录与路径接口 |
-| TUI 渲染 | `packages/cli/src/ui/App.tsx` | Ink 组件 |
+| MessageBus | `gemini-cli/packages/core/src/confirmation-bus/message-bus.ts` | 事件总线 |
+| UIStateContext | `gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx` | UI 状态 |
+| Storage | `gemini-cli/packages/core/src/config/storage.ts` | 持久化根目录与路径接口 |
+| TUI 渲染 | `gemini-cli/packages/cli/src/ui/App.tsx` | Ink 组件 |
 
 ---
 
@@ -252,10 +252,10 @@ Gemini CLI 的可观测性相比 OpenCode 较为基础：
 
 | 函数/类型 | 文件 | 职责 |
 |----------|------|------|
-| `MessageBus` | `packages/core/src/confirmation-bus/message-bus.ts` | 继承 EventEmitter，提供 emit/on/off 工具调用状态广播 |
-| `UIStateContext` | `packages/cli/src/ui/contexts/UIStateContext.tsx` | React Context 状态容器：持有 currentTurn、messages、status |
-| `Storage.initialize()` | `packages/core/src/config/storage.ts` | 计算 `~/.gemini/`、项目级 `.gemini/` 等持久化根路径 |
-| `ChatRecordingService.recordMessage()` | `packages/core/src/services/chatRecordingService.ts` | 实时录制用户/模型/工具/思考消息并序列化到 JSON 文件 |
+| `MessageBus` | `gemini-cli/packages/core/src/confirmation-bus/message-bus.ts` | 继承 EventEmitter，提供 emit/on/off 工具调用状态广播 |
+| `UIStateContext` | `gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx` | React Context 状态容器：持有 currentTurn、messages、status |
+| `Storage.initialize()` | `gemini-cli/packages/core/src/config/storage.ts` | 计算 `~/.gemini/`、项目级 `.gemini/` 等持久化根路径 |
+| `ChatRecordingService.recordMessage()` | `gemini-cli/packages/core/src/services/chatRecordingService.ts` | 实时录制用户/模型/工具/思考消息并序列化到 JSON 文件 |
 | `JsonStorage.saveSession()` | — | 将 session 对象序列化为 JSON 文件写入 Storage 目录 |
 
 ---

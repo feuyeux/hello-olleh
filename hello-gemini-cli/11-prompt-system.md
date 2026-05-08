@@ -22,7 +22,7 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 
 ## 1. 入口只有一个：`PromptProvider`
 
-`packages/core/src/core/prompts.ts` 本身非常薄，真正的工作都在 `packages/core/src/prompts/promptProvider.ts`：
+`gemini-cli/packages/core/src/core/prompts.ts` 本身非常薄，真正的工作都在 `gemini-cli/packages/core/src/prompts/promptProvider.ts`：
 
 - `getCoreSystemPrompt()` 生成主 system prompt
 - `getCompressionPrompt()` 生成上下文压缩专用 prompt
@@ -50,8 +50,8 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 
 `PromptProvider` 会根据 `supportsModernFeatures(resolveModel(...))` 选择：
 
-- `packages/core/src/prompts/snippets.ts`
-- `packages/core/src/prompts/snippets.legacy.ts`
+- `gemini-cli/packages/core/src/prompts/snippets.ts`
+- `gemini-cli/packages/core/src/prompts/snippets.legacy.ts`
 
 这意味着 Prompt 结构会随模型能力切换，而不是所有模型共用一份模板。
 
@@ -86,7 +86,7 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 
 再是**按需激活具体 skill**：
 
-- 激活工具：`packages/core/src/tools/activate-skill.ts`
+- 激活工具：`gemini-cli/packages/core/src/tools/activate-skill.ts`
 - 激活结果：返回 `<activated_skill>` 包裹的 instructions 与资源目录结构
 
 也就是说，当前实现不是“根据关键词自动触发 skill prompt”，而是先让模型知道有哪些 skill，再通过 `activate_skill` 精确启用。
@@ -124,12 +124,12 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Prompt 总入口 | `packages/core/src/core/prompts.ts` | 对外暴露 system/compression prompt 接口 |
-| 核心拼装器 | `packages/core/src/prompts/promptProvider.ts` | 根据运行态构造 prompt |
-| 现代模板片段 | `packages/core/src/prompts/snippets.ts` | system prompt 主模板 |
-| 旧模型模板片段 | `packages/core/src/prompts/snippets.legacy.ts` | 兼容旧能力模型 |
-| Skill 激活 | `packages/core/src/tools/activate-skill.ts` | 把 skill 指令显式注入上下文 |
-| 记忆结构 | `packages/core/src/config/memory.ts` | `HierarchicalMemory` 与 flatten 逻辑 |
+| Prompt 总入口 | `gemini-cli/packages/core/src/core/prompts.ts` | 对外暴露 system/compression prompt 接口 |
+| 核心拼装器 | `gemini-cli/packages/core/src/prompts/promptProvider.ts` | 根据运行态构造 prompt |
+| 现代模板片段 | `gemini-cli/packages/core/src/prompts/snippets.ts` | system prompt 主模板 |
+| 旧模型模板片段 | `gemini-cli/packages/core/src/prompts/snippets.legacy.ts` | 兼容旧能力模型 |
+| Skill 激活 | `gemini-cli/packages/core/src/tools/activate-skill.ts` | 把 skill 指令显式注入上下文 |
+| 记忆结构 | `gemini-cli/packages/core/src/config/memory.ts` | `HierarchicalMemory` 与 flatten 逻辑 |
 
 ---
 
@@ -137,13 +137,13 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 
 | 函数/类型 | 文件 | 职责 |
 |----------|------|------|
-| `PromptProvider.getCoreSystemPrompt()` | `packages/core/src/prompts/promptProvider.ts` | 按运行态（模式/skill/subagent/memory）动态拼装 system prompt |
-| `PromptProvider.getCompressionPrompt()` | `packages/core/src/prompts/promptProvider.ts` | 生成上下文压缩专用 prompt（独立于主 system prompt）|
-| `renderFinalShell()` | `packages/core/src/prompts/snippets.ts` | 将 userMemory 追加到 system prompt 末尾 |
-| `renderSubAgents()` | `packages/core/src/prompts/snippets.ts` | 将可用子代理定义写入 system prompt |
-| `renderAgentSkills()` | `packages/core/src/prompts/snippets.ts` | 将 skill 名称、描述、激活位置写入 system prompt |
-| `ActivateSkillTool` | `packages/core/src/tools/activate-skill.ts` | 将具体 skill 的指令以 `<activated_skill>` 形式注入对话上下文 |
-| `supportsModernFeatures()` | `packages/core/src/prompts/` | 判断当前模型是否使用现代模板集（snippets vs snippets.legacy）|
+| `PromptProvider.getCoreSystemPrompt()` | `gemini-cli/packages/core/src/prompts/promptProvider.ts` | 按运行态（模式/skill/subagent/memory）动态拼装 system prompt |
+| `PromptProvider.getCompressionPrompt()` | `gemini-cli/packages/core/src/prompts/promptProvider.ts` | 生成上下文压缩专用 prompt（独立于主 system prompt）|
+| `renderFinalShell()` | `gemini-cli/packages/core/src/prompts/snippets.ts` | 将 userMemory 追加到 system prompt 末尾 |
+| `renderSubAgents()` | `gemini-cli/packages/core/src/prompts/snippets.ts` | 将可用子代理定义写入 system prompt |
+| `renderAgentSkills()` | `gemini-cli/packages/core/src/prompts/snippets.ts` | 将 skill 名称、描述、激活位置写入 system prompt |
+| `ActivateSkillTool` | `gemini-cli/packages/core/src/tools/activate-skill.ts` | 将具体 skill 的指令以 `<activated_skill>` 形式注入对话上下文 |
+| `supportsModernFeatures()` | `gemini-cli/packages/core/src/prompts/` | 判断当前模型是否使用现代模板集（snippets vs snippets.legacy）|
 
 ---
 

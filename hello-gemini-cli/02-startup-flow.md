@@ -22,18 +22,18 @@ Gemini CLI 的启动不仅仅是加载 UI，它包含了一个复杂的环境预
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 flowchart LR
-    Main["packages/cli/src/gemini.tsx<br/>main() @ 186"] --> Parse["config.ts<br/>parseArguments() @ 155"]
+    Main["gemini-cli/packages/cli/src/gemini.tsx<br/>main() @ 186"] --> Parse["config.ts<br/>parseArguments() @ 155"]
     Parse --> Setup["加载 settings /<br/>trustedFolders / auth"]
     Setup --> Sandbox{沙箱<br/>需要?}
     Sandbox -->|是| StartSandbox["start_sandbox()<br/>重启进容器/受限进程"]
-    Sandbox -->|否| LoadCfg["loadCliConfig()<br/>创建 Config @ config.ts:885"]
+    Sandbox -->|否| LoadCfg["loadCliConfig()<br/>创建 Config @ gemini-cli/packages/core/src/config/config.ts:885"]
     StartSandbox -. "子进程重新<br/>从 main() 开始" .-> Main
     LoadCfg --> InitApp["initializer.ts<br/>initializeApp() @ 38"]
     InitApp --> Mode{交互<br/>模式?}
     Mode -->|是| UI["interactiveCli.tsx<br/>startInteractiveUI() @ 53"]
     Mode -->|否| Headless["nonInteractiveCli.ts<br/>runNonInteractive() @ 58"]
 
-    LoadCfg --> ConfigInit["config.initialize()<br/>@ config.ts:1289"]
+    LoadCfg --> ConfigInit["config.initialize()<br/>@ gemini-cli/packages/core/src/config/config.ts:1289"]
     UI -. "useEffect 中调用<br/>config.initialize()" .-> ConfigInit
     Headless -. "直接调用<br/>config.initialize()" .-> ConfigInit
     ConfigInit --> TOOL_INIT["ToolRegistry.discoverAllTools()<br/>@ tool-registry.ts:219"]
@@ -45,20 +45,20 @@ flowchart LR
 
 | 函数/方法 | 文件路径 | 行号 | 职责 |
 |---|---|---|---|
-| `main()` | `packages/cli/src/gemini.tsx` | :186 | 程序入口，参数解析，沙箱决策 |
-| `parseArguments()` | `packages/cli/src/config/config.ts` | :155 | Yargs 子命令解析 |
-| `loadSandboxConfig()` | `packages/cli/src/config/sandboxConfig.ts` | :126 | 沙箱配置加载（命令检测、镜像路径、allowedPaths） |
-| `start_sandbox()` | `packages/cli/src/utils/sandbox.ts` | :46 | 沙箱子进程启动（Docker/LXC/Seatbelt 等） |
-| `initializeApp()` | `packages/cli/src/core/initializer.ts` | :38 | Auth 校验、IDE 连接预热、主题验证；返回 `InitializationResult` |
-| `Config._initialize()` | `packages/core/src/config/config.ts` | :1299 | 工具注册/MCP 启动/Skill 发现/Hook 系统初始化/GeminiClient 初始化 |
-| `startInteractiveUI()` | `packages/cli/src/interactiveCli.tsx` | :53 | React + Ink TUI 挂载 |
-| `runNonInteractive()` | `packages/cli/src/nonInteractiveCli.ts` | :58 | Headless stdin/stdout 模式 |
-| `loadTrustedFolders()` | `packages/cli/src/config/trustedFolders.ts` | :249 | 工作区信任校验 |
+| `main()` | `gemini-cli/packages/cli/src/gemini.tsx` | :186 | 程序入口，参数解析，沙箱决策 |
+| `parseArguments()` | `gemini-cli/packages/cli/src/config/config.ts` | :155 | Yargs 子命令解析 |
+| `loadSandboxConfig()` | `gemini-cli/packages/cli/src/config/sandboxConfig.ts` | :126 | 沙箱配置加载（命令检测、镜像路径、allowedPaths） |
+| `start_sandbox()` | `gemini-cli/packages/cli/src/utils/sandbox.ts` | :46 | 沙箱子进程启动（Docker/LXC/Seatbelt 等） |
+| `initializeApp()` | `gemini-cli/packages/cli/src/core/initializer.ts` | :38 | Auth 校验、IDE 连接预热、主题验证；返回 `InitializationResult` |
+| `Config._initialize()` | `gemini-cli/packages/core/src/config/config.ts` | :1299 | 工具注册/MCP 启动/Skill 发现/Hook 系统初始化/GeminiClient 初始化 |
+| `startInteractiveUI()` | `gemini-cli/packages/cli/src/interactiveCli.tsx` | :53 | React + Ink TUI 挂载 |
+| `runNonInteractive()` | `gemini-cli/packages/cli/src/nonInteractiveCli.ts` | :58 | Headless stdin/stdout 模式 |
+| `loadTrustedFolders()` | `gemini-cli/packages/cli/src/config/trustedFolders.ts` | :249 | 工作区信任校验 |
 
 ## 3. 核心初始化顺序
 
 ### 3.1 参数解析 (Yargs)
-系统在 `packages/cli/src/config/config.ts` 中使用 `yargs` 定义了丰富的子命令和运行标志。解析后的 `argv` 决定了：
+系统在 `gemini-cli/packages/cli/src/config/config.ts` 中使用 `yargs` 定义了丰富的子命令和运行标志。解析后的 `argv` 决定了：
 - 运行模式（交互 vs. 非交互）
 - 认证方式
 - 是否启用特定的扩展或 MCP 服务
@@ -75,29 +75,29 @@ flowchart LR
 flowchart TD
     Entry["main() 检查 !SANDBOX<br/>gemini.tsx:389"]
     Entry -->|已在沙箱| Direct["直接在宿主进程运行"]
-    Entry -->|首次启动| Resolve["getSandboxCommand() 解析<br/>sandboxConfig.ts:43"]
-    Resolve --> Env["GEMINI_SANDBOX 环境变量?<br/>sandboxConfig.ts:52-57"]
+    Entry -->|首次启动| Resolve["getSandboxCommand() 解析<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:43"]
+    Resolve --> Env["GEMINI_SANDBOX 环境变量?<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:52-57"]
     Env -->|有值| EnvVal["取 toLowerCase().trim() 值"]
     Env -->|无值| ArgVal["取 argv.sandbox 或 settings.tools.sandbox"]
-    EnvVal --> Normalize["类型归一化<br/>sandboxConfig.ts:58-59"]
+    EnvVal --> Normalize["类型归一化<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:58-59"]
     ArgVal --> Normalize
     Normalize -->|false| Direct
-    Normalize -->|字符串| Explicit["显式指定命令<br/>sandboxConfig.ts:65-98"]
-    Normalize -->|true| Auto["自动检测<br/>sandboxConfig.ts:101-123"]
-    Explicit --> Validate["命令存在性 & 平台支持<br/>sandboxConfig.ts:74-97"]
+    Normalize -->|字符串| Explicit["显式指定命令<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:65-98"]
+    Normalize -->|true| Auto["自动检测<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:101-123"]
+    Explicit --> Validate["命令存在性 & 平台支持<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:74-97"]
     Validate -->|失败| Error["抛出 FatalSandboxError"]
     Validate -->|成功| ReturnCmd["返回命令字符串"]
-    Auto --> Darwin?["平台 darwin?<br/>sandboxConfig.ts:104"]
-    Darwin? -->|是| SB?["sandbox-exec 存在?<br/>sandboxConfig.ts:104"]
-    Darwin? -->|否| Docker?["docker 存在?<br/>sandboxConfig.ts:106"]
+    Auto --> Darwin?["平台 darwin?<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:104"]
+    Darwin? -->|是| SB?["sandbox-exec 存在?<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:104"]
+    Darwin? -->|否| Docker?["docker 存在?<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:106"]
     SB? -->|是| ReturnSeatbelt["返回 sandbox-exec"]
     SB? -->|否| Docker?
     Docker? -->|是| ReturnDocker["返回 docker"]
-    Docker? -->|否| Podman?["podman 存在?<br/>sandboxConfig.ts:108"]
+    Docker? -->|否| Podman?["podman 存在?<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:108"]
     Podman? -->|是| ReturnPodman["返回 podman"]
-    Podman? -->|否| NoCmd["sandbox=true 但无容器命令<br/>sandboxConfig.ts:113-118"]
+    Podman? -->|否| NoCmd["sandbox=true 但无容器命令<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:113-118"]
     Direct --> MainFlow["loadCliConfig() 正常启动"]
-    ReturnCmd --> LoadCfg["loadSandboxConfig() 组装完整配置<br/>sandboxConfig.ts:126"]
+    ReturnCmd --> LoadCfg["loadSandboxConfig() 组装完整配置<br/>gemini-cli/packages/cli/src/config/sandboxConfig.ts:126"]
     ReturnSeatbelt --> LoadCfg
     ReturnDocker --> LoadCfg
     ReturnPodman --> LoadCfg
@@ -232,19 +232,19 @@ GEMINI_SANDBOX=docker
 
 交互模式下，`AppContainer` 会先挂载 UI，再异步做运行时初始化：
 
-1. `AppContainer.useEffect()`  
-   文件：`packages/cli/src/ui/AppContainer.tsx:398-427`  
+1. `AppContainer.useEffect()`
+   文件：`gemini-cli/packages/cli/src/ui/AppContainer.tsx:398-427`
    调用点：`404` 调 `config.initialize()`；`406` 初始化完成后置 `setConfigInitialized(true)`。
-2. `Config.initialize()` / `Config._initialize()`  
-   文件：`packages/core/src/config/config.ts:1289-1397`
-3. `useMcpStatus()`  
-   文件：`packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`  
+2. `Config.initialize()` / `Config._initialize()`
+   文件：`gemini-cli/packages/core/src/config/config.ts:1289-1397`
+3. `useMcpStatus()`
+   文件：`gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`
    职责：把 MCP discovery 状态折叠成 `isMcpReady`。
-4. `AppContainer.handleFinalSubmit()`  
-   文件：`packages/cli/src/ui/AppContainer.tsx:1262-1333`  
+4. `AppContainer.handleFinalSubmit()`
+   文件：`gemini-cli/packages/cli/src/ui/AppContainer.tsx:1262-1333`
    调用点：`1298-1329` 只有在 `isConfigInitialized && isMcpReady` 时才真正放行普通 prompt；否则只入队。
-5. `useMessageQueue()`  
-   文件：`packages/cli/src/ui/hooks/useMessageQueue.ts:30-96`  
+5. `useMessageQueue()`
+   文件：`gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts:30-96`
    调用点：`68-80` 当 `isConfigInitialized && isMcpReady && streamingState === Idle` 时，才自动冲刷排队消息。
 
 这意味着启动阶段直接塑造了请求入口语义：
@@ -255,14 +255,14 @@ GEMINI_SANDBOX=docker
 
 #### 影响 2：首轮请求看到的 system prompt 是启动阶段生成的
 
-1. `Config._initialize()`  
-   文件：`packages/core/src/config/config.ts:1395`  
+1. `Config._initialize()`
+   文件：`gemini-cli/packages/core/src/config/config.ts:1395`
    调用点：`await this._geminiClient.initialize()`。
-2. `GeminiClient.initialize()`  
-   文件：`packages/core/src/core/client.ts:245-248`  
+2. `GeminiClient.initialize()`
+   文件：`gemini-cli/packages/core/src/core/client.ts:245-248`
    调用点：`246` 调 `this.startChat()`。
-3. `GeminiClient.startChat()`  
-   文件：`packages/core/src/core/client.ts:358-388`  
+3. `GeminiClient.startChat()`
+   文件：`gemini-cli/packages/core/src/core/client.ts:358-388`
    调用点：`373-375` 调 `getCoreSystemPrompt(this.config, systemMemory)`，把结果作为 `systemInstruction` 注入 `GeminiChat`。
 
 所以**第一轮请求并不是在提交时才“临时生成上下文”**，而是继承启动阶段已经构建好的 `GeminiChat` 会话壳：
@@ -276,31 +276,31 @@ GEMINI_SANDBOX=docker
 
 #### 影响 3：启动阶段注册的工具，决定了请求期 `setTools()` 能下发什么函数声明
 
-1. `Config._initialize()`  
-   文件：`packages/core/src/config/config.ts:1335`  
+1. `Config._initialize()`
+   文件：`gemini-cli/packages/core/src/config/config.ts:1335`
    调用点：创建 `this._toolRegistry = await this.createToolRegistry()`。
-2. `Config.createToolRegistry()`  
-   文件：`packages/core/src/config/config.ts:3257-3259`  
+2. `Config.createToolRegistry()`
+   文件：`gemini-cli/packages/core/src/config/config.ts:3257-3259`
    调用点：`3257` 执行 `registry.discoverAllTools()`，之后 `sortTools()`。
-3. `GeminiClient.setTools()`  
-   文件：`packages/core/src/core/client.ts:288-302`  
+3. `GeminiClient.setTools()`
+   文件：`gemini-cli/packages/core/src/core/client.ts:288-302`
    调用点：`298-301` 从 `toolRegistry.getFunctionDeclarations(modelId)` 取出函数声明并写入 chat。
-4. `GeminiClient.processTurn()`  
-   文件：`packages/core/src/core/client.ts:585-865`  
+4. `GeminiClient.processTurn()`
+   文件：`gemini-cli/packages/core/src/core/client.ts:585-865`
    调用点：`726-727` 在每轮请求前执行 `await this.setTools(modelToUse)`。
 
-这条链说明：**请求阶段虽然每轮都会调用 `setTools()`，但它使用的是启动阶段构建好的 `ToolRegistry`。**  
+这条链说明：**请求阶段虽然每轮都会调用 `setTools()`，但它使用的是启动阶段构建好的 `ToolRegistry`。**
 如果某个工具在启动时没有被发现或注册，模型在请求阶段就根本拿不到对应的 function declaration。
 
 #### 影响 4：MCP 初始化时机决定请求期是否能调用 MCP 工具
 
-1. `Config._initialize()`  
-   文件：`packages/core/src/config/config.ts:1337-1362`  
+1. `Config._initialize()`
+   文件：`gemini-cli/packages/core/src/config/config.ts:1337-1362`
    调用点：`1349-1352` 异步启动 `startConfiguredMcpServers()` 和 `extensionLoader.start(this)`。
-2. 在交互模式下  
+2. 在交互模式下
    调用点：`1347-1358` 不阻塞 UI；`1360-1362` 只在非交互/ACP 模式才 `await this.mcpInitializationPromise`。
-3. `useMcpStatus()`  
-   文件：`packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`  
+3. `useMcpStatus()`
+   文件：`gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`
    调用点：`42-44` 只有 `discoveryState === COMPLETED` 才算 `isMcpReady`。
 
 因此请求流程会受到两层影响：
@@ -310,16 +310,16 @@ GEMINI_SANDBOX=docker
 
 #### 影响 5：启动时的 trust / sandbox / approval 约束会延续到每一轮工具调用
 
-1. `Config.isTrustedFolder()`  
-   文件：`packages/core/src/config/config.ts:2742-2749`  
+1. `Config.isTrustedFolder()`
+   文件：`gemini-cli/packages/core/src/config/config.ts:2742-2749`
    职责：给出当前工作区是否 trusted。
-2. `Config.setApprovalMode()`  
-   文件：`packages/core/src/config/config.ts:2389-2394`  
+2. `Config.setApprovalMode()`
+   文件：`gemini-cli/packages/core/src/config/config.ts:2389-2394`
    约束：untrusted folder 下不能启用 `DEFAULT` 之外的特权 approval mode。
-3. `Config._initialize()`  
-   文件：`packages/core/src/config/config.ts:1367-1371`  
+3. `Config._initialize()`
+   文件：`gemini-cli/packages/core/src/config/config.ts:1367-1371`
    调用点：`discoverSkills(..., this.isTrustedFolder())`，trust 状态直接影响 skill 发现。
-4. 沙箱阶段  
+4. 沙箱阶段
    文档前文已描述 `start_sandbox()` 的文件系统/网络/环境变量过滤。
 
 这些启动约束会一路延续到请求期的工具调度：
@@ -331,10 +331,10 @@ GEMINI_SANDBOX=docker
 
 可以把它压缩成一条依赖链：
 
-`main()` / `loadCliConfig()` / `initializeApp()` / `Config._initialize()`  
--> 生成 `GeminiClient + GeminiChat + ToolRegistry + MCP + Skills + Trust/Sandbox/Approval`  
--> `AppContainer.handleFinalSubmit()` 决定是否允许提交  
--> `useGeminiStream.submitQuery()` 进入 agent loop  
+`main()` / `loadCliConfig()` / `initializeApp()` / `Config._initialize()`
+-> 生成 `GeminiClient + GeminiChat + ToolRegistry + MCP + Skills + Trust/Sandbox/Approval`
+-> `AppContainer.handleFinalSubmit()` 决定是否允许提交
+-> `useGeminiStream.submitQuery()` 进入 agent loop
 -> `GeminiClient.processTurn()` 在每轮里消费这些启动产物
 
 ## 4. 运行模式分发

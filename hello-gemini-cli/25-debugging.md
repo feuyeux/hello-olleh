@@ -52,9 +52,9 @@ GEMINI_DEBUG_LOG_FILE=/tmp/gemini.log gemini
 
 | 文件 | 功能 |
 |------|------|
-| `packages/core/src/utils/debugLogger.ts` | `DebugLogger` 类实现 |
-| `packages/core/src/core/logger.ts` | 会话日志记录器 |
-| `packages/cli/src/config/config.ts:171-176` | CLI debug 选项定义 |
+| `gemini-cli/packages/core/src/utils/debugLogger.ts` | `DebugLogger` 类实现 |
+| `gemini-cli/packages/core/src/core/logger.ts` | 会话日志记录器 |
+| `gemini-cli/packages/cli/src/config/config.ts:171-176` | CLI debug 选项定义 |
 
 ## 5. IDE 调试
 
@@ -118,8 +118,8 @@ npm test -- --testNamePattern="mcp"
 | `LOG_LEVEL` env var | 进程环境 | 控制日志详细程度（debug/info/warn/error）|
 | `GEMINI_SANDBOX` env var | 进程环境 | 控制 sandbox 策略，设为 `none` 可跳过沙箱调试 |
 | `inspector` / `--inspect-brk` | Node.js | Node.js debugger 入口，VS Code 附加调试 |
-| `ChatRecordingService` | `packages/core/src/services/chatRecordingService.ts` | 对话录制兼调试日志：所有交互写入 JSON 文件可回放 |
-| `LoopDetectionService.disable()` | `packages/core/src/services/loopDetectionService.ts` | 调试时临时禁用循环检测，避免干扰重复测试用例 |
+| `ChatRecordingService` | `gemini-cli/packages/core/src/services/chatRecordingService.ts` | 对话录制兼调试日志：所有交互写入 JSON 文件可回放 |
+| `LoopDetectionService.disable()` | `gemini-cli/packages/core/src/services/loopDetectionService.ts` | 调试时临时禁用循环检测，避免干扰重复测试用例 |
 
 ---
 

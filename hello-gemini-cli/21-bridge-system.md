@@ -24,10 +24,10 @@ title: "桥接与集成：CLI、SDK、IDE Companion 与 A2A 接口"
 
 | 桥接面 | 代码锚点 | 作用 |
 | --- | --- | --- |
-| CLI 宿主 | `packages/cli/src/gemini.tsx`、`packages/cli/src/nonInteractiveCli.ts` | 交互式终端与 headless 管道接入 |
+| CLI 宿主 | `gemini-cli/packages/cli/src/gemini.tsx`、`gemini-cli/packages/cli/src/nonInteractiveCli.ts` | 交互式终端与 headless 管道接入 |
 | SDK | `packages/sdk/src/agent.ts`、`packages/sdk/src/session.ts` | 以程序方式嵌入 Gemini CLI 能力 |
 | IDE Companion | `packages/vscode-ide-companion/src/ide-server.ts` | 向 CLI 提供编辑器上下文与 diff 能力 |
-| MCP / Extensions | `packages/cli/src/config/extension-manager.ts`、`packages/core/src/tools/mcp-client-manager.ts` | 把外部工具、资源、prompt 接到主运行时 |
+| MCP / Extensions | `gemini-cli/packages/cli/src/config/extension-manager.ts`、`gemini-cli/packages/core/src/tools/mcp-client-manager.ts` | 把外部工具、资源、prompt 接到主运行时 |
 | A2A Server | `packages/a2a-server/src/http/app.ts`、`packages/a2a-server/src/agent/task.ts` | 以任务化 HTTP/SSE 形式暴露 Agent 能力 |
 
 ## 2. CLI 本身就是第一层桥接协议
@@ -152,12 +152,12 @@ Gemini CLI 的优势是边界比较清楚、协议更分散也更可替换；代
 
 | 函数/类型 | 文件 | 职责 |
 |----------|------|------|
-| `startInteractiveUI()` | `packages/cli/src/gemini.tsx` | 交互模式 CLI 桥接入口 |
-| `nonInteractiveMode()` | `packages/cli/src/gemini.tsx` | Headless / pipe 模式桥接入口 |
-| `GeminiClient` (`@google/gemini-cli-core`) | `packages/core/src/core/client.ts` | SDK 桥接层：对外暴露 `sendMessageStream()` 供程序化调用 |
-| `A2AServer` (实验性) | `packages/core/src/agents/a2a-server.ts` | A2A 远程代理服务器：HTTP 端点供外部 agent 调用 |
-| `McpClientManager` | `packages/core/src/mcp/` | 外部系统桥接：将 MCP server 能力引入运行时 |
-| `ExtensionManager` | `packages/core/src/config/extension-manager.ts` | IDE/VS Code Companion 桥接接入点 |
+| `startInteractiveUI()` | `gemini-cli/packages/cli/src/gemini.tsx` | 交互模式 CLI 桥接入口 |
+| `nonInteractiveMode()` | `gemini-cli/packages/cli/src/gemini.tsx` | Headless / pipe 模式桥接入口 |
+| `GeminiClient` (`@google/gemini-cli-core`) | `gemini-cli/packages/core/src/core/client.ts` | SDK 桥接层：对外暴露 `sendMessageStream()` 供程序化调用 |
+| `A2AServer` (实验性) | `gemini-cli/packages/core/src/agents/a2a-server.ts` | A2A 远程代理服务器：HTTP 端点供外部 agent 调用 |
+| `McpClientManager` | `gemini-cli/packages/core/src/mcp/` | 外部系统桥接：将 MCP server 能力引入运行时 |
+| `ExtensionManager` | `gemini-cli/packages/core/src/config/extension-manager.ts` | IDE/VS Code Companion 桥接接入点 |
 
 ---
 

@@ -20,7 +20,7 @@ Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extensi
 
 ## 1. 一个 extension 能提供什么
 
-磁盘上的扩展配置定义在 `packages/cli/src/config/extension.ts`，核心文件是 `gemini-extension.json`。
+磁盘上的扩展配置定义在 `gemini-cli/packages/cli/src/config/extension.ts`，核心文件是 `gemini-extension.json`。
 
 当前 `ExtensionConfig` 明确支持的贡献项包括：
 
@@ -35,7 +35,7 @@ Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extensi
 
 ## 2. 扩展管理的核心是 `ExtensionManager`
 
-`packages/cli/src/config/extension-manager.ts` 负责：
+`gemini-cli/packages/cli/src/config/extension-manager.ts` 负责：
 
 - 从本地、link、git、GitHub release 安装或更新 extension
 - 处理 workspace trust
@@ -50,7 +50,7 @@ Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extensi
 
 ### 3.1 生命周期由 `McpClientManager` 统一管理
 
-`packages/core/src/tools/mcp-client-manager.ts` 负责：
+`gemini-cli/packages/core/src/tools/mcp-client-manager.ts` 负责：
 
 - 记录所有 MCP server 配置
 - 连接或断开具体 server
@@ -63,7 +63,7 @@ Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extensi
 
 ### 3.2 `McpClient` 支持多种传输
 
-`packages/core/src/tools/mcp-client.ts` 直接引入了三类 MCP transport：
+`gemini-cli/packages/core/src/tools/mcp-client.ts` 直接引入了三类 MCP transport：
 
 - `StdioClientTransport`
 - `SSEClientTransport`
@@ -105,7 +105,7 @@ Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extensi
 
 仓库里的示例位于：
 
-- `packages/cli/src/commands/extensions/examples/mcp-server/gemini-extension.json`
+- `gemini-cli/packages/cli/src/commands/extensions/examples/mcp-server/gemini-extension.json`
 
 示例格式很直接：
 
@@ -129,11 +129,11 @@ Gemini CLI 这里更准确的名称是 **extension system**。MCP 只是 extensi
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Extension 配置结构 | `packages/cli/src/config/extension.ts` | `gemini-extension.json` 的字段定义 |
-| Extension 装载管理 | `packages/cli/src/config/extension-manager.ts` | 安装、更新、trust、consent、贡献项加载 |
-| MCP 生命周期管理 | `packages/core/src/tools/mcp-client-manager.ts` | 连接、发现、诊断、刷新 |
-| MCP 连接实现 | `packages/core/src/tools/mcp-client.ts` | stdio / SSE / Streamable HTTP transport |
-| 示例 manifest | `packages/cli/src/commands/extensions/examples/mcp-server/gemini-extension.json` | 最小 MCP extension 例子 |
+| Extension 配置结构 | `gemini-cli/packages/cli/src/config/extension.ts` | `gemini-extension.json` 的字段定义 |
+| Extension 装载管理 | `gemini-cli/packages/cli/src/config/extension-manager.ts` | 安装、更新、trust、consent、贡献项加载 |
+| MCP 生命周期管理 | `gemini-cli/packages/core/src/tools/mcp-client-manager.ts` | 连接、发现、诊断、刷新 |
+| MCP 连接实现 | `gemini-cli/packages/core/src/tools/mcp-client.ts` | stdio / SSE / Streamable HTTP transport |
+| 示例 manifest | `gemini-cli/packages/cli/src/commands/extensions/examples/mcp-server/gemini-extension.json` | 最小 MCP extension 例子 |
 
 ---
 

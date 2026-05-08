@@ -26,7 +26,7 @@ gemini [--prompt "..."] [--no-interactive]
 ```
 
 ```typescript
-// packages/cli/src/gemini.tsx（简化后的主分流）
+// gemini-cli/packages/cli/src/gemini.tsx（简化后的主分流）
 if (config.isInteractive()) {
   await startInteractiveUI(...);
 } else {
@@ -52,10 +52,10 @@ if (config.isInteractive()) {
 Ink 基于 React 模型，通过 `AppContainer`、`UIStateContext` 和 `ui/components/messages/*` 实现增量更新。下面这段只用于说明渲染思路，不对应单一真实文件：
 
 ```typescript
-// packages/cli/src/ui/AppContainer.tsx + ui/components/messages/*（示意）
+// gemini-cli/packages/cli/src/ui/AppContainer.tsx + ui/components/messages/*（示意）
 function AssistantMessage({ turnId }: { turnId: string }) {
   const [content, setContent] = useState('');
-  
+
   useEffect(() => {
     messageBus.on('token', (e) => {
       if (e.turnId === turnId) {
@@ -63,7 +63,7 @@ function AssistantMessage({ turnId }: { turnId: string }) {
       }
     });
   }, [turnId]);
-  
+
   return <Text>{content}</Text>;
 }
 ```
@@ -95,11 +95,11 @@ gemini --prompt "运行测试并修复失败" --yolo
 ```
 
 ```typescript
-// packages/cli/src/nonInteractiveCli.ts（简化）
+// gemini-cli/packages/cli/src/nonInteractiveCli.ts（简化）
 export async function runNonInteractive(flags: CliFlags) {
   const prompt = flags.prompt ?? await readStdin();
   const agent = new GeminiClient(config);
-  
+
   for await (const event of agent.run(prompt)) {
     if (event.type === 'token') process.stdout.write(event.content);
     if (event.type === 'error') { process.stderr.write(event.message); process.exit(1); }
@@ -135,12 +135,12 @@ export async function runNonInteractive(flags: CliFlags) {
 
 | 函数/类型 | 文件 | 职责 |
 |----------|------|------|
-| `AppContainer` | `packages/cli/src/ui/AppContainer.tsx` | CLI 顶层 React 组件：持有所有 UI Action、初始化 Config、生命周期管理 |
-| `useGeminiStream` | `packages/cli/src/ui/hooks/useGeminiStream.ts` | 核心 hook：管理流处理、工具调度触发、工具结果回注 |
-| `InputBox` | `packages/cli/src/ui/components/InputBox.tsx` | 用户输入组件：键盘事件处理、多行输入、历史导航 |
-| `startInteractiveUI()` | `packages/cli/src/gemini.tsx` | 交互模式启动入口：初始化 Ink + React render |
-| `nonInteractiveMode()` | `packages/cli/src/gemini.tsx` | Headless 模式入口：读取 stdin 或 `--message`，直接调用模型 |
-| `UIStateContext` | `packages/cli/src/ui/contexts/UIStateContext.tsx` | React Context：持有 currentTurn/messages/tools/status 等 UI 状态 |
+| `AppContainer` | `gemini-cli/packages/cli/src/ui/AppContainer.tsx` | CLI 顶层 React 组件：持有所有 UI Action、初始化 Config、生命周期管理 |
+| `useGeminiStream` | `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts` | 核心 hook：管理流处理、工具调度触发、工具结果回注 |
+| `InputBox` | `gemini-cli/packages/cli/src/ui/components/InputBox.tsx` | 用户输入组件：键盘事件处理、多行输入、历史导航 |
+| `startInteractiveUI()` | `gemini-cli/packages/cli/src/gemini.tsx` | 交互模式启动入口：初始化 Ink + React render |
+| `nonInteractiveMode()` | `gemini-cli/packages/cli/src/gemini.tsx` | Headless 模式入口：读取 stdin 或 `--message`，直接调用模型 |
+| `UIStateContext` | `gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx` | React Context：持有 currentTurn/messages/tools/status 等 UI 状态 |
 
 ---
 

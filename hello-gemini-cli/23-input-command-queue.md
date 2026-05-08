@@ -27,13 +27,13 @@ Gemini CLI 的输入处理涉及以下核心模块：
 
 | 模块 | 路径 | 职责 |
 |------|------|------|
-| 交互式 CLI | `packages/cli/src/interactiveCli.tsx` | 输入总入口 |
-| 命令服务 | `packages/cli/src/services/CommandService.ts` | 命令加载与匹配 |
-| Slash 命令处理器 | `packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
-| Shell 命令处理器 | `packages/cli/src/ui/hooks/shellCommandProcessor.ts` | bash/本地命令 |
-| 消息队列 | `packages/cli/src/ui/hooks/useMessageQueue.ts` | 忙碌时输入排队 |
-| Shell 状态机 | `packages/cli/src/ui/hooks/shellReducer.ts` | UI 状态管理 |
-| 命令类型定义 | `packages/cli/src/ui/commands/types.ts` | 数据结构 |
+| 交互式 CLI | `gemini-cli/packages/cli/src/interactiveCli.tsx` | 输入总入口 |
+| 命令服务 | `gemini-cli/packages/cli/src/services/CommandService.ts` | 命令加载与匹配 |
+| Slash 命令处理器 | `gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
+| Shell 命令处理器 | `gemini-cli/packages/cli/src/ui/hooks/shellCommandProcessor.ts` | bash/本地命令 |
+| 消息队列 | `gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 忙碌时输入排队 |
+| Shell 状态机 | `gemini-cli/packages/cli/src/ui/hooks/shellReducer.ts` | UI 状态管理 |
+| 命令类型定义 | `gemini-cli/packages/cli/src/ui/commands/types.ts` | 数据结构 |
 
 ## 2. 输入流程图
 
@@ -97,7 +97,7 @@ flowchart TB
 ### 3.2 命令类型
 
 ```typescript
-// packages/cli/src/ui/commands/types.ts
+// gemini-cli/packages/cli/src/ui/commands/types.ts
 
 interface SlashCommand {
   name: string;
@@ -123,7 +123,7 @@ type SlashCommandActionReturn =
 ### 4.1 命令解析流程
 
 ```typescript
-// packages/cli/src/ui/hooks/slashCommandProcessor.ts
+// gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts
 
 async function handleSlashCommand(input: string, context: CommandContext) {
   // 1. 解析命令名和参数
@@ -153,7 +153,7 @@ async function handleSlashCommand(input: string, context: CommandContext) {
 MCP 服务器提供的 prompts 可以作为 slash 命令调用：
 
 ```typescript
-// packages/cli/src/services/McpPromptLoader.ts
+// gemini-cli/packages/cli/src/services/McpPromptLoader.ts
 
 export class McpPromptLoader implements ICommandLoader {
   async loadCommands(signal: AbortSignal): Promise<SlashCommand[]> {
@@ -200,7 +200,7 @@ stateDiagram-v2
 ### 5.2 队列实现
 
 ```typescript
-// packages/cli/src/ui/hooks/useMessageQueue.ts
+// gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts
 
 interface MessageQueueState {
   messageQueue: string[];  // 待发送消息队列
@@ -227,7 +227,7 @@ useEffect(() => {
 ## 6. Shell 状态管理
 
 ```typescript
-// packages/cli/src/ui/hooks/shellReducer.ts
+// gemini-cli/packages/cli/src/ui/hooks/shellReducer.ts
 
 type StreamingState =
   | { status: 'idle' }
@@ -271,12 +271,12 @@ function shellReducer(state: ShellState, action: ShellAction): ShellState {
 
 | 主题 | 代码锚点 | 说明 |
 |------|----------|------|
-| CLI 入口 | `packages/cli/src/interactiveCli.tsx` | 交互式 CLI 入口 |
-| 命令服务 | `packages/cli/src/services/CommandService.ts:45-90` | 命令加载与匹配 |
-| 命令类型 | `packages/cli/src/ui/commands/types.ts` | 数据结构定义 |
-| Slash 处理器 | `packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
-| Shell 状态 | `packages/cli/src/ui/hooks/shellReducer.ts` | 状态机管理 |
-| 消息队列 | `packages/cli/src/ui/hooks/useMessageQueue.ts` | 队列管理 |
+| CLI 入口 | `gemini-cli/packages/cli/src/interactiveCli.tsx` | 交互式 CLI 入口 |
+| 命令服务 | `gemini-cli/packages/cli/src/services/CommandService.ts:45-90` | 命令加载与匹配 |
+| 命令类型 | `gemini-cli/packages/cli/src/ui/commands/types.ts` | 数据结构定义 |
+| Slash 处理器 | `gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
+| Shell 状态 | `gemini-cli/packages/cli/src/ui/hooks/shellReducer.ts` | 状态机管理 |
+| 消息队列 | `gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 队列管理 |
 
 ## 8. 与 Claude Code 的差异
 

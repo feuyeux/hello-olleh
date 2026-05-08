@@ -75,20 +75,20 @@ flowchart TB
 
 | 组件 | 路径 | 职责 |
 |------|------|------|
-| McpClientManager | `packages/core/src/tools/mcp-client-manager.ts` | 客户端生命周期管理 |
-| McpClient | `packages/core/src/tools/mcp-client.ts` | 单个 MCP 服务器连接 |
-| Auth Provider | `packages/core/src/mcp/auth-provider.ts` | 认证抽象接口 |
-| MCPOAuthProvider | `packages/core/src/mcp/oauth-provider.ts` | OAuth 2.0 实现 |
-| Google Auth Provider | `packages/core/src/mcp/google-auth-provider.ts` | Google 凭据 |
-| SA Impersonation Provider | `packages/core/src/mcp/sa-impersonation-provider.ts` | 服务账号模拟 |
-| Token Storage | `packages/core/src/mcp/oauth-token-storage.ts` | Token 持久化 |
+| McpClientManager | `gemini-cli/packages/core/src/tools/mcp-client-manager.ts` | 客户端生命周期管理 |
+| McpClient | `gemini-cli/packages/core/src/tools/mcp-client.ts` | 单个 MCP 服务器连接 |
+| Auth Provider | `gemini-cli/packages/core/src/mcp/auth-provider.ts` | 认证抽象接口 |
+| MCPOAuthProvider | `gemini-cli/packages/core/src/mcp/oauth-provider.ts` | OAuth 2.0 实现 |
+| Google Auth Provider | `gemini-cli/packages/core/src/mcp/google-auth-provider.ts` | Google 凭据 |
+| SA Impersonation Provider | `gemini-cli/packages/core/src/mcp/sa-impersonation-provider.ts` | 服务账号模拟 |
+| Token Storage | `gemini-cli/packages/core/src/mcp/oauth-token-storage.ts` | Token 持久化 |
 
 ## 3. 传输层实现
 
 ### 3.1 传输类型选择
 
 ```typescript
-// packages/core/src/tools/mcp-client.ts
+// gemini-cli/packages/core/src/tools/mcp-client.ts
 
 function createTransport(config: MCPServerConfig): Transport {
   // 1. 有 command → StdioTransport (本地进程)
@@ -146,7 +146,7 @@ flowchart TB
 ### 4.1 认证类型
 
 ```typescript
-// packages/core/src/mcp/auth-provider.ts
+// gemini-cli/packages/core/src/mcp/auth-provider.ts
 
 enum AuthProviderType {
   GOOGLE_CREDENTIALS,           // Google 应用默认凭据
@@ -213,7 +213,7 @@ flowchart LR
 ### 5.2 工具调用
 
 ```typescript
-// packages/core/src/tools/mcp-client.ts
+// gemini-cli/packages/core/src/tools/mcp-client.ts
 
 class McpCallableTool implements CallableTool {
   async callTool(functionCalls: FunctionCall[]): Promise<Part[]> {
@@ -265,7 +265,7 @@ flowchart TB
 ### 7.1 List-Changed 通知
 
 ```typescript
-// packages/core/src/tools/mcp-client.ts
+// gemini-cli/packages/core/src/tools/mcp-client.ts
 
 private registerNotificationHandlers(): void {
   // 工具列表变更
@@ -313,7 +313,7 @@ private async refreshTools(): Promise<void> {
 ### 8.1 MCPServerConfig
 
 ```typescript
-// packages/core/src/tools/types.ts
+// gemini-cli/packages/core/src/tools/types.ts
 
 interface MCPServerConfig {
   name: string;
@@ -380,13 +380,13 @@ stateDiagram-v2
 
 | 主题 | 代码锚点 | 说明 |
 |------|----------|------|
-| 客户端管理 | `packages/core/src/tools/mcp-client-manager.ts` | 生命周期管理 |
-| 客户端实现 | `packages/core/src/tools/mcp-client.ts` | 单服务器连接 |
-| OAuth | `packages/core/src/mcp/oauth-provider.ts` | OAuth 2.0 实现 |
-| Google 认证 | `packages/core/src/mcp/google-auth-provider.ts` | 应用默认凭据 |
-| Token 存储 | `packages/core/src/mcp/oauth-token-storage.ts` | 安全存储 |
-| 提示词加载 | `packages/cli/src/services/McpPromptLoader.ts` | MCP → Slash 命令 |
-| 工具包装 | `packages/core/src/agents/browser/mcpToolWrapper.ts` | 工具适配 |
+| 客户端管理 | `gemini-cli/packages/core/src/tools/mcp-client-manager.ts` | 生命周期管理 |
+| 客户端实现 | `gemini-cli/packages/core/src/tools/mcp-client.ts` | 单服务器连接 |
+| OAuth | `gemini-cli/packages/core/src/mcp/oauth-provider.ts` | OAuth 2.0 实现 |
+| Google 认证 | `gemini-cli/packages/core/src/mcp/google-auth-provider.ts` | 应用默认凭据 |
+| Token 存储 | `gemini-cli/packages/core/src/mcp/oauth-token-storage.ts` | 安全存储 |
+| 提示词加载 | `gemini-cli/packages/cli/src/services/McpPromptLoader.ts` | MCP → Slash 命令 |
+| 工具包装 | `gemini-cli/packages/core/src/agents/browser/mcpToolWrapper.ts` | 工具适配 |
 
 ---
 
