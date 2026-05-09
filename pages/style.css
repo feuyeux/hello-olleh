@@ -17,7 +17,7 @@ permalink: /style.css
   --shadow: rgba(31, 24, 19, 0.08);
   --radius: 16px;
   --radius-sm: 10px;
-  --page-max: 1240px;
+  --page-max: 1800px;
 }
 
 *, *::before, *::after {
@@ -54,7 +54,7 @@ body {
 body::before {
   content: '';
   position: fixed;
-  inset: 14px;
+  inset: 4px;
   border: 1px solid rgba(60, 45, 30, 0.12);
   pointer-events: none;
 }
@@ -120,7 +120,7 @@ code, pre {
 }
 
 .page-wrapper {
-  width: min(var(--page-max), calc(100% - 2.4rem));
+  width: min(var(--page-max), calc(100% - 1rem));
   margin: 0 auto;
 }
 
@@ -664,7 +664,7 @@ code, pre {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
   gap: 1.4rem;
-  width: min(var(--page-max), calc(100% - 2.4rem));
+  width: min(var(--page-max), calc(100% - 1rem));
   margin: 0 auto;
 }
 
@@ -913,12 +913,12 @@ code, pre {
 
 @media (max-width: 720px) {
   body::before {
-    inset: 8px;
+    inset: 2px;
   }
 
   .page-wrapper,
   .content-page .page-content {
-    width: min(var(--page-max), calc(100% - 1.4rem));
+    width: min(var(--page-max), calc(100% - 0.5rem));
   }
 
   .nav-topline-inner {
