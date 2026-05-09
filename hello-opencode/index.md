@@ -83,6 +83,6 @@ title: "OpenCode 源码分析"
 <footer class="site-footer page-wrapper">
   <div class="footer-links">
     <a href="https://github.com/feuyeux/hello-olleh">GitHub</a>
-    <a href="/hello-olleh/">返回首页</a>
+    <a href="{{ '/' | relative_url }}">返回首页</a>
   </div>
 </footer>
