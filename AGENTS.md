@@ -25,6 +25,30 @@ There is no single monorepo build. Use the command that matches the area you cha
 
 If you edit code inside a vendored repo, run that repo's native checks from its own directory and record the exact command in your PR or task summary.
 
+## File Encoding Requirements
+
+**All Markdown files must be UTF-8 without BOM.** A UTF-8 BOM (`\xEF\xBB\xBF`) at the start of a file causes Jekyll's YAML frontmatter parser to fail silently, resulting in 404 pages on GitHub Pages even when the file exists.
+
+Before committing new markdown files, verify they have no BOM:
+```bash
+xxd your-file.md | head -1   # Should start with ---, not efbb bf
+```
+
+Or in Python:
+```python
+with open('your-file.md', 'rb') as f:
+    has_bom = f.read(3) == b'\xef\xbb\xbf'
+```
+
+If you find a BOM, remove it:
+```python
+with open('your-file.md', 'rb') as f:
+    content = f.read()
+if content.startswith(b'\xef\xbb\xbf'):
+    with open('your-file.md', 'wb') as f:
+        f.write(content[3:])
+```
+
 ## Coding Style & Naming Conventions
 Prefer short, source-backed Markdown sections with concrete headings. Follow existing filename patterns with ordered prefixes such as `01-architecture.md`, `06-context-and-memory.md`, `28-ghost-snapshot.md`, or `38-mainline-index.md`. Keep one major topic per file and place new notes in the matching `hello-*` directory. Preserve the language already used in the file or folder you edit instead of mixing styles casually.
 
