@@ -1,4 +1,4 @@
-﻿---
+---
 layout: content
 title: "Claude Code LSP 集成：代码理解与符号定位"
 ---

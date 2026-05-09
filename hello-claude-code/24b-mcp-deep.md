@@ -1,4 +1,4 @@
-﻿---
+---
 layout: content
 title: "Claude Code MCP 深度专题：OAuth 认证、生命周期钩子与渠道权限"
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 layout: content
 title: "项目初始化分析报告：面向首次进入 Claude Code 仓库的总览"
 ---

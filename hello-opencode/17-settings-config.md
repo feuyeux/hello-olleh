@@ -1,4 +1,4 @@
-﻿---
+---
 layout: content
 title: "OpenCode 深度专题 B08：启动与配置加载，从全局目录到 .opencode 覆写"
 ---
