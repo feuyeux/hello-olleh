@@ -37,10 +37,10 @@ title: "14 - 源码分析质量横向评估"
 
 | 项目 | 当前定位 | 强项 | 需要修正 |
 | --- | --- | --- | --- |
-| Claude Code | 深读型分析 | Prompt、memory、MCP、React TUI 与反编译风险意识强 | `03/05/11/15/23/24/25` 已补 repo-root 锚点；继续把“推断/反编译残留/源码确认”分开 |
-| Codex | 工程均衡型分析 | Rust runtime、turn loop、sandbox、ghost snapshot 证据扎实 | `03/05/11/15/23/24/25` 已补源码锚点；后续继续补厚 `11-21` |
-| Gemini CLI | 可追溯型分析 | 早期章节行号和函数锚点最密，工具调度链清楚 | `03/05/11/15/23/24/25` 已补源码锚点；后续继续补扩展、多代理、SDK 生命周期 |
-| OpenCode | 体系化深挖型分析 | Durable state、session loop、processor、Effect-ts 深挖充分 | `03/05/11/15/23/24/25` 已补 repo-root 锚点；继续合并重复主线 |
+| Claude Code | 深读型分析 | Prompt、memory、MCP、React TUI 与反编译风险意识强 | 主要风险转为证据等级维护：反编译推断、源码确认、设计解读要继续分开 |
+| Codex | 工程均衡型分析 | Rust runtime、turn loop、sandbox、ghost snapshot 证据扎实 | `11-21` 已补字段级链路；后续重点是保持 line anchor 随 upstream 漂移可校验 |
+| Gemini CLI | 可追溯型分析 | 行号和函数锚点密，工具调度、extension、MCP、skill 链路清楚 | 扩展、多代理、Bridge 生命周期已补；后续重点是把“无 LSP/工具化补偿”边界持续写清 |
+| OpenCode | 体系化深挖型分析 | Durable state、session loop、processor、Effect-ts 深挖充分 | durable/resume/processor 已补强；后续重点是控制 `03` 与 `27-29` 的重复 |
 
 ## 2.1 质量评分矩阵
 
@@ -49,8 +49,8 @@ title: "14 - 源码分析质量横向评估"
 | 项目 | 覆盖度 | 证据密度 | 链路完整性 | 差异表达 | 维护性 | 综合判断 |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | 5 | 4 | 4 | 4 | 3 | 深读充分，但反编译快照需要持续标注证据等级 |
-| Codex | 5 | 4 | 5 | 4 | 4 | Runtime 主线清楚，`11-21` 还可补字段级链路 |
-| Gemini CLI | 5 | 5 | 4 | 4 | 4 | 源码锚点密，扩展、Bridge、多代理章节仍偏摘要 |
+| Codex | 5 | 4 | 5 | 4 | 4 | Runtime 主线清楚，prompt/multi-agent/bridge/resilience 已补字段级链路 |
+| Gemini CLI | 5 | 5 | 4 | 4 | 4 | 源码锚点密，extension、skill、MCP、多代理、Bridge 已补生命周期链路 |
 | OpenCode | 5 | 4 | 5 | 5 | 4 | 深挖最强，但需要控制 `03` 与 `27-29` 的重复 |
 
 ## 2.2 代表证据链
@@ -66,10 +66,10 @@ title: "14 - 源码分析质量横向评估"
 
 | 项目 | 已补强范围 | 剩余风险 |
 | --- | --- | --- |
-| Claude Code | `03/05/11/15/23/24/25` 已补 repo-root 锚点，尤其补齐 `03-agent-loop.md` 的主循环证据 | 反编译快照仍需标注证据等级 |
-| Codex | `03/05/11/15/23/24/25` 已补统一“源码锚点补强”表 | `12-21` 可继续深化字段级链路 |
-| Gemini CLI | `03/05/11/15/23/24/25` 已补统一“源码锚点补强”表 | 多代理、Hook、Bridge 等章节仍偏摘要 |
-| OpenCode | `03/05/11/15/23/24/25` 已补 repo-root 锚点，尤其补齐 `23-input-command-queue.md` 的 server/prompt/command 入口 | 继续避免 `03` 与 `27-29` 重复叙述 |
+| Claude Code | `08/12/15-21/23-25` 已补源码链路、状态表和 transport/MCP 分层 | 反编译快照仍需标注证据等级 |
+| Codex | `05/09-13/16/18-21/23-25` 已补工具治理、prompt 字段、multi-agent、resume、MCP 与调试链路 | line anchor 漂移需要定期校验 |
+| Gemini CLI | `06/12-14/16-17/19/21/23-25` 已补 extension、skill、multi-agent、MCP、checkpoint 与输入队列链路 | LSP 缺口应持续写成能力边界，而不是误写成已实现 |
+| OpenCode | `05/08-10/12-13/15-16/18/20/24-25` 已补 durable、Bus/SSE、MCP、skill、LSP、debugging 边界 | 继续避免 `03` 与 `27-29` 重复叙述 |
 
 ## 3. 证据等级
 
@@ -87,7 +87,7 @@ title: "14 - 源码分析质量横向评估"
 | 目录 | 修正动作 |
 | --- | --- |
 | `hello-claude-code/` | 保留深读文字，补“关键源码锚点”表；反编译推断统一标注 |
-| `hello-codex/` | 以 `03-agent-loop.md` 的证据密度为样板，扩展 `11-21` |
+| `hello-codex/` | 以 `03-agent-loop.md` 的证据密度为样板，保持 `11-21` 的字段级链路可校验 |
 | `hello-gemini-cli/` | 保持短章节优势，但每章至少补“生命周期位置”和“关键函数清单” |
 | `hello-opencode/` | `03` 保持总览，`27-29` 保持深挖，`36` 只做导航 |
 

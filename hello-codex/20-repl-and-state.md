@@ -170,3 +170,33 @@ Codex 的 TUI/REPL 层主要消费和投影 Rust core 产生的 thread/session e
 | UI render state | 从事件流派生显示状态、进度和工具结果 |
 
 这和 Claude Code 的 React state 深耦合不同，也和 OpenCode 的 durable state + Bus/SSE 投影不同。Codex 更接近“runtime event 是真相，TUI 是订阅者”。
+
+## 状态同步补强：TUI 到 core 的最短路径
+
+Codex 的 REPL/TUI 状态不能只看 Ratatui widget。用户动作进入 core 的主链路是：
+
+```mermaid
+%%{init: {'theme': 'neutral'}}%%
+sequenceDiagram
+    participant TUI as tui/app.rs
+    participant APP as app-server session/client
+    participant MSP as codex_message_processor
+    participant CORE as CodexThread
+    participant LOOP as submission_loop
+
+    TUI->>APP: submit thread op
+    APP->>MSP: turn/start or command request
+    MSP->>CORE: submit_core_op()
+    CORE->>LOOP: Op::UserInput / Op::Interrupt / approval
+    LOOP-->>TUI: thread events projected back
+```
+
+| 状态面 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| app-server request 规范化 | `codex/codex-rs/app-server/src/codex_message_processor.rs:776` | `normalize_turn_start_collaboration_mode()` 处理 turn/start 的协作模式 |
+| core op 提交 | `codex/codex-rs/app-server/src/codex_message_processor.rs:2548` | `submit_core_op()` 是 app-server 到 core thread 的关键桥 |
+| turn/start 入口 | `codex/codex-rs/app-server/src/codex_message_processor.rs:6853` | 外部请求在这里变成 turn operation |
+| user turn 提交 | `codex/codex-rs/app-server/src/codex_message_processor.rs:7005` | turn op 最终进入 core op 队列 |
+| interrupt 提交 | `codex/codex-rs/app-server/src/codex_message_processor.rs:7729` | interrupt 不是普通 prompt，而是独立 `Op::Interrupt` |
+
+这个结构说明：TUI 的“状态”只是 thread event 的投影；真正的执行权在 core thread 的 `submission_loop()`。因此调试 UI 卡住时，要先分清是 TUI 渲染没有消费 event，还是 app-server 没有提交 op，还是 core turn 阻塞在工具/审批。

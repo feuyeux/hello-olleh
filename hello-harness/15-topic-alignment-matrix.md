@@ -6,7 +6,7 @@ title: "15 - 篇章主题对齐矩阵"
 
 # 篇章主题对齐矩阵
 
-本章定义四个 `hello-*` 目录的统一篇章骨架。目标是让横向阅读时，读者可以用相同编号比较相同主题。
+本章定义四个项目 `hello-*` 目录的统一篇章骨架，并说明 `hello-harness/` 如何承担第五个横向验收目录。目标是让横向阅读时，读者可以用相同编号比较相同主题，再用 Harness 页确认结论是否收敛。
 
 ## 1. 对齐规则
 
@@ -59,3 +59,14 @@ title: "15 - 篇章主题对齐矩阵"
 
 项目目录保留“源码阅读笔记”，`hello-harness/` 承担“横向结论”。当一个主题在多个项目中都存在，不再新增第五份项目摘要，而是新增或更新 Harness 对比章。
 
+## 5. 五目录验收关系
+
+| 目录 | 角色 | 验收重点 |
+| --- | --- | --- |
+| `hello-claude-code/` | Claude Code 单项目源码笔记 | 反编译快照下的入口、Prompt、MCP、TUI、恢复边界 |
+| `hello-codex/` | Codex 单项目源码笔记 | Rust runtime、thread/turn、tools、sandbox、Skill、MCP、transport |
+| `hello-gemini-cli/` | Gemini CLI 单项目源码笔记 | Ink TUI、GeminiClient、ToolRegistry/Scheduler、extensions、checkpoint |
+| `hello-opencode/` | OpenCode 单项目源码笔记 | Hono server、durable state、session loop、processor、LSP、MCP |
+| `hello-harness/` | 横向验收与综合层 | 主题对齐、术语统一、证据等级、维护风险 |
+
+最终验收入口见 `hello-harness/21-final-audit.md`。后续新增或重写主干主题时，先在项目目录补源码证据，再在 Harness 页维护横向结论，避免单篇很深但横向语义不一致。

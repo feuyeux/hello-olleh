@@ -163,4 +163,16 @@ Codex 的会话恢复应按 rollout reconstruction 和 thread state 读，而不
 | ghost snapshot | 文件系统回滚/undo 支撑 | Codex 特有附录 `26-ghost-snapshot.md` |
 | pending approval | 当前恢复弱项 | 四项目都容易遗漏运行中状态 |
 
-后续本章应补一张 resume 后哪些状态恢复、哪些状态丢弃的表，特别是 pending tool、approval、cancel token、snapshot lifecycle。
+## Resume 后状态恢复矩阵
+
+| 状态对象 | Resume 后行为 | 原因 | 横向意义 |
+| --- | --- | --- | --- |
+| Rollout history | 恢复 | rollout item 可重放，重建 thread/session 语义 | 比纯聊天记录恢复更结构化 |
+| 已完成 tool result | 恢复 | 已写入历史，可作为后续上下文 | 对应 OpenCode durable part |
+| Pending tool call | 丢弃/需重新推理 | 运行中 future、进程句柄、stdout 状态不在 rollout 中 | 四项目共同弱点 |
+| Pending approval | 丢弃 | 用户决策通道是运行时状态，不应跨进程静默恢复 | 避免恢复后误执行危险命令 |
+| Cancel token | 丢弃 | token 绑定当前 async runtime | 恢复后需要新的 turn 控制面 |
+| Ghost snapshot | 视 snapshot 生命周期恢复 | 已持久化 snapshot 可用于 undo；未完成 snapshot 不应假定有效 | Codex 相比其他项目的独特恢复面 |
+| Compact summary | 恢复 | summary 已作为上下文消息/rollout item 写入 | 长会话 resume 的关键 |
+
+因此 Codex resume 是“恢复可重放事实”，不是“恢复运行中的异步控制流”。这解释了为什么中断在审批或工具执行期间时，恢复后应让模型重新规划，而不是继续旧 future。

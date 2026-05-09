@@ -154,4 +154,31 @@ Gemini CLI 的 skill 设计重点不是全量注入，而是先暴露可用 skil
 | 激活 | `activate_skill` 将完整 skill 注入当前上下文 | 对应 Codex skill dependency 和 OpenCode skill permission |
 | 权限 | 仍需经过工具/策略路径约束 | 不应绕过 PolicyEngine |
 
-后续完善本章时，应补 `activate_skill` 与 PromptProvider、ToolRegistry、Scheduler 的交叉链路，避免把 skill 误解成单纯 Markdown 文件。
+## Skill 与 PromptProvider、ToolRegistry、Scheduler 的交叉链路
+
+| 组件 | 与 Skill 的关系 | 边界 |
+| --- | --- | --- |
+| `SkillManager` | 发现、缓存、激活 skill body | 管理 skill 内容，不执行任意工具 |
+| `PromptProvider` | 把可用 skill 列表渲染进 system prompt | 只暴露名称/描述，避免全量注入 |
+| `activate_skill` tool | 模型按需请求完整 skill 内容 | 是工具调用，因此进入工具治理路径 |
+| `ToolRegistry` | 注册 `activate_skill` 以及 skill 后续可能要求调用的普通工具 | skill 本身不直接扩展工具 schema |
+| `Scheduler` | 调度 `activate_skill` 和后续工具调用 | 负责 confirmation、policy 和结果回注 |
+
+这个链路避免把 skill 误解成“Markdown 文件被直接拼进 prompt”：发现阶段只提供可见性，激活阶段才把正文注入，而实际动作仍由 ToolRegistry/Scheduler 管控。
+
+## 交叉链路补强：Skill 从“可见”到“生效”
+
+Gemini CLI 的 skill 生命周期可以拆成四步：
+
+| 阶段 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| 发现 | `gemini-cli/packages/core/src/skills/skillManager.ts:47` | `discoverSkills()` 扫描内建、extension、user、workspace skill |
+| 暴露 | `gemini-cli/packages/core/src/prompts/promptProvider.ts:58` | PromptProvider 从 `SkillManager.getSkills()` 取 skill 列表 |
+| 渲染 | `gemini-cli/packages/core/src/prompts/promptProvider.ts:111` | `renderAgentSkills()` 把可用 skill 名称/描述放入 system prompt |
+| 激活 | `gemini-cli/packages/core/src/tools/activate-skill.ts:130` | `activate_skill` 调用 `skillManager.activateSkill()`，再返回 skill body |
+
+因此，skill 的“生效”不是发现时发生，而是模型调用 `activate_skill` 后才发生。`activate_skill` 自身是工具调用，所以仍要经过工具治理路径；非内建 skill 还会在执行阶段发 policy/确认更新（`gemini-cli/packages/core/src/tools/activate-skill.ts:105`）。
+
+### 与 ToolRegistry / Scheduler 的关系
+
+Skill 本身不直接注册新工具，也不绕过 Scheduler。它提供的是额外指令、资源目录和后续读取资源的上下文。模型如果根据 skill 指令调用 `read_file`、MCP tool 或 shell 类工具，这些调用仍然回到 `ToolRegistry -> Scheduler -> ToolExecutor -> MessageBus/PolicyEngine` 路径。横向看，Gemini skill 比 Claude 的“prompt/command/permission bundle”更轻，比 OpenCode skill 更少 durable state 参与。

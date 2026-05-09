@@ -411,4 +411,16 @@ Claude Code 的配置不是单一 settings 文件，而是 user/project/policy/p
 | GrowthBook | Claude 特有远程门控 |
 | env vars | provider/auth/feature 开关 |
 
-后续本章应补优先级表和冲突案例，说明同一字段由多个层级设置时谁生效。
+## 配置优先级与冲突案例
+
+Claude Code 的配置面需要区分用户设置、项目设置、managed settings、环境变量和运行时 flag。
+
+| 配置面 | 典型字段 | 冲突规则 / 风险 | 源码锚点 |
+| --- | --- | --- | --- |
+| Managed MCP allow/deny | `allowedMcpServers` / `deniedMcpServers` | denylist 优先于 allowlist，企业策略可限制项目 MCP | `claude-code/src/utils/settings/types.ts:416`, `claude-code/src/utils/settings/types.ts:433` |
+| Managed hooks | `disableAllHooks`、`managedSettingsOnly` | 可禁用用户/项目/local hooks，只允许 managed hooks | `claude-code/src/utils/settings/types.ts:458`, `claude-code/src/utils/settings/types.ts:471` |
+| HTTP hook allowlist | `httpHookAllowedUrls` / env vars | 限制 HTTP hook 目标 URL 和可插值 env var | `claude-code/src/utils/settings/types.ts:485`, `claude-code/src/utils/settings/types.ts:491` |
+| Transcript | `cleanupPeriodDays`、`transcriptMode` | 设置为 0 可禁用 session persistence；mode 决定 chat/transcript 视图 | `claude-code/src/utils/settings/types.ts:331`, `claude-code/src/utils/settings/types.ts:925` |
+| Auto memory | `autoMemoryDirectory`、`autoDreamEnabled` | 项目设置中的自定义 memory dir 出于安全会被忽略 | `claude-code/src/utils/settings/types.ts:948`, `claude-code/src/utils/settings/types.ts:954` |
+
+冲突案例：若项目 `.mcp.json` 配了某个 remote MCP server，但 managed settings 同时把该 server 放入 denylist，则 denylist 生效；若用户设置了 HTTP hook 指向任意 URL，但 managed allowlist 为空数组，则 HTTP hook 全部被阻断。

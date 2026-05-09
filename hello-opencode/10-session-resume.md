@@ -994,4 +994,22 @@ OpenCode 的恢复能力是四项目中最适合做 durable state 对照的：me
 | Processor state | 运行态部分仍在内存 | crash 后仍需重新推导 |
 | Bus/SSE | 从 durable history 投影到 UI | 多端一致性强 |
 
-后续本章应把“durable 的”和“非 durable 的”分成两张表，特别说明 status、in-flight stream、pending permission 是否可恢复。
+## Durable 与非 Durable 恢复边界
+
+| Durable 对象 | 恢复后状态 | 依据 |
+| --- | --- | --- |
+| Session row | 可恢复 | session metadata 存在 SQLite 中，可重新查询 |
+| MessageV2 | 可恢复 | user/assistant message 是 durable history 主体 |
+| Part 最终快照 | 可恢复 | text/reasoning/tool part 最终状态写入 part table |
+| Compacted summary | 可恢复 | compact 后历史以 summary/filtered view 继续投影 |
+| Permission 决策结果 | 已写入时可恢复 | 已完成的批准/拒绝可作为历史事实读取 |
+
+| 非 Durable / 运行中对象 | 恢复后状态 | 风险 |
+| --- | --- | --- |
+| `SessionStatus` in-memory | 不完整恢复 | 崩溃后 UI 只能从 durable rows 重新推导 |
+| in-flight provider stream | 不恢复 | stream delta 中断后只能依赖已落库 part 或重新发起 turn |
+| pending permission 等待点 | 不应静默恢复 | 用户决策通道和 waiter 属于运行时对象 |
+| Bus/SSE 订阅 | 重新建立 | 前端需 bootstrap durable state，再订阅新事件 |
+| Processor 局部变量 | 不恢复 | loop 分支、retry 计数等需由历史重新推导 |
+
+这个边界是 OpenCode 相比其他项目最重要的恢复语义：durable history 可以恢复“已经发生的事实”，但不能恢复“正在等待的异步控制流”。

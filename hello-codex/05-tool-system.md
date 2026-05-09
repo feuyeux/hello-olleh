@@ -453,7 +453,17 @@ Codex 工具系统的横向价值在于把 built-in、MCP、dynamic tools、netw
 | 审批沙箱 | `tools/sandboxing.rs` | Codex 安全核心 |
 | 输出归一 | ToolOutput / truncation | 对应 OpenCode durable part |
 
-后续本章应补“工具调用是否可并发、是否需要审批、是否进沙箱、输出如何截断”的统一矩阵。
+## 工具治理统一矩阵
+
+| 工具族 | 是否可并发 | 审批入口 | 沙箱边界 | 输出归一/截断 |
+| --- | --- | --- | --- | --- |
+| Shell / exec | 由 turn/orchestrator 调度，结果按顺序回收 | `create_exec_approval_requirement_for_command()` | unified exec 进入平台 sandbox | handler 输出转成 tool result，再回注模型输入 |
+| Patch / file edit | 与其他工具同走 orchestrator | 文件写入/工作区策略决定是否询问 | workspace / sandbox policy 约束 | diff/错误摘要作为结构化结果 |
+| MCP / dynamic tools | schema 暴露后作为普通工具候选 | 仍进入 approval policy | 远程 server 自身 + Codex tool policy | MCP result 归一到 Codex tool output |
+| Network / fetch | 可作为工具调用的一类被调度 | network ask 独立于本地 exec | 网络策略独立于文件沙箱 | 响应体需要裁剪后进入上下文 |
+| Multi-agent tools | spawn/wait/send/close 走 handler | 操作类型决定是否需要确认 | 子 agent 继承或覆盖 sandbox/approval | 子 agent 消息压成 tool result |
+
+源码锚点上，`codex/codex-rs/core/src/tools/orchestrator.rs:111` 接收 approval 与 sandbox policy，`codex/codex-rs/core/src/tools/orchestrator.rs:122` 在执行前处理 approval，`codex/codex-rs/core/src/exec_policy.rs:234` 判断命令审批需求，`codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` 连接 shell 执行与 sandbox。这个矩阵是横向比较的最小口径：声明、审批、隔离、输出四步必须同时看。
 
 ## 源码锚点补强：工具治理要同时看 Router、Orchestrator、Approval
 

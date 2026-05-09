@@ -360,7 +360,20 @@ Claude Code 的会话恢复核心是 transcript 和 `parentUuid` 链，而不是
 | progress/UI | 多数不持久化 | 四项目恢复弱点 |
 | tool state | 运行中工具通常不可恢复 | 需要和工具治理章节联读 |
 
-后续本章应列出恢复边界：哪些 message 恢复、哪些 tool/progress/approval 状态丢失。
+## Resume 恢复边界
+
+| 对象 | Resume 后行为 | 原因 |
+| --- | --- | --- |
+| 已落盘 transcript message | 恢复 | JSONL 记录可通过 `parentUuid` 链重建 |
+| Sidechain / subagent transcript | 可恢复为旁链上下文 | 子代理 transcript 是独立归档，不混入主链 |
+| Session title / metadata | 部分恢复 | 取决于 transcript 与 session sidecar 是否完整 |
+| 已完成 tool result | 恢复 | 已写入 transcript 的 tool result 是历史事实 |
+| Pending tool execution | 不恢复 | 子进程、stream、future 不在 transcript 中 |
+| Pending approval | 不应恢复为继续等待 | 用户确认通道属于运行时 UI 状态 |
+| Progress / spinner / UI step | 丢失 | progress 事件不作为 durable message 存储 |
+| Remote task identity | 视 sidecar 而定 | remote task 可通过 sidecar metadata 尝试重连 |
+
+因此 Claude resume 的强项是恢复“消息拓扑”，弱项是恢复“运行中控制流”。这和 OpenCode durable part 恢复、Codex rollout reconstruction、Gemini chat recording 都不同。
 
 ## 源码锚点补强：恢复不是读文件，而是重建链
 

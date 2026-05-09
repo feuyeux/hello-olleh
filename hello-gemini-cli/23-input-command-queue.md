@@ -341,7 +341,33 @@ Gemini CLI 的输入链路要把自然语言、slash command、工具确认和 c
 | tool confirmation | Scheduler state | 对应 PolicyEngine 安全章节 |
 | continuation | 工具结果回注后再次调用 stream | Gemini 相比 OpenCode durable loop 的关键差异 |
 
-后续本章应补 UI hook、Scheduler、CommandService 三者的调用关系，避免把队列只写成命令解析。
+## UI Hook、Scheduler 与 CommandService 调用关系
+
+```mermaid
+sequenceDiagram
+    participant UI as Ink UI / useMessageQueue
+    participant Cmd as CommandService / slashCommandProcessor
+    participant Stream as useGeminiStream
+    participant Core as GeminiClient / Turn
+    participant Sch as Scheduler
+
+    UI->>Cmd: slash command or raw input classification
+    Cmd-->>UI: local command result or query payload
+    UI->>Stream: submitQuery()
+    Stream->>Core: sendMessageStream()
+    Core->>Sch: schedule tool calls
+    Sch-->>Stream: tool results / confirmation state
+    Stream->>Core: continuation with tool results
+```
+
+| 边界 | 负责什么 | 不负责什么 |
+| --- | --- | --- |
+| `useMessageQueue` / UI hook | 忙碌时缓存输入、把键盘/粘贴/参数归一 | 不决定工具是否可执行 |
+| `CommandService` | 加载和执行 slash command handler | 不处理模型 stream continuation |
+| `useGeminiStream` | 把 query、tool result、continuation 串成模型流 | 不实现具体工具 |
+| `Scheduler` | 工具调度、确认状态、结果收集 | 不解析 slash command |
+
+这说明 Gemini 的“输入队列”跨 UI 与 core：用户输入先经 UI/CommandService 分类，模型产生工具调用后又由 Scheduler 和 `useGeminiStream` 触发 continuation，形成下一轮模型输入。
 
 ## 源码锚点补强：输入队列跨 CommandService、UI hook 和 Scheduler
 

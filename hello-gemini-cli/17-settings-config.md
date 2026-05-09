@@ -200,4 +200,25 @@ Gemini CLI 的 `Config` 同时承担配置读取、服务初始化、ToolRegistr
 | MCP manager | 扩展发现 |
 | IDE/headless | bridge/transport 配置 |
 
-后续本章应补 Config 初始化顺序图，并拆出“配置值”和“运行时服务”两类职责。
+## Config 初始化顺序与职责拆分
+
+```mermaid
+flowchart TD
+    Flags[CLI flags] --> Settings[settings/env/project/global merge]
+    Env[.gemini/.env] --> Settings
+    Settings --> Config[Config instance]
+    Config --> Storage[Storage paths]
+    Config --> Trust[Workspace trust]
+    Config --> Policy[PolicyEngine]
+    Config --> Tools[ToolRegistry]
+    Config --> Prompt[PromptProvider]
+    Config --> MCP[MCP manager]
+```
+
+| 类别 | 代表字段/服务 | 生命周期 | 风险 |
+| --- | --- | --- | --- |
+| 配置值 | model、sandbox、workspace trust、paths、MCP server config | 启动时合并，运行中基本固定 | 热加载缺失，变更需重启 |
+| 运行时服务 | ToolRegistry、PolicyEngine、PromptProvider、MCP manager、Storage | 由 Config 初始化并持有 | `Config` 变成 service locator，测试 mock 成本高 |
+| 派生状态 | discovery state、server last error、workspace root | 运行中变化 | 容易和静态配置混写，造成职责模糊 |
+
+源码阅读应区分“配置来源优先级”和“运行时服务装配”：前者解释值怎么来，后者解释 agent loop 为什么能拿到工具、prompt、policy 和 MCP 状态。

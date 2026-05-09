@@ -548,7 +548,18 @@ Claude Bridge 章节应和 SDK/Transport 区分：它关注远程 REPL、多 ses
 | poll/heartbeat | 对应 OpenCode SSE/Bus |
 | GrowthBook gate | Claude 特有 rollout 控制 |
 
-后续应补协议版本、身份验证和 session lifecycle 的表，支撑安全评估。
+## 协议、身份验证与 session lifecycle
+
+| 维度 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| WebSocket base URL | `claude-code/src/remote/SessionsWebSocket.ts:108` | remote session 把 OAuth base API URL 转成 WSS |
+| 认证方式 | `claude-code/src/remote/SessionsWebSocket.ts:79` | 连接后发送 OAuth credential/auth message |
+| 未授权关闭码 | `claude-code/src/remote/SessionsWebSocket.ts:35` | 4003 表示 unauthorized |
+| fresh token | `claude-code/src/remote/SessionsWebSocket.ts:113` | 每次连接尝试取 fresh token，降低过期风险 |
+| permission bridge | `claude-code/src/remote/RemoteSessionManager.ts:153` | remote control request 可转成本地 permission prompt |
+| permission response | `claude-code/src/remote/RemoteSessionManager.ts:246` | 本地审批结果回传远端 |
+
+安全评估时要分清两条链：身份验证链决定能否连接远端 session；permission bridge 链决定远端 agent 请求本地危险操作时如何让用户确认。二者缺一不可。
 
 ## 源码锚点补强：Bridge 是独立远程控制面
 

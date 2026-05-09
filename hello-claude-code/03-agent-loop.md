@@ -669,7 +669,7 @@ REPL 负责交互控制，`query.ts` 负责会话执行，`services/api/claude.t
 
 ## 横向对齐补强：反编译快照的证据分级
 
-Claude Code 的 `03-agent-loop.md` 比其他项目更依赖反编译快照，因此后续维护本章时需要把结论分为三类：
+Claude Code 的 `03-agent-loop.md` 比其他项目更依赖反编译快照，因此本章维护时需要把结论分为三类：
 
 | 证据等级 | 本章用法 |
 | --- | --- |

@@ -207,7 +207,17 @@ Claude Code 的韧性来自 provider retry、streaming fallback、context overfl
 | stop hook | Claude 特有的人类/插件干预路径 |
 | tool failure isolation | 对应 Codex/Gemini/OpenCode 工具结果归一 |
 
-后续应把“可自动恢复”和“需要用户重新提交”的错误分开列，避免韧性章节只描述机制不说明边界。
+## 恢复边界补强
+
+| 错误/中断类型 | 自动恢复能力 | 需要用户动作 | 源码锚点 |
+| --- | --- | --- | --- |
+| prompt too long / context overflow | 可走 reactive compact；失败时提前返回，避免 stop hook 死循环 | compact 仍失败时需要用户缩短上下文或重提任务 | `claude-code/src/query.ts:1172` |
+| max output tokens | 可注入 continuation meta message，最多有限次数继续 | 多次到达上限后需要用户拆分任务 | `claude-code/src/query.ts:1194` |
+| stop hook 阻止 | 可把 hook continuation 注入下一轮 | hook 持续阻止时需要用户修正 hook 或请求 | `claude-code/src/query.ts:1281`, `claude-code/src/query.ts:1305` |
+| API auth/rate/error | 不进入 stop hook 评估，避免错误- hook -重试循环 | 需要用户修复认证、网络或 provider 配额 | `claude-code/src/query.ts:1262` |
+| tool execution 中断 | query 可清理/回收工具上下文，但本地副作用不一定可回滚 | 需要用户确认文件状态或重新执行 | `claude-code/src/query.ts:1489` |
+
+因此，本章的结论应区分“模型请求可继续”和“本地动作可回滚”。Claude Code 韧性强在请求/上下文恢复，不等于所有工具副作用都有事务回滚。
 
 ## 源码锚点补强：Claude 韧性分散在 API、query 和 streaming tool
 

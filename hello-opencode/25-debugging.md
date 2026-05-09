@@ -259,7 +259,19 @@ OpenCode 的调试优势是状态可查：message、part、session、Bus/SSE 都
 | UI 不更新 | Bus/SSE route |
 | MCP 失败 | MCP status / config / auth |
 
-后续本章应补 SQLite 查询、Bus event 订阅、MCP protocol dump 和 provider request dump 的操作步骤。
+## 调试操作步骤补强
+
+| 症状 | 优先检查 | 操作路径 |
+| --- | --- | --- |
+| UI 没有更新 | Bus/SSE 是否有事件 | 订阅 `/event`，对应 server route 是 `opencode/packages/opencode/src/server/routes/event.ts:19` |
+| 工具卡住 | durable part 是否停在 pending/running | 查 `PartTable`，再对照 `opencode/packages/opencode/src/session/processor.ts:121` 和 `processor.ts:142` |
+| 工具结果丢失 | 是否发布 `message.part.updated` | 看 `opencode/packages/opencode/src/session/index.ts:770` 和 CLI 消费点 `opencode/packages/opencode/src/cli/cmd/run.ts:460` |
+| MCP 不能用 | status 是否 `needs_auth` / `failed` | 查 `opencode/packages/opencode/src/server/routes/mcp.ts:16` 的 status 接口 |
+| MCP OAuth 卡住 | pending transport 是否存在 | 看 `opencode/packages/opencode/src/mcp/index.ts:153` 和 `mcp/index.ts:896` |
+| 远端 attach 失败 | basic auth header 是否存在 | 看 `opencode/packages/opencode/src/cli/cmd/run.ts:655` 和 `server.ts:81` |
+| provider 请求中断 | provider/model stream 配置 | 先查 config，再看 session error 是否经 `Bus.publish(Session.Event.Error)` 发出 |
+
+最小定位顺序：先看 durable row，再看 Bus event，再看 SSE/SDK consumer。OpenCode 的很多“UI 问题”其实是 projection 问题，不能只盯 TUI。
 
 ## 源码锚点补强
 

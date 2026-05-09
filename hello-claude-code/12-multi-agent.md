@@ -649,4 +649,13 @@ Claude Code 的多代理是工具系统的一部分：主 agent 通过 `AgentToo
 | 工具权限 | 继承/裁剪 ToolUseContext | 需和 `05-tool-system.md` 联读 |
 | 结果回传 | tool result 进入主循环 | 仍回到 `queryLoop()` |
 
-后续应补“前台/后台/远程/worker”四种路径的状态表，避免多代理章节和 bridge 章节重叠。
+## 前台、后台、远程与 Worker 边界
+
+| 路径 | 生命周期归属 | 状态可见性 | 与 Bridge 章节边界 |
+| --- | --- | --- | --- |
+| 前台 AgentTool | 主 `queryLoop()` 等待 tool result | 结果作为普通 tool result 回到当前 turn | 属于本章多代理执行，不属于远程控制面 |
+| 后台 async agent | `registerAsyncAgent()` 注册后台任务 | 主会话不阻塞，完成状态需要显式查询/轮询 | 仍是本地 delegation，不是 remote session |
+| 远程 session | `RemoteSessionManager` / WebSocket 维护连接 | 状态投影到远端宿主和 UI | 放在 `21-bridge-system.md` 展开协议/auth/session |
+| Worker/隔离执行 | agent 可在独立 worktree / 执行上下文中运行 | 文件系统隔离强于 prompt 隔离 | 和 `16-resilience.md`、worktree 调试章节联读 |
+
+因此本章只回答“Claude 如何把任务拆给子 agent 并回收结果”；bridge 章节回答“外部宿主如何连接和驱动 Claude 会话”。两者的交叉点是状态投影，而不是同一个调度器。

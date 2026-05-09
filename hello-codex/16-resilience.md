@@ -240,4 +240,15 @@ Codex 韧性不只包括 LLM retry，也包括 sandbox fallback、ghost snapshot
 | Tools | sandbox retry / approval escalation | Codex 强项 |
 | Filesystem | ghost snapshot / undo | Codex 特有 |
 
-后续本章应补“异常发生后是否能继续同一 turn、是否需要新 turn、是否能回滚文件”的表。
+## 异常后的继续、重开与回滚边界
+
+| 异常类型 | 同一 turn 是否继续 | 是否需要新 turn | 文件是否可回滚 | 说明 |
+| --- | --- | --- | --- | --- |
+| Provider transient error | 可重试后继续 | 达到最大重试后需要新 turn/用户介入 | 不涉及 | client retry/backoff 处理 transport 抖动 |
+| Tool command failure | 可继续，作为 tool result 反馈模型 | 若失败导致规划失效，可由模型新 turn 重试 | 取决于命令是否改写文件 | 失败是模型可见事实，不等于 runtime 崩溃 |
+| Sandbox denial | 通常继续，等待审批升级或策略调整 | 用户改变 policy 后可能新 turn | denial 前通常无文件写入 | Codex 的审批/沙箱是韧性核心 |
+| Process panic/crash | 当前 turn 中断 | 需要 resume/replay 重建 | 依赖已持久化 ghost snapshot | 运行中 future/cancel token 不恢复 |
+| Partial file edit | 不应假定继续 | 建议新 turn 先检查 diff | ghost snapshot 可提供 undo 支撑 | 回滚能力和恢复能力要分开写 |
+| Context overflow | compact 后可继续 | compact 失败时需要新 turn 或缩短输入 | 不涉及 | 属于上下文韧性而非 transport 韧性 |
+
+这张表给横向对比一个明确口径：Claude/Gemini/OpenCode 多数只恢复会话或工具结果，Codex 额外有 ghost snapshot/undo 维度，但它仍不能恢复运行中的 pending approval、cancel token 或外部进程句柄。

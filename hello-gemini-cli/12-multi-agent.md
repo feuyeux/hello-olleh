@@ -160,4 +160,12 @@ Gemini CLI 的多代理能力比 Codex/Claude 更明显分成两层：本地 Loc
 | 权限 | confirmation / policy | 仍需和 Scheduler/PolicyEngine 联读 |
 | 输入输出 | sendMessageStream / task event | 与 core client 复用 |
 
-后续本章应补“本地 agent、browser agent、A2A agent”的能力和隔离矩阵。
+## Agent 类型能力与隔离矩阵
+
+| Agent 类型 | 入口对象 | 隔离方式 | 权限/确认 | 适用场景 |
+| --- | --- | --- | --- | --- |
+| 本地 agent | `LocalAgentExecutor` / `AgentRegistry` | 独立 ToolRegistry、PromptRegistry、MessageBus，禁止递归 agent 调用 | 仍经 Scheduler / confirmation | 本地子任务拆分、专门化 prompt |
+| Browser agent | 作为工具/agent 能力接入调度 | 与浏览器执行环境隔离，状态不应直接污染 core chat | 需要显式确认或策略允许 | UI 自动化、网页上下文任务 |
+| A2A agent | `A2AClientManager` / remote invocation | 远端 contextId/taskId，流式 task event 回传 | 默认确认，远端能力受协议约束 | 跨进程/跨服务 agent 调用 |
+
+这三类能力的共同点是“作为工具被 Scheduler 看见”，差异在隔离边界：本地 agent 隔离的是 Gemini 内部 registry/message bus；browser agent 隔离的是外部执行环境；A2A agent 隔离的是远端协议上下文。源码锚点可从 `gemini-cli/packages/core/src/agents/local-executor.ts`、`gemini-cli/packages/core/src/agents/remote-invocation.ts`、`gemini-cli/packages/core/src/agents/subagent-tool.ts` 与 `gemini-cli/packages/core/src/scheduler/scheduler.ts:191` 对照阅读。

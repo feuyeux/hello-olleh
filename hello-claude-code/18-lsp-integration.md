@@ -228,7 +228,16 @@ Claude Code 的 LSP 能力应理解为工具和上下文增强侧通道，而不
 | workspace root | monorepo 风险点 |
 | crash recovery | 需要和 resilience 章节联读 |
 
-后续本章应补 LSP 结果如何进入 prompt、tool result 或 UI 状态。
+## LSP 结果进入系统的位置
+
+| 结果类型 | 进入路径 | 用户可见面 | 横向意义 |
+| --- | --- | --- | --- |
+| Diagnostics | diagnostic tracking 服务聚合状态 | 工具后诊断、问题提示、调试信息 | 对应 OpenCode read/write/apply_patch 后追加 diagnostics |
+| Completion / Symbol | LSP manager 向 server 发请求 | 代码理解和补全辅助，不是主 prompt 模板 | 弱于 IDE，但强于纯文本 grep |
+| Workspace root | LSP server 初始化参数 | monorepo 下影响诊断/补全范围 | 四项目共同风险 |
+| Server lifecycle | LSPServerInstance 管理连接、请求、退出 | 崩溃后能力降级，agent loop 仍可继续 | 与 resilience 章节联读 |
+
+因此 Claude 的 LSP 结果不是 durable conversation 的主数据源，而是通过诊断跟踪、工具反馈和 UI 状态给模型/用户提供侧通道信号。`claude-code/src/services/diagnosticTracking.ts:188` 和 `claude-code/src/services/diagnosticTracking.ts:352` 体现诊断聚合，`claude-code/src/services/lsp/manager.ts:143`、`claude-code/src/services/lsp/LSPServerInstance.ts:343`、`claude-code/src/services/lsp/LSPServerInstance.ts:393` 体现 LSP 请求生命周期。
 
 ## 源码锚点补强：Claude 的代码理解要从诊断和 LSP 管理器看
 

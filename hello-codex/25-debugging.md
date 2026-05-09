@@ -160,7 +160,18 @@ Codex 调试路径要把 Rust tracing、thread/turn events、tool approval、san
 | resume/replay | rollout/session reconstruction |
 | SDK | JSON event protocol dump |
 
-后续本章应补“按症状定位”的表：卡在审批、工具无输出、stream 断开、resume 异常、sandbox 失败分别看哪里。
+## 按症状定位
+
+| 症状 | 优先看哪里 | 关键判断 |
+| --- | --- | --- |
+| 卡在审批 | approval policy、orchestrator 等待点、TUI approval response | 是没有收到用户决策，还是 policy 计算为必须询问 |
+| 工具无输出 | tool handler、sandbox runtime、tool result 格式化 | 是命令未启动、stdout 被截断，还是结果未回注 |
+| Stream 断开 | client.rs provider stream、transport tracing、retry/backoff | 是 provider 断流、网络重试，还是 JSON event 解析失败 |
+| Resume 异常 | rollout replay、thread/session reconstruction、ghost snapshot | 是历史记录损坏，还是运行中状态被错误期待恢复 |
+| Sandbox 失败 | sandbox policy、platform runtime、approval escalation | 是 OS 不支持、策略拒绝，还是权限升级未生效 |
+| SDK 事件错乱 | app-server tracing、protocol event dump | 是 core event 顺序问题，还是 SDK 消费端处理问题 |
+
+最小复现路径优先使用 `RUST_LOG` 缩小模块，再配合 debug 子命令或 replay/rollout 文件固定输入。不要先修改工具代码；先确认问题发生在 provider、orchestrator、sandbox、protocol 还是 UI 消费层。
 
 ## 源码锚点补强：调试应从 tracing、debug 子命令和 app-server 事件开始
 

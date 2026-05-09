@@ -254,4 +254,15 @@ OpenCode 的韧性机制要和 `SessionPrompt.loop()`、`SessionProcessor.proces
 | doom loop | processor 检测异常循环 | Gemini 也有 loop detection |
 | durable history | 崩溃后可重新推导 | OpenCode 强项 |
 
-后续本章应明确哪些错误会写 durable part，哪些只通过 Bus/Error 事件通知。
+## 错误持久化边界
+
+| 错误类型 | 是否写 durable part | 是否发 Bus/Error 事件 | 恢复语义 |
+| --- | --- | --- | --- |
+| 模型产生的 tool error / provider error | 通常写入 message/part 或错误 part | 是 | 恢复后模型/用户能看到失败事实 |
+| 工具执行失败 | 写入 tool result / error part | 是 | 后续 turn 可基于失败结果继续规划 |
+| Permission pending / rejected | pending/decision 可写入对应 part 或状态 | 是 | 已决策结果可恢复，等待中的 waiter 不恢复 |
+| SSE 客户端断开 | 不写 durable part | 连接层事件 | 前端重新 bootstrap durable state |
+| Bus subscriber 处理失败 | 不应污染 durable history | 内部错误/日志 | durable truth 不依赖单个订阅者 |
+| Process crash | 只保留已提交事务 | 进程级错误 | 恢复时从 SQLite 已写入事实重新推导 |
+
+这说明 OpenCode 的韧性不是“所有错误都持久化”，而是把影响会话语义的错误写入 durable history，把传输层、订阅层和运行时等待点留在事件/日志层。

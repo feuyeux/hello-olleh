@@ -154,3 +154,24 @@ Codex 的多代理能力应放在工具系统和 session runtime 之间理解：
 | 结果回传 | `codex/codex-rs/core/src/session/turn.rs` | 子任务结果最终仍落回 turn loop 事件流 |
 
 横向看，Codex 比 Gemini 的 A2A/agent manager 更靠近核心 runtime，比 Claude 的 `AgentTool` 更强调 typed thread/session 边界，比 OpenCode 的 `task` 工具更依赖 Rust 侧工具 handler 的状态复制。
+
+## 源码补强：`spawn_agent` 的真实闭环
+
+Codex 的多代理不是 UI 旁路功能，而是工具 handler 驱动的新 thread 生命周期。
+
+| 阶段 | 源码位置 | 说明 |
+| --- | --- | --- |
+| 参数进入 handler | `codex/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:69` | handler 先基于父 turn 的 base instructions 构造子 agent config |
+| 继承与覆盖配置 | `codex/codex-rs/core/src/tools/handlers/multi_agents_common.rs:203` | `build_agent_spawn_config()` 把父 base instructions 写入子 config |
+| 运行时覆盖 | `codex/codex-rs/core/src/tools/handlers/multi_agents_common.rs:256` | 将当前 turn 的 cwd、approval、sandbox、模型等运行时字段应用到子 agent |
+| spawn 执行 | `codex/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:114` | 通过 `agent_control.spawn_agent_with_metadata()` 创建子线程 |
+| fork 约束 | `codex/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:236` | v2 明确拒绝 `fork_context` 参数，改用 `fork_turns` 语义 |
+| 结果回传 | `codex/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:298` | spawn 结果以 tool output response item 回到父 turn |
+
+### 状态继承边界
+
+子 agent 继承的是可复制的 runtime 配置，而不是父 agent 的全部内存状态。`build_agent_spawn_config()` 会保留 base instructions，但 resume 类路径会清空 base instructions（`codex/codex-rs/core/src/tools/handlers/multi_agents_common.rs:219`），避免把父 turn 的临时上下文错误套到已存在子线程。这个设计让多代理更像“受控 thread spawn”，而不是共享堆内存的协程。
+
+### 与普通工具并发的区别
+
+同一轮多个普通工具可以用 `FuturesOrdered`/runtime 并发处理；多代理则创建可持续存在的 agent thread，后续还可 list、send input、wait、close。前者优化单 turn 吞吐，后者用于任务分解和隔离。文档阅读时应把两者分开，否则会误以为 child-agent 只是“更重的 tool call”。

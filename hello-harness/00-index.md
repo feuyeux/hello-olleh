@@ -35,6 +35,7 @@ Hello Harness 是 `hello-claude-code/`、`hello-codex/`、`hello-gemini-cli/`、
 | [18-extension-mcp-comparison.md](18-extension-mcp-comparison.md) | Skill、Plugin、MCP、Command、Hook 扩展面分层 | 完成 |
 | [19-runtime-surface-comparison.md](19-runtime-surface-comparison.md) | 入口、传输、REPL、Bridge、Input Queue 合并视角 | 完成 |
 | [20-doc-merge-plan.md](20-doc-merge-plan.md) | 项目源码笔记与 Harness 横向结论的逐主题合并计划 | 完成 |
+| [21-final-audit.md](21-final-audit.md) | 五目录主题验收、证据等级、术语表和维护风险 | 完成 |
 | [40-pluggable-context-memory-module.md](40-pluggable-context-memory-module.md) | 统一抽象层设计、核心接口定义、适配器实现、使用示例 | ✅ 完成 |
 | [42-runtime-comparison.md](42-runtime-comparison.md) | OpenCode vs Hermes Agent 详细对比分析 | ✅ 完成 |
 | [pluggable-architecture.mermaid](pluggable-architecture.mermaid) | 分层架构可视化图表 | ✅ 完成 |
@@ -44,7 +45,7 @@ Hello Harness 是 `hello-claude-code/`、`hello-codex/`、`hello-gemini-cli/`、
 1. **先看质量标准**：阅读 [14-source-analysis-quality.md](14-source-analysis-quality.md)，确认四套 `hello-*` 文档的证据密度和剩余风险。
 2. **再看主题骨架**：阅读 [15-topic-alignment-matrix.md](15-topic-alignment-matrix.md)，按统一编号比较相同主题。
 3. **进入专题对比**：阅读 [16-tool-governance-comparison.md](16-tool-governance-comparison.md) 到 [19-runtime-surface-comparison.md](19-runtime-surface-comparison.md)，查看工具、Prompt、扩展和入口传输的横向结论。
-4. **最后看合并计划**：阅读 [20-doc-merge-plan.md](20-doc-merge-plan.md)，确认哪些内容留在项目章，哪些内容进入 Harness。
+4. **最后看合并计划与验收页**：阅读 [20-doc-merge-plan.md](20-doc-merge-plan.md) 和 [21-final-audit.md](21-final-audit.md)，确认哪些内容留在项目章、哪些内容进入 Harness、还有哪些维护风险。
 
 ---
 

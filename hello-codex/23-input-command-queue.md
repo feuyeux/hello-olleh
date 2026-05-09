@@ -415,7 +415,18 @@ Codex 的输入队列复杂度高于其他项目，因为普通用户 prompt、s
 | child-agent message | mailbox / multi-agent handler | Codex 特有复杂度 |
 | approval response | 工具运行时等待用户决策 | 对应工具治理章节 |
 
-后续本章应补“哪些输入会中断当前 turn，哪些排队到下一 turn”的表，便于和 Claude/Gemini/OpenCode 对齐。
+## 当前 Turn 中断与排队规则
+
+| 输入/事件 | 对当前 turn 的影响 | 进入位置 | 横向对齐 |
+| --- | --- | --- | --- |
+| 普通用户 prompt | 忙碌时排队或等待当前 turn 结束 | TUI submission / protocol submission | 对应 Gemini message queue |
+| Slash command | 若是本地 UI 命令可立即处理；若转为 prompt 则排队 | command parser -> submission | 对应 Claude slash command |
+| Approval response | 唤醒当前等待中的 tool，不开启新 turn | approval channel / orchestrator wait point | 对应 OpenCode permission ask |
+| Cancel/interrupt | 中断当前 turn，取消 token 生效 | turn control path | 对应 Claude QueryGuard / Gemini abort |
+| Child-agent mailbox | 作为 multi-agent 消息进入目标 agent | mailbox / handler | Codex 特有 |
+| Resume/fork request | 不插入当前 turn，而是创建/恢复 thread | ThreadManager start/resume/fork | 对应 session resume 章节 |
+
+因此 Codex 的“输入队列”至少有两层：UI/Protocol submission 队列，以及工具/多代理运行时等待点。横向比较时，不能只把 slash command 当作命令解析问题，还要看 approval、cancel 和 mailbox 这些运行中控制消息。
 
 ## 源码锚点补强：输入命令队列从 TUI 进入 Protocol，再进 core
 

@@ -112,4 +112,16 @@ Gemini CLI 的 MCP 文档需要和 `13-skill-system.md`、`14-plugin-system.md` 
 | PolicyEngine | MCP 工具执行前仍需要策略判断 | `07-error-security.md` |
 | PromptProvider | MCP 不是 system prompt 主模板来源 | `11-prompt-system.md` |
 
-横向看，Gemini CLI 的 MCP 路径比 OpenCode 少 durable state 负担，比 Codex 少 sandbox 耦合，比 Claude Code 少插件市场复杂度；后续应补足连接生命周期和失败恢复。
+横向看，Gemini CLI 的 MCP 路径比 OpenCode 少 durable state 负担，比 Codex 少 sandbox 耦合，比 Claude Code 少插件市场复杂度。
+
+## MCP 连接生命周期与失败恢复
+
+| 阶段 | Gemini 侧边界 | 失败恢复 | 对齐章节 |
+| --- | --- | --- | --- |
+| Extension/config 发现 | extension loader 读取配置并合并 MCP server 定义 | 配置缺失时不注册 server，CLI 仍可运行 | `14-plugin-system.md` |
+| Client 连接 | MCP manager 建立 server 连接并记录状态 | 连接失败进入 last error / 状态提示 | `24-mcp-system.md` |
+| 工具发现 | ToolRegistry 把 MCP tools 并入统一工具集合 | 发现失败只影响该 server 的工具可见性 | `05-tool-system.md` |
+| 执行调度 | Scheduler 对 MCP 工具仍走确认/调度链路 | 工具调用失败作为 tool error 反馈模型 | `07-error-security.md` |
+| Auth 刷新 | auth provider 处理需要授权的 server | 授权失败不应污染其他 server | `24-mcp-system.md` |
+
+源码上可从 `gemini-cli/packages/core/src/utils/extensionLoader.ts:75`、`gemini-cli/packages/core/src/utils/extensionLoader.ts:183` 看扩展配置进入点，从 `gemini-cli/packages/core/src/tools/tool-registry.ts:269` 看工具刷新，从 `gemini-cli/packages/core/src/scheduler/scheduler.ts:191` 看 MCP 工具执行仍回到统一调度。

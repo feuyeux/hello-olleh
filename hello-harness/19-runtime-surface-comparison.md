@@ -65,3 +65,37 @@ flowchart LR
 
 OpenCode 的入口面最宽，因为 server contract 是中心；Codex 的 runtime 边界最清楚，因为 Rust event protocol 是中心；Claude Code 的 UI 和 agent loop 耦合更深；Gemini CLI 的 core/cli 分层适合阅读和扩展，但需要在文档里补足状态投影细节。
 
+## 7. 请求生命周期对齐
+
+入口与传输章节应统一回答“用户输入什么时候才真正变成 agent turn”。
+
+| 阶段 | Claude Code | Codex | Gemini CLI | OpenCode |
+| --- | --- | --- | --- | --- |
+| 输入捕获 | React TUI / slash command / SDK headless | Ratatui TUI、app-server client、remote WebSocket | Ink TUI、non-interactive CLI、IDE/ACP | CLI/TUI/Web/Desktop/API server |
+| 命令预处理 | slash command 可返回 UI、prompt message、background task | app-server 把 request 映射成 `Op` | command service / UI hook 决定本地处理或提交 | server route / command compiler 生成 prompt 或 TUI event |
+| runtime 提交 | `query()` 消费 messages 和 `ToolUseContext` | `submit_core_op()` -> `submission_loop()` | `submitQuery()` -> `GeminiClient.sendMessageStream()` | `session.prompt()` 先写 durable user message |
+| 状态投影 | stream event 更新 React state / transcript | thread event 投影到 TUI/app-server consumers | core events、hook state、Scheduler 状态投影到 UI | Bus/SSE + SQLite durable state |
+| 外部宿主 | SDK、bridge、remote sessions | app-server protocol、HTTP/WebSocket、thread API | non-interactive、IDE、ACP、MCP/extension | Hono OpenAPI、SSE、SDK、ACP、attach |
+
+## 8. 章节边界
+
+| 章节 | 应保留的重点 | 不应混入 |
+| --- | --- | --- |
+| `15-sdk-transport.md` | 协议、SDK、server/headless 如何复用 runtime | 具体 TUI 组件细节 |
+| `20-repl-and-state.md` | 输入框、渲染状态、运行态状态同步 | 外部 API 的完整协议 |
+| `21-bridge-system.md` | IDE、remote、ACP、bridge 等外部宿主边界 | 普通 CLI 启动流程 |
+| `23-input-command-queue.md` | slash command、自然语言、取消、中断、排队规则 | agent loop 内部采样细节 |
+
+## 9. 输入分类维护表
+
+每个项目的 `23-input-command-queue.md` 都应保留一张输入分类表：
+
+| 输入类型 | 是否进入模型 | 是否改变工具池 | 是否可中断当前 turn | 是否写入会话历史 |
+| --- | --- | --- | --- | --- |
+| 自然语言 | 是 | 通常否 | 取决于 runtime | 是 |
+| slash command | 取决于命令 | 可能 | 可能 | 取决于命令 |
+| tool approval | 否 | 否 | 是，解除阻塞 | 通常作为事件/状态记录 |
+| interrupt/cancel | 否 | 否 | 是 | 需要记录取消边界 |
+| extension/MCP 状态变化 | 否 | 是 | 通常否 | 取决于项目 |
+
+这张表能直接修复当前几篇入口章节最常见的问题：只写“输入怎么解析”，没有写“输入是否进入模型、是否排队、是否改变运行时能力”。

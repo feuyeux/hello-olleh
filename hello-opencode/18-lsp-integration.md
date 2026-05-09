@@ -644,4 +644,13 @@ OpenCode 的 LSP 不只是独立工具。`SessionPrompt.prompt()` 处理 file UR
 | root discovery | monorepo 准确性 | 四项目共同难点 |
 | lazy startup | 性能与准确性折中 | 对应性能章节 |
 
-后续本章应补 LSP 失败时 prompt/file part 如何降级。
+## LSP 失败降级路径
+
+| 失败点 | OpenCode 行为 | Prompt/File Part 影响 | 横向意义 |
+| --- | --- | --- | --- |
+| LSP 被禁用 | `Lsp.start()` 命中 disabled 语言后直接跳过 | file part 仍按文本内容编译，只缺 diagnostics/symbol 补偿 | 比 Claude 更明确地允许无 LSP 运行 |
+| Server 启动失败 | server 进入 broken/disabled 集合，避免反复重启 | 后续 read/write 仍返回文件内容和工具输出 | LSP 是增强通道，不是工具成功的前置条件 |
+| Diagnostics 不可用 | `Read`/`Write`/`apply_patch` 结果少一段 diagnostic 附加信息 | 模型失去即时错误反馈，但 durable part 仍完整 | 与 Gemini 文本工具降级接近 |
+| Symbol range 缺失 | file URL start/end 无法借 LSP 做范围补偿 | prompt 退回到纯文本切片或普通文件注入 | 影响上下文质量，不影响 session loop |
+
+源码上，`opencode/packages/opencode/src/lsp/index.ts:87`、`opencode/packages/opencode/src/lsp/index.ts:89` 维护禁用/损坏集合，`opencode/packages/opencode/src/tool/read.ts:216` 只是在读取后触碰 LSP，`opencode/packages/opencode/src/tool/write.ts:55` 到 `opencode/packages/opencode/src/tool/write.ts:77`、`opencode/packages/opencode/src/tool/apply_patch.ts:234` 到 `opencode/packages/opencode/src/tool/apply_patch.ts:276` 把 diagnostics 作为输出附加段处理。这个边界说明 LSP 失败不会破坏 durable message，只会减少模型可见的代码理解信号。

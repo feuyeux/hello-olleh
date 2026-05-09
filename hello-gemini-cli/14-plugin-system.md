@@ -164,3 +164,23 @@ Gemini CLI 没有像 OpenCode 那样的运行时 plugin hook 系统，也不像 
 | Config | `17-settings-config.md` | 决定 extension 是否启用 |
 
 横向比较时，Gemini 的插件系统应强调“组合式扩展装配”，而不是单独寻找一个 plugin runtime。
+
+## Extension 生命周期补强
+
+Gemini CLI 的插件面应按 `ExtensionLoader` 来读，而不是寻找一个通用 `Plugin` class。
+
+| 阶段 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| 初始化 | `gemini-cli/packages/core/src/utils/extensionLoader.ts:33` | `start()` 在 Config 初始化后启动所有 active extensions |
+| 启动 extension | `gemini-cli/packages/core/src/utils/extensionLoader.ts:65` | `startExtension()` 要求 loader 已经初始化 |
+| MCP 注入 | `gemini-cli/packages/core/src/utils/extensionLoader.ts:75` | extension 的 MCP server 交给 `McpClientManager.startExtension()` |
+| Policy 注入 | `gemini-cli/packages/core/src/utils/extensionLoader.ts:80` | extension rules/checkers 注册进 PolicyEngine |
+| Hook 刷新 | `gemini-cli/packages/core/src/utils/extensionLoader.ts:129` | extension 变更后重新初始化 HookSystem |
+| 停止 extension | `gemini-cli/packages/core/src/utils/extensionLoader.ts:172` | stop 时卸载 MCP server，并移除 policy/checker |
+| 重启 extension | `gemini-cli/packages/core/src/utils/extensionLoader.ts:241` | restart 是 stop + start 的组合 |
+
+这条链路说明：Gemini 的 extension 能贡献 MCP、policy、checker、skill/command 等对象，但最终仍要落到已有运行时组件里。它不是 OpenCode 式“插件 hook 可以订阅 Bus 并注入 tool/context”的同构 plugin runtime。
+
+### 命名空间与失效边界
+
+extension stop 会调用 `McpClientManager.stopExtension()` 并注销 policy/checker，但已经进入会话历史的 tool result、prompt 内容不会自动从历史里删除。文档里应把“运行时能力失效”和“历史事实保留”分开，否则会误以为禁用 extension 能回滚既有上下文。

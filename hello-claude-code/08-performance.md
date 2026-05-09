@@ -361,4 +361,14 @@ Claude Code 的性能分析要围绕 prompt cache 稳定性、context compaction
 | React TUI | 高频 token 触发渲染 | 对应 Gemini Ink、Codex Ratatui |
 | Compaction | token 阈值和摘要质量 | 四项目共享长会话瓶颈 |
 
-后续应补基准：首 token 延迟、工具并发耗时、React 渲染延迟、compact 频率。
+## 可执行性能基准口径
+
+| 基准项 | Claude 观测点 | 建议采样字段 | 横向对齐 |
+| --- | --- | --- | --- |
+| 首 token 延迟 | request 发出到首个 stream event | provider、model、cache hit/miss、prompt token | 对应 Codex/Gemini/OpenCode provider stream |
+| 工具并发耗时 | tool_use start 到 tool_result 注入 | tool name、并发数、审批等待、执行耗时 | 对应工具治理章节 |
+| React/Ink 渲染延迟 | stream event 到 UI 可见状态 | event batch size、render duration、dropped frame | 对应 Gemini Ink、Codex Ratatui |
+| Compact 频率 | context 接近阈值到 summary 替换 | before/after token、summary token、触发原因 | 四项目长会话共同指标 |
+| Prompt cache 稳定性 | cache boundary 与请求 metadata | cache key 变化、命中率、失效原因 | Claude 侧性能特色 |
+
+源码定位上，context/token 统计和 cache 边界可从 `claude-code/src/utils/messages.ts:2976`、`claude-code/src/utils/messages.ts:3025`、`claude-code/src/utils/messages.ts:4468`、`claude-code/src/utils/messages.ts:4538` 跟起；模型流请求与重试在 `claude-code/src/services/api/claude.ts:1869` 到 `claude-code/src/services/api/claude.ts:1875`、`claude-code/src/services/api/claude.ts:1945`、`claude-code/src/services/api/claude.ts:1955`；session tracing 可从 `claude-code/src/utils/telemetry/sessionTracing.ts:371`、`claude-code/src/utils/telemetry/sessionTracing.ts:727` 补充横向埋点。

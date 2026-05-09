@@ -359,7 +359,19 @@ OpenCode 的 SDK/transport 章节应围绕 Hono server、SSE、ACP、TUI/Web/Des
 | ACP | 外部协议面 | 对应 Claude bridge、Gemini A2A |
 | SSE/Bus | 实时状态投影 | 对应 Codex event protocol |
 
-后续本章应补认证、协议版本和 attach 安全边界。
+## 认证、协议版本与 attach 安全边界
+
+| 主题 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| Server basic auth | `opencode/packages/opencode/src/server/server.ts:81` | 设置 `OPENCODE_SERVER_PASSWORD` 后 server 使用 basic auth |
+| TUI attach password | `opencode/packages/opencode/src/cli/cmd/tui/attach.ts:64` | attach 默认从参数或环境变量读取 password |
+| TUI Authorization | `opencode/packages/opencode/src/cli/cmd/tui/attach.ts:66` | attach 生成 `Authorization: Basic ...` header |
+| run attach | `opencode/packages/opencode/src/cli/cmd/run.ts:655` | `run --attach` 同样构造远端 SDK client |
+| SDK event stream | `opencode/packages/opencode/src/cli/cmd/run.ts:441` | attach 后通过 SDK 订阅事件 |
+| ACP protocol | `opencode/packages/opencode/src/acp/agent.ts:521` | ACP 初始化记录 client protocol version |
+| ACP auth | `opencode/packages/opencode/src/acp/agent.ts:598` | 未认证时多处返回 `authRequired()` |
+
+安全边界上，attach 模式不能相信本地 Instance state；`opencode/packages/opencode/src/cli/cmd/run.ts:564` 已明确在 attach 时要向远端 server 验证。文档中应把本地 CLI 直连、远端 attach、ACP 三类宿主分开，否则会混淆“本地工作区权限”和“远端 server 权限”。
 
 ## 源码锚点补强
 

@@ -4,7 +4,7 @@ title: "Skill 系统：Codex 的能力扩展与自定义指令机制"
 ---
 # Skill 系统：Codex 的能力扩展与自定义指令机制
 
-本文分析 Codex 与"Skill"概念的关系，以及 Codex 如何通过 `AGENTS.md` 和工具扩展达成类似 Skill 的能力定制。
+本文分析 Codex 的 Skill 系统，以及它和 `AGENTS.md`、MCP、Prompt 注入、TUI 管理面的关系。
 
 
 **目录**
@@ -20,22 +20,29 @@ title: "Skill 系统：Codex 的能力扩展与自定义指令机制"
 
 ---
 
-## 1. Codex 没有独立的 Skill 子系统
+## 1. Codex 的 Skill 子系统定位
 
-与 Claude Code（Skills via Markdown）、Gemini CLI（`skills/` 目录）、OpenCode（Skill 注册表）不同，**Codex 没有专门的 Skill 系统**。
+Codex 现在有独立的 Skill 发现、解析、列举与 prompt 注入链路。它不是早期那种只靠 `AGENTS.md` 的自由文本约定，而是由 `core-skills` crate 扫描 `SKILL.md`，由 core session 把可用 skill 渲染成 `<skills_instructions>` developer block，再由 TUI 暴露 enable/disable 管理面。
 
 其能力扩展路径为：
 
 ```
-AGENTS.md（自定义指令）
-    + MCP 工具（新增工具能力）
-    + config.toml user_instructions（全局行为调节）
-    ≈ 等价于其他系统的 "Skill"
+SKILL.md（专项说明与元数据）
+    + .agents/skills / config skills root / bundled system skills（发现范围）
+    + <skills_instructions> developer block（模型可见入口）
+    + MCP/dynamic tools（依赖能力）
+    + TUI skills picker（启停与可见性）
 ```
 
-## 2. AGENTS.md 作为 Skill 的载体
+源码入口集中在 `codex/codex-rs/core-skills/src/loader.rs:106`、`codex/codex-rs/core/src/context/available_skills_instructions.rs:20`、`codex/codex-rs/core/src/session/mod.rs:2581` 和 `codex/codex-rs/tui/src/chatwidget/skills.rs:61`。
 
-`AGENTS.md` 是 Codex 实现 Skill 类功能的核心机制。通过在 `AGENTS.md` 中编写结构化指令，用户可以定义 Agent 的专项能力：
+## 2. AGENTS.md 与 Skill 的边界
+
+`AGENTS.md` 仍然是项目级自定义指令，但不等于 Skill 本体。`AGENTS.md` 的发现与合并由 `AgentsMdManager` 负责：它读取配置指令、向上查找 `AGENTS.md` / `AGENTS.override.md`，并拼接到 user instructions 中（`codex/codex-rs/core/src/agents_md.rs:125`, `codex/codex-rs/core/src/agents_md.rs:191`, `codex/codex-rs/core/src/agents_md.rs:255`）。
+
+Skill 则走另一条链路：`core-skills` 扫描 `SKILL.md`，`AvailableSkillsInstructions` 生成 developer block，二者在 prompt 中分层出现。测试还明确覆盖“skills 不追加到 AGENTS.md”的边界（`codex/codex-rs/core/src/agents_md_tests.rs:491`）。
+
+`AGENTS.md` 可以继续表达项目约束，例如：
 
 ```markdown
 # AGENTS.md（项目级）
@@ -53,27 +60,24 @@ AGENTS.md（自定义指令）
 为每个新函数自动生成单元测试，测试框架为 pytest。
 ```
 
-## 3. config.toml 的 user_instructions
+## 3. Skill 发现与加载
 
-```toml
-# ~/.config/codex/config.toml
-[model]
-name = "o3"
+| 阶段 | 源码锚点 | 说明 |
+| --- | --- | --- |
+| 根目录约定 | `codex/codex-rs/core-skills/src/loader.rs:106` | 使用 `.agents/skills`、`skills`、system cache 等根 |
+| repo/user/system/admin scope | `codex/codex-rs/core-skills/src/loader.rs:151` | `SkillRoot` 记录路径、scope 和文件系统 |
+| 配置层扫描 | `codex/codex-rs/core-skills/src/loader.rs:233` | 按 config layer 推导 project/user/system/admin roots |
+| repo 层扫描 | `codex/codex-rs/core-skills/src/loader.rs:319` | 从项目根到 cwd 搜索 `.agents/skills` |
+| 去重和排序 | `codex/codex-rs/core-skills/src/loader.rs:159` | repo scope 优先，然后按名称和路径稳定排序 |
+| 元数据结构 | `codex/codex-rs/core-skills/src/model.rs:12` | `SkillMetadata` 统一名称、描述、依赖、policy 和路径 |
 
-[instructions]
-user_instructions = """
-你是一个专注于 Rust 系统编程的代码助手。
-- 所有代码建议优先考虑内存安全
-- 使用 Result<> 进行错误处理，不使用 panic!
-- 提供详细的 unsafe 块说明
-"""
-```
+TUI 启动后会触发 skills refresh（`codex/codex-rs/tui/src/app.rs:956`），core 通过 `Op::ListSkills` 返回 `ListSkillsResponse`（`codex/codex-rs/protocol/src/protocol.rs:736`, `codex/codex-rs/core/src/session/handlers.rs:647`）。用户在管理弹窗里启停 skill 后，`ChatWidget` 会把启用的 skill metadata 写入 bottom pane / mention 上下文（`codex/codex-rs/tui/src/chatwidget/skills.rs:96`, `codex/codex-rs/tui/src/chatwidget/skills.rs:138`）。
 
-`user_instructions` 作为全局 Skill 配置，对所有会话生效。
+## 4. Prompt 注入与 MCP 依赖
 
-## 4. MCP 工具作为 Skill 扩展点
+Codex 把可用 skill 渲染为 developer role 的 `<skills_instructions>` 块，而不是普通 user message。渲染模板直接定义“Discovery / Trigger rules / How to use skills / Context hygiene / Safety and fallback”等规则（`codex/codex-rs/core/src/context/available_skills_instructions.rs:20`）。Session 构造 prompt 时调用 `build_available_skills`，并把渲染结果追加进 developer sections（`codex/codex-rs/core/src/session/mod.rs:2581`, `codex/codex-rs/core/src/session/mod.rs:2600`）。
 
-通过 MCP（Model Context Protocol），用户可以为 Codex 添加专项工具能力：
+MCP 仍然是 Skill 的能力依赖面。Skill metadata 可以携带 tool dependency（`codex/codex-rs/core-skills/src/model.rs:67`, `codex/codex-rs/core-skills/src/model.rs:72`），core 再通过 `mcp_skill_dependencies` 解析被提及 skill 的 MCP 依赖（`codex/codex-rs/core/src/mcp_skill_dependencies.rs:36`）。
 
 ```toml
 # config.toml
@@ -83,17 +87,17 @@ command = "npx"
 args = ["@security/codex-mcp"]
 ```
 
-这相当于为 Codex 安装了"安全扫描 Skill"，模型可以通过这个 MCP 工具进行专项安全分析。
+这不是“把 MCP 当 Skill”，而是 Skill 可以声明或暗示 MCP 依赖；MCP server 是否可用仍由 config、session refresh 和工具治理决定。
 
 ## 5. 与其他系统 Skill 的功能对照
 
 | 功能 | Codex 实现 | 对应 Claude Code | 对应 Gemini CLI | 对应 OpenCode |
 |------|-----------|-----------------|----------------|--------------|
-| **自定义行为** | `AGENTS.md` | `CLAUDE.md` + Skills | `GEMINI.md` | Skill 注册 |
-| **专项工具** | MCP 扩展 | MCP + 内置 Skills | MCP | Skill + MCP |
-| **全局配置** | `config.toml` user_instructions | settings.json | settings.json | 配置文件 |
-| **发现机制** | 无 Skill 目录 | `~/.claude/skills/` | `skills/` 目录 | 注册表 |
-| **版本管理** | 无 | 文件系统 | 文件系统 | 注册表 |
+| **自定义行为** | `AGENTS.md` + `SKILL.md` | `CLAUDE.md` + Skills | `GEMINI.md` + extensions | Skill / command |
+| **专项工具** | MCP / dynamic tools / local shell | MCP + 内置工具 | MCP + tools | Tool registry + MCP |
+| **全局配置** | `config.toml` / profiles | settings.json | settings.json | config |
+| **发现机制** | `.agents/skills`、config roots、system cache | 文件系统 | extensions/commands | registry/file |
+| **版本管理** | repo/user/system scope | 文件系统 | 文件系统 | 配置/文件 |
 
 ## 6. 评估与展望
 
@@ -107,7 +111,7 @@ args = ["@security/codex-mcp"]
 - 不同 Skill 之间没有依赖管理
 - 缺乏 Skill 的测试与验证框架
 
-Codex 的这种设计体现了"配置即代码"（Configuration as Code）的哲学：Skills 作为 `AGENTS.md` 文档存在于代码库中，与代码一起版本化、审查和共享。
+Codex 的设计已经从“配置即代码”前进到“Skill 是可发现的本地资产”。`AGENTS.md` 仍适合放团队规则，`SKILL.md` 适合放可触发、可列举、可禁用的专项工作流。
 
 ---
 
@@ -115,12 +119,13 @@ Codex 的这种设计体现了"配置即代码"（Configuration as Code）的哲
 
 | 函数/类型 | 文件 | 职责 |
 |----------|------|------|
-| `AGENTS.md` discovery | `codex-rs/core/src/config.rs` | 从当前目录向上遍历查找 AGENTS.md，加载 skill 规则 |
-| `skill_prompt_fragments()` | `codex-rs/core/src/skill.rs` | 读取 skill 文件内容，返回 prompt fragment 列表 |
-| system prompt builder | `codex-rs/core/src/prompt.rs` | 将 skill/agent 规则追加到系统提示词末尾 |
-| `Config::skills` | `codex-rs/core/src/config.rs` | 配置结构中 skill 路径列表，支持多 skill 覆盖 |
-| skill hot-reload handler | `codex-rs/core/src/watcher.rs` | 监听 AGENTS.md 文件变化，触发 prompt 重建 |
-| skill scope resolver | `codex-rs/core/src/config.rs` | 解析 skill 的作用域：project-local 优先于 global |
+| `load_skills_from_roots()` | `codex/codex-rs/core-skills/src/loader.rs:153` | 从多个 root 扫描 `SKILL.md`，去重并排序 |
+| `skill_roots()` | `codex/codex-rs/core-skills/src/loader.rs:205` | 汇总配置层、插件和 repo `.agents/skills` 根 |
+| `AvailableSkillsInstructions::body()` | `codex/codex-rs/core/src/context/available_skills_instructions.rs:25` | 生成模型可见的 skills developer block |
+| `build_available_skills()` | `codex/codex-rs/core/src/skills.rs:27` | 暴露 skill metadata 渲染入口 |
+| `handle list_skills` | `codex/codex-rs/core/src/session/handlers.rs:647` | 把 skill list 作为事件返回给 UI/客户端 |
+| `open_manage_skills_popup()` | `codex/codex-rs/tui/src/chatwidget/skills.rs:61` | TUI 中启停 skill |
+| `find_skill_mentions_with_tool_mentions()` | `codex/codex-rs/tui/src/chatwidget/skills.rs:242` | 从 mention 中识别显式 skill 使用 |
 
 ---
 
@@ -128,25 +133,38 @@ Codex 的这种设计体现了"配置即代码"（Configuration as Code）的哲
 
 **优点**
 
-- **目录向上遍历发现**：skill 发现策略与 `.gitignore` 类似，就近原则保证项目级 skill 优先于全局 skill，直觉符合用户预期。
-- **纯文本 AGENTS.md 格式**：skill 文件是普通 Markdown，无需专属格式解析器，人类可读且 diff 友好。
-- **多文件 skill 叠加**：支持多层 skill 文件按优先级叠加，项目级可以覆盖全局规则而不是完全替换。
+- **Scope 分层清楚**：repo/user/system/admin root 分开，且 repo scope 排序优先，便于团队项目覆盖用户通用 skill。
+- **Prompt 注入边界明确**：`AGENTS.md` 和 `<skills_instructions>` 分层，降低项目规则与可用 skill 列表互相污染的风险。
+- **UI 管理面完整**：TUI 可以列举、启停、刷新 skill，模型侧可通过 mention 触发。
 
 **风险与改进点**
 
-- **skill 无结构校验**：AGENTS.md 为自由文本，无法在加载时验证规则格式是否被 LLM 正确理解，误配置无提示。
-- **skill 内容直接注入 prompt**：skill 内容未经 sanitization 直接追加到 system prompt，恶意项目的 AGENTS.md 可执行 prompt injection。
-- **hot-reload 作用域有限**：skill 文件变化后重载只影响新 session，已运行的 session 无法动态更新 skill 集。
+- **执行语义仍靠 prompt discipline**：Skill 是否被正确使用，最终仍依赖模型遵守 `<skills_instructions>` 的 progressive disclosure 规则。
+- **依赖链路跨层**：MCP dependency 分散在 metadata、session、config 和 tool registry，排障时需要跨多个章节阅读。
+- **repo skill 的信任边界敏感**：本地仓库可提供 skill 说明，恶意仓库仍可能通过 prompt injection 改写行为，应和 approval/sandbox 一起治理。
 
 ## 横向对齐补强：Codex Skill 更接近“运行时依赖声明”
 
-Codex 的 skill 不应只按 `AGENTS.md` 文本注入理解。它同时影响 prompt、MCP dependency、tool availability 和 turn 前置准备。
+Codex 的 skill 不应按 `AGENTS.md` 文本注入理解。它同时影响 prompt、MCP dependency、tool availability 和 turn 前置准备。
 
 | 关注点 | Codex 源码入口 | 横向对齐 |
 | --- | --- | --- |
-| 指令来源 | `codex/codex-rs/core/src/agents_md.rs` | 对齐 Claude/Gemini 的项目指令文件 |
-| Skill dependency | `codex/codex-rs/core/src/session/turn.rs` | 在 turn 前解析并注入依赖 |
-| MCP 依赖提示 | `codex/codex-rs/core/src/mcp_skill_dependencies.rs` | Codex 特有：skill 可触发 MCP 依赖安装/提示 |
+| 指令来源 | `codex/codex-rs/core/src/agents_md.rs:125` | 对齐 Claude/Gemini 的项目指令文件 |
+| Skill discovery | `codex/codex-rs/core-skills/src/loader.rs:153` | 从 repo/user/system/admin roots 发现 `SKILL.md` |
+| Skill prompt | `codex/codex-rs/core/src/context/available_skills_instructions.rs:20` | 生成 developer block |
+| MCP 依赖提示 | `codex/codex-rs/core/src/mcp_skill_dependencies.rs:36` | Codex 特有：skill 可触发 MCP 依赖安装/提示 |
 | 状态记忆 | `codex/codex-rs/core/src/state/session.rs` | 记录已提示过的 MCP dependency，避免重复打扰 |
 
-横向看，Claude/Gemini/OpenCode 的 skill 更像模型可见能力说明；Codex 的 skill 更接近运行时 dependency graph 的一部分，因此文档应补充“skill 如何改变工具集合和依赖提示”，而不只讲 Markdown 注入。
+横向看，Claude/Gemini/OpenCode 的 skill 更像模型可见能力说明；Codex 的 skill 更接近运行时 dependency graph 的一部分，因此必须同时讲清“skill 如何改变工具集合和依赖提示”，而不只讲 Markdown 注入。
+
+## Skill 对工具集合与依赖提示的影响
+
+| 影响面 | Codex 行为 | 横向意义 |
+| --- | --- | --- |
+| 指令注入 | `AGENTS.md`/skill 文本进入 prompt 指令层 | 与 Claude/Gemini 项目指令相似 |
+| MCP dependency | skill 可声明或触发 MCP dependency 提示 | Codex 特有，skill 参与运行时依赖图 |
+| Tool availability | dependency 满足后，相关 MCP/dynamic tools 才能成为候选 | skill 不只是“建议模型使用工具” |
+| Session memory | 已提示过的 dependency 被记录，避免重复打扰 | 与 OpenCode durable state、Gemini session store 对齐 |
+| Turn 前准备 | turn 构造 prompt/tool specs 时需要考虑 skill dependency 状态 | 连接 `11-prompt-system.md` 与 `24-mcp-system.md` |
+
+这也是 Codex skill 章节和 MCP 章节必须交叉阅读的原因：skill 改变的是“模型可见规则 + 运行时可用依赖”的组合，而不是单纯 Markdown 片段。

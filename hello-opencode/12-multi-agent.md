@@ -242,4 +242,14 @@ OpenCode 的多代理不应理解为独立调度器，而是 `task` 工具创建
 | 状态 | 子 session / Bus event | 比 Gemini A2A 更 durable |
 | 回传 | message/part 写回 | 与主 loop 同构 |
 
-后续本章应补父子 session 关系图，说明哪些状态共享、哪些隔离。
+## 父子 Session 状态边界
+
+| 状态面 | 父 session | 子 session | 共享/隔离判断 |
+| --- | --- | --- | --- |
+| 创建关系 | `TaskTool` 调用时持有 `ctx.sessionID` | `Session.create()` 写入 `parentID`，形成 child session | 只共享父子指针，不共享消息历史 |
+| Prompt 输入 | 父消息中出现 task tool part | 子 session 通过 `Session.prompt()` 接收独立 prompt、agent、permission | prompt 内容由父侧传入，但后续上下文独立增长 |
+| Durable history | 父 session 记录 tool invocation / result part | 子 session 记录自己的 message / part / status | 持久化隔离，便于单独恢复和删除 |
+| 权限状态 | 父 loop 只等待 task tool 完成 | 子 loop 内部继续走 Permission.ask / updatePart | 权限链路同构，但决策发生在子 session 内 |
+| 完成通知 | 通过 Bus 观察 child session 状态 | 子 session 发布 `SessionStatus` 变化 | 事件共享，执行状态不共享 |
+
+源码上，`opencode/packages/opencode/src/tool/task.ts:74` 创建带 `parentID` 的 session，`opencode/packages/opencode/src/tool/task.ts:132`、`opencode/packages/opencode/src/tool/task.ts:137`、`opencode/packages/opencode/src/tool/task.ts:141` 把 prompt、agent 与权限传入子任务；父子关系和 child 查询在 `opencode/packages/opencode/src/session/index.ts:222`、`opencode/packages/opencode/src/session/index.ts:230`、`opencode/packages/opencode/src/session/index.ts:652`、`opencode/packages/opencode/src/session/index.ts:668`。因此 OpenCode 的多代理状态边界比“共享工作线程”更清晰：共享的是 session graph 和事件，总结/权限/消息历史都留在各自 session。
