@@ -37,10 +37,10 @@ title: "14 - 源码分析质量横向评估"
 
 | 项目 | 当前定位 | 强项 | 需要修正 |
 | --- | --- | --- | --- |
-| Claude Code | 深读型分析 | Prompt、memory、MCP、React TUI 与反编译风险意识强 | 增加源码锚点密度；把“推断/反编译残留/源码确认”分开 |
+| Claude Code | 深读型分析 | Prompt、memory、MCP、React TUI 与反编译风险意识强 | `03/05/11/15/23/24/25` 已补 repo-root 锚点；继续把“推断/反编译残留/源码确认”分开 |
 | Codex | 工程均衡型分析 | Rust runtime、turn loop、sandbox、ghost snapshot 证据扎实 | `03/05/11/15/23/24/25` 已补源码锚点；后续继续补厚 `11-21` |
 | Gemini CLI | 可追溯型分析 | 早期章节行号和函数锚点最密，工具调度链清楚 | `03/05/11/15/23/24/25` 已补源码锚点；后续继续补扩展、多代理、SDK 生命周期 |
-| OpenCode | 体系化深挖型分析 | Durable state、session loop、processor、Effect-ts 深挖充分 | 合并重复主线；把短路径改为 repo-root 源码路径 |
+| OpenCode | 体系化深挖型分析 | Durable state、session loop、processor、Effect-ts 深挖充分 | `03/05/11/15/23/24/25` 已补 repo-root 锚点；继续合并重复主线 |
 
 ## 2.1 质量评分矩阵
 
@@ -66,10 +66,10 @@ title: "14 - 源码分析质量横向评估"
 
 | 项目 | 已补强范围 | 剩余风险 |
 | --- | --- | --- |
-| Claude Code | 核心主干和薄弱章节已补源码锚点，尤其是 tool、MCP、prompt、transport、debug | 反编译快照仍需标注证据等级 |
+| Claude Code | `03/05/11/15/23/24/25` 已补 repo-root 锚点，尤其补齐 `03-agent-loop.md` 的主循环证据 | 反编译快照仍需标注证据等级 |
 | Codex | `03/05/11/15/23/24/25` 已补统一“源码锚点补强”表 | `12-21` 可继续深化字段级链路 |
 | Gemini CLI | `03/05/11/15/23/24/25` 已补统一“源码锚点补强”表 | 多代理、Hook、Bridge 等章节仍偏摘要 |
-| OpenCode | 总览与 `27-32/38` 深挖附录已补 repo-root 锚点 | 继续避免 `03` 与 `27-29` 重复叙述 |
+| OpenCode | `03/05/11/15/23/24/25` 已补 repo-root 锚点，尤其补齐 `23-input-command-queue.md` 的 server/prompt/command 入口 | 继续避免 `03` 与 `27-29` 重复叙述 |
 
 ## 3. 证据等级
 

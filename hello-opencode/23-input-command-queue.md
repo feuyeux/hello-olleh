@@ -92,7 +92,7 @@ export const PromptInput = z.object({
 
 ### 2.2 `createUserMessage()` 编译步骤
 
-`opencode/packages/opencode/src/opencode/packages/opencode/src/session/prompt.ts:986-1387` 是核心编译函数：
+`opencode/packages/opencode/src/session/prompt.ts:986-1387` 是核心编译函数：
 
 ```ts
 async function createUserMessage(input: PromptInput) {
@@ -138,7 +138,7 @@ async function createUserMessage(input: PromptInput) {
 
 ### 3.1 FilePart 编译
 
-`opencode/packages/opencode/src/opencode/packages/opencode/src/session/prompt.ts:1031-1299` 对不同协议处理不同：
+`opencode/packages/opencode/src/session/prompt.ts:1031-1299` 对不同协议处理不同：
 
 | 协议 | 处理方式 |
 |------|----------|
@@ -163,7 +163,7 @@ if (url.protocol === "file:") {
 
 ### 3.2 AgentPart 编译
 
-`opencode/packages/opencode/src/opencode/packages/opencode/src/session/prompt.ts:1303-1326` 将 `@agent` 引用转成 task 调用：
+`opencode/packages/opencode/src/session/prompt.ts:1303-1326` 将 `@agent` 引用转成 task 调用：
 
 ```ts
 if (part.type === "agent") {
@@ -214,7 +214,7 @@ export const Info = z.object({
 
 ### 4.3 命令执行流程
 
-`opencode/packages/opencode/src/opencode/packages/opencode/src/session/prompt.ts:1823-1973`：
+`opencode/packages/opencode/src/session/prompt.ts:1823-1973`：
 
 ```ts
 export async function command(input: CommandInput) {
@@ -260,7 +260,7 @@ export async function command(input: CommandInput) {
 
 ### 5.1 `shell()` 函数
 
-`opencode/packages/opencode/src/opencode/packages/opencode/src/session/prompt.ts:1541-1788` 处理用户 shell 命令：
+`opencode/packages/opencode/src/session/prompt.ts:1541-1788` 处理用户 shell 命令：
 
 ```ts
 export async function shell(input: ShellInput) {
@@ -294,7 +294,7 @@ export async function shell(input: ShellInput) {
 
 ### 5.2 支持的 Shell
 
-`opencode/packages/opencode/src/opencode/packages/opencode/src/session/prompt.ts:1648-1693` 支持多种 shell：
+`opencode/packages/opencode/src/session/prompt.ts:1648-1693` 支持多种 shell：
 
 ```ts
 const invocations = {
@@ -314,7 +314,7 @@ const invocations = {
 
 ### 6.1 Loop 架构
 
-`opencode/packages/opencode/src/opencode/packages/opencode/src/session/prompt.ts:278-756` 是核心处理循环：
+`opencode/packages/opencode/src/session/prompt.ts:278-756` 是核心处理循环：
 
 ```ts
 export const loop = fn(LoopInput, async (input) => {
