@@ -53,29 +53,4 @@ nul
 .claude/
 .kiro/
 
-# Python (removed - iota project moved)
-# __pycache__/
-# *.py[cod]
-# *$py.class
-# *.so
-# .Python
-# *.egg-info/
-# dist/
-# build/
-# *.egg
-# .venv/
-# venv/
-# ENV/
-# env/
-# .pytest_cache/
-# .coverage
-# htmlcov/
-# .hypothesis/
-# .mypy_cache/
-# .ruff_cache/
-# .python-version
-
-# Docker (removed - iota project moved)
-# .dockerignore
-# Dockerfile
-# docker-compose.yml
+hermes-agent/
