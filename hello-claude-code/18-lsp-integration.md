@@ -6,7 +6,6 @@ title: "Claude Code LSP 集成：代码理解与符号定位"
 
 本文档分析 Claude Code 的 LSP（Language Server Protocol）集成情况。
 
-
 **目录**
 
 - [1. LSP 集成现状](#1-lsp-集成现状)
@@ -193,7 +192,7 @@ Claude Code **当前没有原生 LSP 集成**，主要通过：
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `LspManager` | `src/services/lsp/lspManager.ts` | LSP 生命周期管理：根据文件类型启动/复用对应 LSP server |
 | `LspClient.openDocument()` | `src/services/lsp/lspClient.ts` | 发送 `textDocument/didOpen`，通知 LSP server 文件打开 |
 | `LspClient.getDiagnostics()` | `src/services/lsp/lspClient.ts` | 收集 `publishDiagnostics` 通知，返回错误/警告列表 |

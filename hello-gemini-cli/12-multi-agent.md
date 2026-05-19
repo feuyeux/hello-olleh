@@ -6,7 +6,6 @@ title: "Gemini CLI 多代理与远程模式：本地子代理、A2A 远程代理
 
 旧版文档把 Gemini CLI 概括成“单 Agent CLI”，这已经明显过时。当前仓库里不仅有本地子代理，也有远程代理与对应的调度、认证、进度回传链路。
 
-
 **目录**
 
 - [1. Agent 不是一个，而是一套注册表](#1-agent-不是一个而是一套注册表)
@@ -125,7 +124,7 @@ Gemini CLI 的并行不只是“未来可以做”，当前就已经有相当明
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `AgentRegistry` | `gemini-cli/packages/core/src/agents/registry.ts` | 加载内建/用户级/项目级/extension agent 定义，提供统一注册表 |
 | `SubagentTool` | `gemini-cli/packages/core/src/agents/subagent-tool.ts` | 将 agent 定义包装成标准 declarative tool，调用前做 schema 校验 |
 | `LocalAgentExecutor` | `gemini-cli/packages/core/src/agents/local-executor.ts` | 创建隔离执行环境（独立 ToolRegistry/PromptRegistry/MessageBus），阻止递归 |

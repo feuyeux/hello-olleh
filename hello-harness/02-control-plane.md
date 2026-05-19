@@ -188,7 +188,7 @@ If the codebase has tests or the ability to build or run, consider using them to
 ## 总结对比表
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|-------------|-------|------------|----------|
+| :------| :-------------| :-------| :------------| :----------|
 | Prompt 来源 | TypeScript 硬编码 + 模板片段 | Markdown 模板文件 | Snippet 函数组合 | Effect-ts 配置 |
 | 文件发现 | 向上遍历 CWD，四层优先级 | AGENTS.md 语义（范围绑定） | GEMINI.md 三层层级 | Skill 目录扫描 + URL pull |
 | 优先级规则 | Local > Project > User > Managed | 嵌套优先 + Direct 最高 | Snippet 条件组合 | Permission merge 叠加 |

@@ -8,7 +8,6 @@ title: "OpenCode 架构全景：目录结构、分层模型、核心抽象"
 
 ---
 
-
 **目录**
 
 - [1. 整体架构总览](#1-整体架构总览)
@@ -84,7 +83,7 @@ flowchart TD
 ### 2.1 packages/opencode/src 主目录
 
 | 目录/文件 | 职责 |
-|---------|------|
+| :---------| :------|
 | `index.ts` | CLI middleware 入口，Log/init/migration 注册 |
 | `global/index.ts` | XDG 目录、缓存版本、进程级全局路径计算 |
 | `config/config.ts` | Config.get() 主实现：多来源配置合并、plugin 加载 |
@@ -146,7 +145,7 @@ flowchart TD
 ### 3.1 六层架构
 
 | 层 | 层级名称 | 核心职责 |
-|----|---------|---------|
+| :----| :---------| :---------|
 | L1 | 多端入口层 | CLI/TUI/Web/Desktop/ACP 统一收束到 HTTP/SSE contract |
 | L2 | HTTP Server 层 | 认证、日志、CORS、WorkspaceContext、Instance 绑定、路由分发 |
 | L3 | Session 执行骨架 | prompt 编译、loop 编排、processor 流处理、LLM 调用 |
@@ -163,7 +162,7 @@ flowchart TD
 `Session.Info`（`session/index.ts:122-164`）关键字段：
 
 | 字段 | 语义 |
-|------|------|
+| :------| :------|
 | `projectID` | 归属工程 |
 | `workspaceID` | 归属 workspace |
 | `directory` | 当前请求目录 |
@@ -177,7 +176,7 @@ flowchart TD
 ### 4.2 MessageV2：消息头与部件分离
 
 | 类型 | 职责 |
-|------|------|
+| :------| :------|
 | `User` header | agent / model / system / format / variant |
 | `Assistant` header | parentID / providerID / tokens / cost / finish / error |
 | `Part[]` | text / reasoning / tool / step-start / step-finish / patch / subtask / compaction |
@@ -189,7 +188,7 @@ flowchart TD
 四状态（`message-v2.ts:267-344`）：
 
 | 状态 | 携带数据 |
-|------|---------|
+| :------| :---------|
 | `pending` | `input` 结构化参数 |
 | `running` | `input` + `title` + `metadata` + `time.start` |
 | `completed` | `output` + `attachments` + `metadata` + `time.start/end` |
@@ -198,6 +197,7 @@ flowchart TD
 ### 4.4 Provider：模型调用抽象
 
 `provider/provider.ts` 承担：
+
 - 模型发现：`getProvider()`、`getModel()`、`getLanguage()`
 - 认证管理：`ProviderAuth` 支持 env/api/custom/provider auth
 - 请求构造：`streamText()` 参数拼装、middleware 包装
@@ -245,7 +245,7 @@ Bun.spawn({
 ### 5.3 Bun 与 Node.js 差异点
 
 | 能力 | Bun | Node.js |
-|------|-----|---------|
+| :------| :-----| :---------|
 | HTTP Server | `Bun.serve()` 原生高性能 | `node:http` 或 Express/Fastify |
 | WebSocket | 内置 `websocket` 选项 | `ws` 库 |
 | Shell | `Bun.$` 模板语法 | `child_process.exec/spawn` |
@@ -257,7 +257,7 @@ Bun.spawn({
 ## 6. 关键函数清单
 
 | 函数/类 | 文件坐标 | 功能描述 |
-|---------|---------|---------|
+| :---------| :---------| :---------|
 | `SessionPrompt.prompt()` | `session/prompt.ts:162-188` | 外部请求入口，先落 durable user message，再决定是否进入 loop |
 | `SessionPrompt.loop()` | `session/prompt.ts:242-756` | Session 级状态机：处理 subtask/compaction/overflow，调度 normal round |
 | `SessionProcessor.process()` | `session/processor.ts:46-425` | 消费单轮 LLM 流事件，写入 reasoning/text/tool/step/patch |
@@ -282,7 +282,7 @@ Bun.spawn({
 ### 固定骨架 6 个硬编码交接点
 
 | 固定点 | 被写死的事情 |
-|-------|------------|
+| :-------| :------------|
 | 输入先落 durable history | `prompt()` 总是先 `createUserMessage()` |
 | 每轮从历史重建状态 | `loop()` 每轮重新 `MessageV2.filterCompacted(MessageV2.stream())` |
 | 分支种类固定 | loop 只识别 subtask/compaction/overflow/normal round |
@@ -293,7 +293,7 @@ Bun.spawn({
 ### 晚绑定点
 
 | 晚绑定点 | 绑定时机 |
-|---------|---------|
+| :---------| :---------|
 | transport | 最外层：CLI/TUI/Web/Desktop/ACP 各自选择 |
 | request scope | 进入 server 后：WorkspaceContext + Instance.provide() |
 | agent/model/variant | loop 执行前：`Agent.get()` + `Provider.getModel()` |

@@ -8,7 +8,6 @@ title: "OpenCode 性能与代码质量：流式传输、SSE、Bun Runtime 优势
 
 ---
 
-
 **目录**
 
 - [1. 流式传输架构](#1-流式传输架构)
@@ -46,7 +45,7 @@ flowchart LR
 ### 1.2 AI SDK fullStream 21 种状态
 
 | 分组 | 状态 | OpenCode 处理 |
-|------|------|--------------|
+| :------| :------| :--------------|
 | 文本 | `text-start/delta/end` | 增量写 text part |
 | 推理 | `reasoning-start/delta/end` | 增量写 reasoning part |
 | 工具 | `tool-input-start/delta/end` | 当前忽略 |
@@ -59,10 +58,12 @@ flowchart LR
 | 生命周期 | `error` | 进入 retry/stop/compact |
 
 ### 1.2 Bun 原生持久化加速
+
 - **Bun.sql 零开销访问**：OpenCode 放弃了传统 ORM，直接使用 Bun 内置的 SQLite 引擎（`packages/opencode/src/storage/db.ts`）。
 - **原子性保障**：利用 Bun 的同步写入特性，确保 `updatePartDelta` 在高频并发下依然能维持顺序一致性。
 
 ### 1.3 MCP 流式集成深度
+
 - **SSE 透明转发**：在 `packages/opencode/src/mcp/index.ts` 中，利用 Bun 原生支持的 `ReadableStream` 直接将远程 MCP Server 的事件透传至前端，避免了中间层序列化开销。
 
 ---
@@ -94,7 +95,7 @@ sequenceDiagram
 ### 2.2 两层事件作用域
 
 | 接口 | 作用域 | 代码坐标 |
-|------|-------|---------|
+| :------| :-------| :---------|
 | `/event` | 当前 Instance | `server/routes/event.ts:13-84` |
 | `/global/event` | 全局（跨 Instance）| `server/routes/global.ts:43-124` |
 
@@ -116,6 +117,7 @@ Bun.serve({
 ```
 
 **优势**：
+
 - 原生 HTTP/1.1 + HTTP/2 支持
 - 内置 WebSocket 支持
 - 自动 TLS（通过 `serveTLS`）
@@ -136,6 +138,7 @@ Bun.spawn({
 ```
 
 **优势**：
+
 - 比 Node.js `child_process` 更快的进程启动
 - 原生 `stdout`/`stderr` 流处理
 - 内置 IPC 能力
@@ -149,6 +152,7 @@ Bun.$`git status --short`
 ```
 
 **优势**：
+
 - 模板字符串语法，链式调用
 - 自动流式输出捕获
 - 内置 `glob`、`expand`、`quiet` 等修饰符
@@ -156,7 +160,7 @@ Bun.$`git status --short`
 ### 3.4 Bun vs Node.js 差异
 
 | 能力 | Bun | Node.js |
-|------|-----|---------|
+| :------| :-----| :---------|
 | HTTP Server | `Bun.serve()` 原生高性能 | `node:http` 或 Express/Fastify |
 | WebSocket | 内置 `websocket` 选项 | `ws` 库 |
 | Shell | `Bun.$` 模板语法 | `child_process.exec/spawn` |
@@ -171,7 +175,7 @@ Bun.$`git status --short`
 ### 4.1 增量写 vs 全量写
 
 | 类型 | API | 场景 |
-|------|-----|------|
+| :------| :-----| :------|
 | 全量写 | `Session.updatePart()` | text/reasoning 结束 |
 | 增量写 | `Session.updatePartDelta()` | text/reasoning delta |
 | 实时广播 | `Bus.publish()` | part delta 事件 |
@@ -179,12 +183,14 @@ Bun.$`git status --short`
 ### 4.2 LSP 懒启动
 
 `lsp/index.ts`：
+
 - **eager init**：runtime 先知道有哪些 server 可用
 - **lazy spawn**：真正启动要看文件是否命中
 
 ### 4.3 MCP 连接复用
 
 `mcp/index.ts`：
+
 - 同一 `(root + serverID)` 的多个请求复用同一个 client
 - `spawning` map 防止并发去重
 - `broken` set 隔离失败
@@ -192,6 +198,7 @@ Bun.$`git status --short`
 ### 4.4 Database effect 批处理
 
 `storage/db.ts:121-146`：
+
 - `effect` 不会立刻执行，而是先塞进队列
 - 等主事务写完再统一执行
 - 减少数据库 fsync 次数
@@ -201,7 +208,7 @@ Bun.$`git status --short`
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Session.updatePartDelta()` | `session/index.ts:778-789` | 流式增量写 text/reasoning delta 到 SQLite |
 | `Session.updatePart()` | `session/index.ts` | 批量写完整 part（流结束时触发）|
 | `Bus.publish()` | — | 将 durable 写操作广播为 SSE 事件，驱动实时推送 |
@@ -296,7 +303,7 @@ OpenCode 的设计哲学是：
 ## 7. 关键源码定位
 
 | 主题 | 源码文件 |
-|------|---------|
+| :------| :---------|
 | AI SDK fullStream 处理 | `session/processor.ts` |
 | SSE 端点 | `server/routes/event.ts`、`server/routes/global.ts` |
 | Bun.serve | `server/server.ts` |

@@ -6,7 +6,6 @@ title: "Hooks 与生命周期：Effect-ts 驱动的事件流与扩展点"
 
 本文分析 OpenCode 基于 Effect-ts 的生命周期管理与事件扩展机制。
 
-
 **目录**
 
 - [1. OpenCode 生命周期概览](#1-opencode-生命周期概览)
@@ -103,7 +102,7 @@ const executeWithHooks = (tool: Tool, input: unknown) =>
 ## 5. 与 Claude Code Hooks 的对比
 
 | 特性 | OpenCode | Claude Code |
-|------|---------|-------------|
+| :------| :---------| :-------------|
 | **Hook 机制** | Effect-ts Layer + Bus 事件 | settings.json hooks（Shell 命令）|
 | **生命周期管理** | Effect.addFinalizer（编译期安全）| 进程信号处理 |
 | **事件总线** | Bus（类型化）| 无独立总线 |
@@ -117,7 +116,7 @@ OpenCode 的生命周期完全由 Effect-ts 类型系统保证，资源泄漏在
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Effect.Service` | Effect-ts | 声明式服务定义，类型系统保证 service 在 scope 内有效 |
 | `Bus.subscribe()` | — | 订阅 instance 内 typed 事件，绑定生命周期到当前 scope |
 | `GlobalBus.subscribe()` | — | 订阅全局 typed 事件，跨 instance 协调 |

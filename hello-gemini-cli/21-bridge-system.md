@@ -6,7 +6,6 @@ title: "桥接与集成：CLI、SDK、IDE Companion 与 A2A 接口"
 
 把 Gemini CLI 说成“没有 Bridge”只说对了一半。它确实没有 Claude Code 那种单一、专有的 IDE Bridge 子系统，但仓库里已经形成了多条明确的桥接面：CLI 宿主、SDK、VS Code Companion、MCP 扩展和实验性的 A2A 服务。
 
-
 **目录**
 
 - [1. 当前仓库里的主要桥接面](#1-当前仓库里的主要桥接面)
@@ -151,7 +150,7 @@ Gemini CLI 的优势是边界比较清楚、协议更分散也更可替换；代
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `startInteractiveUI()` | `gemini-cli/packages/cli/src/gemini.tsx:227` | 交互模式 CLI 桥接入口 |
 | `runNonInteractive()` | `gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | Headless / pipe 模式桥接入口 |
 | `GeminiCliAgent` | `gemini-cli/packages/sdk/src/agent.ts:19` | SDK 对外 agent facade |

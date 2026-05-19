@@ -6,7 +6,6 @@ title: "调试指南"
 
 本文介绍 Codex 的调试方法。
 
-
 **目录**
 
 - [1. 调试标志](#1-调试标志)
@@ -20,12 +19,13 @@ title: "调试指南"
 ## 1. 调试标志
 
 | 标志 | 说明 |
-|------|------|
+| :------| :------|
 | `RUST_LOG=level` | 设置 Rust 日志级别 (error, warn, info, debug, trace) |
 | `RUST_LOG=crate=level` | 按 crate 设置日志级别 |
 | `--debug` | 子命令: `codex debug` |
 
 **可用子命令**:
+
 ```bash
 codex debug app-server        # 调试 app server
 codex debug clear-memories    # 清除本地记忆状态
@@ -36,11 +36,13 @@ codex debug clear-memories    # 清除本地记忆状态
 Codex 使用 `tracing_subscriber` 进行日志管理。
 
 **默认日志级别**:
+
 ```
 codex_core=info,codex_tui=info,codex_rmcp_client=info
 ```
 
 **自定义日志级别**:
+
 ```bash
 # 所有 crate 设为 debug
 RUST_LOG=debug codex
@@ -57,7 +59,7 @@ RUST_LOG=codex_tui::app=debug codex
 ## 3. 关键源码
 
 | 文件 | 功能 |
-|------|------|
+| :------| :------|
 | `codex-rs/tui/src/lib.rs:822-840` | `tracing_subscriber` 配置 |
 | `codex-rs/cli/src/main.rs:163-176` | Debug 子命令定义 |
 | `codex-rs/core/src/otel_init.rs` | OpenTelemetry 初始化 |
@@ -124,7 +126,7 @@ codex sandbox linux -- your command
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `RUST_LOG` env | `codex-rs/cli/src/main.rs` | 控制 `tracing` 日志级别：`RUST_LOG=codex=debug` 开启详细日志 |
 | `tracing::instrument` macro | `codex-rs/core/src/*.rs` | 函数级追踪宏：自动记录函数进入/退出和参数 |
 | `DebugDump::write()` | `codex-rs/core/src/debug.rs` | 将当前 session 状态（messages/tools/config）导出为 JSON |

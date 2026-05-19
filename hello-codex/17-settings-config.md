@@ -6,7 +6,6 @@ title: "配置与设置：config.toml、环境变量与运行时策略"
 
 本文分析 Codex 的配置系统，包括配置文件结构、环境变量、优先级规则和运行时策略注入。
 
-
 **目录**
 
 - [1. 配置来源与优先级](#1-配置来源与优先级)
@@ -75,14 +74,14 @@ args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
 ### 3.1 模型配置
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| :------| :------| :------|
 | `model.name` | string | OpenAI 模型 ID（如 `o3`, `o4-mini`）|
 | `model.reasoning_effort` | string | 推理强度（影响 o3/o4 系列速度与质量）|
 
 ### 3.2 审批策略
 
 | 模式 | 说明 |
-|------|------|
+| :------| :------|
 | `suggest` | 仅建议，不执行任何工具（最保守）|
 | `auto-edit` | 自动执行文件编辑，Shell 命令需审批 |
 | `full-auto` | 自动执行所有工具（需要沙箱或信任环境）|
@@ -90,7 +89,7 @@ args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
 ### 3.3 历史持久化
 
 | 策略 | 说明 |
-|------|------|
+| :------| :------|
 | `saveall` | 保存所有会话历史（可 resume）|
 | `never` | 不保存（隐私优先）|
 | `ephemeral` | 仅内存中保留，进程退出即丢失 |
@@ -98,7 +97,7 @@ args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
 ## 4. 环境变量
 
 | 变量 | 说明 |
-|------|------|
+| :------| :------|
 | `OPENAI_API_KEY` | OpenAI API 密钥（必填） |
 | `OPENAI_BASE_URL` | 自定义 API endpoint（兼容 OpenAI 协议的服务）|
 | `CODEX_RS_MODEL` | 覆写模型选择 |
@@ -130,6 +129,7 @@ project/
 ```
 
 项目级 `config.toml` 通常只覆写少数字段，如：
+
 ```toml
 # .codex/config.toml（项目级）
 [approval]
@@ -139,7 +139,7 @@ mode = "full-auto"  # 在 CI 中使用全自动模式
 ## 7. 与其他系统的对比
 
 | 系统 | 配置格式 | 项目级 | 层级数 | 主要特色 |
-|------|---------|-------|--------|---------|
+| :------| :---------| :-------| :--------| :---------|
 | **Codex** | TOML | `.codex/config.toml` | 4层 | 细粒度工具审批 |
 | **Claude Code** | JSON | 项目 `settings.json` | 3层 | Managed Policy |
 | **Gemini CLI** | JSON | `.gemini/settings.json` | 4层 | Trust 模型 |
@@ -150,7 +150,7 @@ mode = "full-auto"  # 在 CI 中使用全自动模式
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Config` | `codex/codex-rs/core/src/config/mod.rs:233` | 运行时配置快照，session/turn/tool 都读取它 |
 | `ConfigOverrides` | `codex/codex-rs/core/src/config/mod.rs:1374` | CLI 或外部入口传入的高优先级覆写 |
 | `ProfileToml` | `codex/codex-rs/config/src/profile_toml.rs:31` | profile 层可覆写 approval、model、instructions 等 |

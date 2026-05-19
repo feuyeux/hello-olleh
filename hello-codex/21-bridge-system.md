@@ -6,7 +6,6 @@ title: "宿主桥接：app-server 协议与多宿主复用"
 
 本文分析 Codex 如何通过 `app-server-protocol` 将 Rust runtime 暴露给多种宿主（CLI、SDK、Web 服务），实现跨平台复用。
 
-
 **目录**
 
 - [1. 多宿主架构](#1-多宿主架构)
@@ -106,7 +105,7 @@ core.on_event(|event| {
 ## 4. 与 Claude Code Bridge 的对比
 
 | 特性 | Codex app-server | Claude Code Bridge |
-|------|-----------------|-------------------|
+| :------| :-----------------| :-------------------|
 | **协议** | app-server-protocol（自定义）| IPC + JSON |
 | **传输** | 直接调用 / stdio / WebSocket | Unix socket / named pipe |
 | **主要用途** | CLI、SDK、Web 多宿主 | IDE 插件（VS Code 等）|
@@ -118,7 +117,7 @@ core.on_event(|event| {
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `AgentBridge` | `codex-rs/core/src/bridge.rs` | TUI ↔ core 桥接：转发用户消息到 Codex engine，转回事件流 |
 | `EventChannel` | `codex-rs/core/src/bridge.rs` | 异步 mpsc 通道：core 发布事件，TUI 订阅消费 |
 | `BridgeCommand` enum | `codex-rs/core/src/bridge.rs` | 指令枚举：Send / Interrupt / Reset / SetConfig |

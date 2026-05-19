@@ -2,7 +2,7 @@
 layout: content
 title: "OpenCode A05：SessionProcessor.process()"
 ---
-# OpenCode A05：`SessionProcessor.process()` 
+# OpenCode A05：`SessionProcessor.process()`
 
 > 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
 > 核心代码：`packages/opencode/src/session/processor.ts`
@@ -12,7 +12,6 @@ title: "OpenCode A05：SessionProcessor.process()"
 它不决定下一个 agent，也不重新回放整个 session；它只处理“这一轮 assistant skeleton 已经建好之后，流进来的事件该怎么落盘”。
 
 ---
-
 
 **目录**
 
@@ -503,13 +502,12 @@ processor 的返回值承担控制信号角色。
 | `opencode/packages/opencode/src/session/processor.ts:303` | text part 增量写入 | 对比 Claude stream event |
 | `opencode/packages/opencode/src/session/processor.ts:391` | retry / overflow / fatal 分支 | 对应韧性章节 |
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `SessionProcessor.create()` | `session/processor.ts` | 工厂函数：为单个 session 创建带状态的 processor 实例 |
 | `SessionProcessor.process()` | `session/processor.ts` | 处理单轮 LLM 请求：组装 prompt、调用 stream、收集事件 |
 | text event handler | `session/processor.ts` | 处理 `text-delta` 流事件：追加助手消息 token |

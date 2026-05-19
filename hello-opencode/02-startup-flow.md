@@ -8,7 +8,6 @@ title: "OpenCode 启动链路：入口点、CLI/TUI/Web 多表面初始化、Ser
 
 ---
 
-
 **目录**
 
 - [1. 多端入口总览](#1-多端入口总览)
@@ -27,7 +26,7 @@ title: "OpenCode 启动链路：入口点、CLI/TUI/Web 多表面初始化、Ser
 ## 1. 多端入口总览
 
 | 入口 | 代码坐标 | 传输方式 | 最后进入哪里 |
-|------|---------|---------|-------------|
+| :------| :---------| :---------| :-------------|
 | 默认 TUI (`opencode`) | `src/index.ts:126-151`、`cli/cmd/tui/thread.ts:66-231` | 本地 worker RPC，必要时也可起外部 HTTP server | 同一套 `Server.fetch()` / `/event` 协议 |
 | 一次性 `run` | `cli/cmd/run.ts:221-675` | 本地 in-process fetch 或远端 HTTP attach | `session.prompt` / `session.command` |
 | `attach <url>` | `cli/cmd/tui/attach.ts:9-88` | 远端 HTTP + SSE | 远端 server 的 `/session`、`/event` |
@@ -45,7 +44,7 @@ title: "OpenCode 启动链路：入口点、CLI/TUI/Web 多表面初始化、Ser
 ### 2.1 启动阶段总览
 
 | 阶段 | 代码坐标 | 真正在做什么 |
-|------|---------|------------|
+| :------| :---------| :------------|
 | import 阶段 | `global/index.ts:14-40` | 准备 XDG 目录、缓存版本、和 cache version 校验 |
 | CLI middleware 阶段 | `index.ts:67-123` | 初始化日志、环境变量、首次 SQLite/JSON migration |
 | 配置编译阶段 | `config/config.ts:79-260`、`config/paths.ts:10-144` | 按优先级叠加 config，装载 .opencode 下的 commands/agents/modes/plugins |
@@ -178,7 +177,7 @@ flowchart LR
 ### 9.1 两层事件作用域
 
 | 接口 | 作用域 | 代码坐标 |
-|------|-------|---------|
+| :------| :-------| :---------|
 | `/event` | 当前 Instance | `server/routes/event.ts:13-84` |
 | `/global/event` | 全局（跨 Instance）| `server/routes/global.ts:43-124` |
 
@@ -207,7 +206,7 @@ sequenceDiagram
 ## 10. 关键源码定位
 
 | 主题 | 源码文件 |
-|------|---------|
+| :------| :---------|
 | CLI 入口 | `packages/opencode/src/index.ts` |
 | 默认命令 | `cli/cmd/tui/thread.ts` |
 | TUI worker | `cli/cmd/tui/worker.ts` |
@@ -230,7 +229,7 @@ sequenceDiagram
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `cli()` | `cli/cmd/run.ts` | CLI 顶层入口，解析子命令和参数 |
 | `run` 命令处理 | `cli/cmd/run.ts` | 默认路径：HTTP+SSE server + TUI |
 | `Server.start()` | `server/server.ts` | Bun HTTP server 启动入口 |

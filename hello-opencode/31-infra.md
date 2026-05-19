@@ -10,7 +10,6 @@ title: "OpenCode 深度专题 B05：基础设施，SQLite、Storage、Bus、Inst
 
 ---
 
-
 **目录**
 
 - [1. 当前基础设施不是单一存储，而是两层](#1-当前基础设施不是单一存储而是两层)
@@ -241,13 +240,12 @@ Storage.write(["session_diff", sessionID], diffs)
 | `opencode/packages/opencode/src/project/instance.ts:64` | `Instance` 单例上下文 | 解释请求如何落到工作目录 |
 | `opencode/packages/opencode/src/control-plane/workspace-context.ts:10` | workspace context | 说明 server/control-plane 还有工作区维度 |
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Database.use()` | `storage/database.ts` | 获取当前 workspace 的 SQLite 连接，带连接池管理 |
 | `Database.transaction()` | `storage/database.ts` | 包裹多个写操作为原子事务 |
 | `Database.effect()` | `storage/database.ts` | 将 SQLite 操作提升为 Effect，集成错误类型系统 |

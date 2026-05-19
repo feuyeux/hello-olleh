@@ -6,7 +6,6 @@ title: "工具调用机制：工具注册、权限控制、执行闭环与结果
 
 主向导对应章节：`工具调用机制`
 
-
 **目录**
 
 - [工具系统目录结构](#工具系统目录结构)
@@ -74,7 +73,7 @@ for handler in plan.handlers {
 }
 ```
 
-4. **返回** `ToolRegistryBuilder`，包含累积的 specs 和 handlers
+1. **返回** `ToolRegistryBuilder`，包含累积的 specs 和 handlers
 
 ### 工具来源
 
@@ -387,17 +386,17 @@ ToolRouter::build_tool_call()  ->  ToolCall
 ToolRouter::dispatch_tool_call_with_code_mode_result()  ->  ToolInvocation
          |
 ToolRegistry::dispatch_any()
-  |-- Lookup handler
-  |-- Validate kind
-  |-- Pre-hooks (can block)
-  |-- is_mutating() check
-  |-- Handler::handle() execution
-  |-- Post-hooks (can modify)
+  | :-- Lookup handler
+  | :-- Validate kind
+  | :-- Pre-hooks (can block)
+  | :-- is_mutating() check
+  | :-- Handler::handle() execution
+  | :-- Post-hooks (can modify)
   +-- AfterToolUse hooks
          |
 ToolOrchestrator::run()
-  |-- Phase A: Approval check
-  |-- Phase B: First sandbox attempt
+  | :-- Phase A: Approval check
+  | :-- Phase B: First sandbox attempt
   +-- Phase C: Escalate on denial
          |
 SandboxAttempt  ->  Execution (Shell, MCP, etc.)
@@ -408,12 +407,13 @@ Format for Model (Structured / Freeform)
          |
 ResponseInputItem (回传给模型)
 ```
+
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `ToolRegistry` | `codex-rs/core/src/agent/registry.rs` | 注册和查询所有工具（内置 + Dynamic + MCP）|
 | `ToolCall::execute()` | `codex-rs/core/src/...` | 工具执行入口：sandbox 包装 + policy 检查 |
 | `SandboxPolicy` | `codex-rs/core/src/...` | 沙箱策略枚举：None / Workspace-only / Docker / Seatbelt |

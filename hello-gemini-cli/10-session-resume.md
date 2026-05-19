@@ -6,7 +6,6 @@ title: "Gemini CLI Session 持久化与会话恢复"
 
 本文档分析 Gemini CLI 的会话持久化与恢复机制。和 Codex / OpenCode 不同，它没有单独抽出一套 thread/session 协议，而是把“可恢复会话”落实为项目级 JSON 会话文件、路径计算服务和 `--resume` 解析链。
 
-
 **目录**
 
 - [1. 这套机制在源码里的真实位置](#1-这套机制在源码里的真实位置)
@@ -170,7 +169,7 @@ Gemini CLI 的 session 机制本质上是“conversation 文件 + resume 解析 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Storage.initialize()` | `gemini-cli/packages/core/src/config/storage.ts` | 计算 `~/.gemini/tmp/<project-hash>/chats/` 等持久化路径 |
 | `ChatRecordingService.recordMessage()` | `gemini-cli/packages/core/src/services/chatRecordingService.ts` | 增量录制消息到 conversation JSON 文件 |
 | `SessionSelector.resolveSession()` | `gemini-cli/packages/cli/src/utils/sessionUtils.ts` | 将 `--resume latest|<index>|<uuid>` 解析为具体会话文件路径 |

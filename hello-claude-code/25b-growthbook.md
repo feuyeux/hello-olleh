@@ -50,7 +50,7 @@ flowchart TD
 ### 核心文件
 
 | 文件 | 职责 |
-|------|------|
+| :------| :------|
 | `services/analytics/growthbook.ts` | GrowthBook SDK 封装、init、refresh、缓存 |
 | `utils/config.ts` | 全局配置读写（含 `cachedGrowthBookFeatures` 持久化）|
 | `analytics/firstPartyEventLogger.ts` | 实验曝光事件记录 |
@@ -78,6 +78,7 @@ thisClient.init({ timeout: 5000 })
 ```
 
 **关键设计**：
+
 - `remoteEval: true` — 服务端预计算，直接返回已评估的值，无需客户端规则引擎
 - `cacheKeyAttributes` — 确保 org 切换时重新获取
 - `apiHostRequestHeaders` — 认证头随请求发送，使服务端能按用户/组织定向
@@ -315,7 +316,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.1 桥接与远程控制
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_ccr_bridge` | CCR (Claude Code Remote) 桥接 |
 | `tengu_bridge_repl_v2` | REPL v2 桥接模式 |
 | `tengu_cobalt_harbor` | Cobalt Harbor 远程服务 |
@@ -325,7 +326,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.2 UI / 视图
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_terminal_panel` | 终端面板 |
 | `tengu_terminal_sidebar` | 终端侧边栏 |
 | `tengu_willow_mode` | Willow 视图模式 |
@@ -334,7 +335,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.3 模型与推理
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_ant_model_override` | 模型覆盖（ANT 用户）|
 | `tengu_ultraplan_model` | UltraPlan 模型选择 |
 | `tengu_kairos_brief` | Kairos 简洁视图 |
@@ -344,7 +345,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.4 记忆与上下文
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_session_memory` | Session Memory 功能 |
 | `tengu_bramble_lintel` | Bramble Lintel 上下文提取 |
 | `tengu_passport_quail` | Passport Quail 功能 |
@@ -354,7 +355,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.5 MCP 与权限
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_harbor` | Harbor MCP 通道 |
 | `tengu_harbor_permissions` | Harbor 权限控制 |
 | `tengu_birch_trellis` | Bash 工具权限 |
@@ -363,7 +364,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.6 Compact 与性能
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_cobalt_raccoon` | 自动 Compact |
 | `tengu_cicada_nap_ms` | CICADA 休眠间隔 |
 | `tengu_chomp_inflection` | Prompt 建议 |
@@ -372,7 +373,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.7 日志与分析
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_1p_event_batch_config` | 1P 日志批处理配置 |
 | `tengu_ccr_bundle_seed_enabled` | CCR bundle seed |
 | `tengu_hive_evidence` | TaskUpdate 证据 |
@@ -380,7 +381,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.8 远程后端
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_remote_backend` | Remote TUI 后端 |
 | `tengu_surreal_dali` | Remote agent scheduling |
 | `tengu_cobalt_lantern` | Remote setup |
@@ -389,7 +390,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ### 6.9 实验性
 
 | Feature | 用途 |
-|---------|------|
+| :---------| :------|
 | `tengu_strap_foyer` | Settings sync |
 | `tengu_jade_anvil_4` | Rate limit options |
 | `tengu_amber_quartz_disabled` | Voice mode disable |
@@ -399,7 +400,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
 ## 7. 关键函数清单
 
 | 函数/变量 | 文件 | 行号 | 职责 |
-|----------|------|------|------|
+| :----------| :------| :------| :------|
 | `GrowthBookUserAttributes` | `services/analytics/growthbook.ts` | 32 | 用户属性类型（Targeting 依据）|
 | `getGrowthBookClient` | `services/analytics/growthbook.ts` | 490 | 创建 GrowthBook 客户端（memoized）|
 | `initializeGrowthBook` | `services/analytics/growthbook.ts` | 622 | 异步初始化入口 |

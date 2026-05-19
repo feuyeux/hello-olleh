@@ -6,7 +6,6 @@ title: "调试指南"
 
 本文介绍 Claude Code 的调试方法。
 
-
 **目录**
 
 - [1. 调试标志](#1-调试标志)
@@ -21,7 +20,7 @@ title: "调试指南"
 ## 1. 调试标志
 
 | 标志 | 说明 |
-|------|------|
+| :------| :------|
 | `--debug` / `-d` | 启用调试模式 |
 | `--debug=pattern` | 按类别过滤（如 `--debug=api,hooks`） |
 | `--debug-file[=path]` | 将调试输出写入指定文件 |
@@ -44,6 +43,7 @@ CLAUDE_CODE_DEBUG_LOG_LEVEL=debug claude    # 默认级别
 **最新日志符号链接**: `~/.claude/debug/latest`
 
 **日志格式** (JSONL):
+
 ```
 2024-01-01T12:00:00.000Z [DEBUG] message content
 2024-01-01T12:00:00.000Z [INFO] message content
@@ -54,7 +54,7 @@ CLAUDE_CODE_DEBUG_LOG_LEVEL=debug claude    # 默认级别
 ## 4. 关键源码
 
 | 文件 | 功能 |
-|------|------|
+| :------| :------|
 | `src/utils/debug.ts:44-57` | `isDebugMode()` 函数检测调试状态 |
 | `src/utils/debug.ts:203-228` | `logForDebugging()` 日志写入 |
 | `src/utils/telemetry/logger.ts` | OpenTelemetry 诊断日志 |
@@ -123,7 +123,7 @@ DEBUG=1 claude --debug
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `DEBUG` env var | `src/utils/debug.ts` | 控制详细日志输出：`DEBUG=claude-code:*` 开启全模块日志 |
 | `Logger` | `src/utils/logger.ts` | 结构化日志工具：按模块 namespace 分类，支持级别过滤 |
 | `--debug` flag | `src/cli.ts` | CLI 调试标志：启用详细模式，打印完整 system prompt 和 API 请求 |

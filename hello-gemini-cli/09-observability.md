@@ -6,7 +6,6 @@ title: "Gemini CLI 可观测性：日志、MessageBus 与 UI 状态追踪"
 
 本文档分析 Gemini CLI 的可观测性基础设施。
 
-
 **目录**
 
 - [1. 可观测性在 Gemini CLI 里的定位](#1-可观测性在-gemini-cli-里的定位)
@@ -251,7 +250,7 @@ Gemini CLI 的可观测性相比 OpenCode 较为基础：
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `MessageBus` | `gemini-cli/packages/core/src/confirmation-bus/message-bus.ts` | 继承 EventEmitter，提供 emit/on/off 工具调用状态广播 |
 | `UIStateContext` | `gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx` | React Context 状态容器：持有 currentTurn、messages、status |
 | `Storage.initialize()` | `gemini-cli/packages/core/src/config/storage.ts` | 计算 `~/.gemini/`、项目级 `.gemini/` 等持久化根路径 |

@@ -6,7 +6,6 @@ title: "韧性机制：请求重试、循环恢复与上下文减压"
 
 Gemini CLI 的韧性并不集中在单一的“恢复管理器”里，而是分散在模型请求、流式输出、循环检测、上下文压缩和会话持久化几条链路中协同实现。
 
-
 **目录**
 
 - [1. 韧性的实际分层](#1-韧性的实际分层)
@@ -162,7 +161,7 @@ Gemini CLI 的另一个现实风险不是“报错”，而是上下文逐轮膨
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `retryWithBackoff()` | `gemini-cli/packages/core/src/utils/retry.ts:198` | API 重试：指数退避 + 可重试错误判断 |
 | `ChatCompressionService` | `gemini-cli/packages/core/src/context/chatCompressionService.ts:237` | 上下文压缩：阈值触发，保留近期历史 |
 | `LoopDetectionService` | `gemini-cli/packages/core/src/services/loopDetectionService.ts:133` | 三层循环检测（工具重复/内容重复/LLM 辅助），支持 session 级禁用 |

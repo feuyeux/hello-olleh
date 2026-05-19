@@ -6,7 +6,6 @@ title: "用户输入、Slash 命令与队列分发"
 
 本篇梳理 Gemini CLI 中用户提交输入后，系统如何完成输入分类、命令匹配和队列调度的完整流程。
 
-
 **目录**
 
 - [1. 整体架构](#1-整体架构)
@@ -26,7 +25,7 @@ title: "用户输入、Slash 命令与队列分发"
 Gemini CLI 的输入处理涉及以下核心模块：
 
 | 模块 | 路径 | 职责 |
-|------|------|------|
+| :------| :------| :------|
 | 交互式 CLI | `gemini-cli/packages/cli/src/interactiveCli.tsx` | 输入总入口 |
 | 命令服务 | `gemini-cli/packages/cli/src/services/CommandService.ts` | 命令加载与匹配 |
 | Slash 命令处理器 | `gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
@@ -270,7 +269,7 @@ function shellReducer(state: ShellState, action: ShellAction): ShellState {
 ## 7. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
-|------|----------|------|
+| :------| :----------| :------|
 | CLI 入口 | `gemini-cli/packages/cli/src/interactiveCli.tsx` | 交互式 CLI 入口 |
 | 命令服务 | `gemini-cli/packages/cli/src/services/CommandService.ts:45-90` | 命令加载与匹配 |
 | 命令类型 | `gemini-cli/packages/cli/src/ui/commands/types.ts` | 数据结构定义 |
@@ -281,7 +280,7 @@ function shellReducer(state: ShellState, action: ShellAction): ShellState {
 ## 8. 与 Claude Code 的差异
 
 | 特性 | Claude Code | Gemini CLI |
-|------|-------------|------------|
+| :------| :-------------| :------------|
 | 队列实现 | `messageQueueManager.ts` + `queueProcessor.ts` | `useMessageQueue.ts` (React hook) |
 | 命令来源 | 内置 + 文件 + MCP + 技能 | 内置 + Toml 文件 + MCP Prompt + 技能 |
 | 并发控制 | `QueryGuard` 同步闸门 | `StreamingState` 状态机 |
@@ -316,7 +315,7 @@ Gemini CLI 的输入层特点：
 本章（Gemini CLI）与同主题其他工具的差异：
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|------------|-------|------------|----------|
+| :------| :------------| :-------| :------------| :----------|
 | 核心主题 | Slash 命令 + QueryGuard 并发控制 | Mailbox + Command Canonicalization + Exec | CommandService + Shell 状态 | PromptInput 编译 + Durable Message |
 | 独有机制 | `QueryGuard` 防并发 query | `Mailbox` 跨 Agent 通信 | `Shell 状态管理` | `Part` 编译类型系统 |
 | 命令返回 | 可改变工具/模型/effort | 命令规范化元数据 | CommandService 统一分发 | 模板化 command 编译 |

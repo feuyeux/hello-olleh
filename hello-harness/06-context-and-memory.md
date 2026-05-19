@@ -214,7 +214,7 @@ OpenCode 的 **InstructionPrompt loaded/claim 机制**（`instruction.ts:168-190
 - **memory**：跨轮次甚至跨会话保留的知识、摘要或结构化衍生物。
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|-------------|-------|------------|----------|
+| :------| :-------------| :-------| :------------| :----------|
 | **state 是什么** | 进程内 `AppState` + store / selector 驱动的 UI 运行态 | `SessionState / ActiveTurn` 运行态 + `Thread / Turn / ThreadItem` 协议状态 | `Scheduler / MessageBus / UIStateContext` + recording 运行态 | 内存 `SessionStatus` + durable `Session / MessageV2 / Part` |
 | **session 是什么** | transcript 文件边界 + compact boundary 后的有效模型视图 | `Thread` 是会话容器，`Turn` 是轮次边界 | `ChatRecording` JSON 文件就是整个会话 | `SessionTable` 一条 session 记录，下面挂 message / part 树 |
 | **memory 是什么** | `MEMORY.md`、topic files、KAIROS daily log、SessionMemory notes | `AGENTS.md` 长期记忆 + memories pipeline 提取的会话经验 | `GEMINI.md` 三层记忆 + `save_memory` 工具写入 | `session_diff`、summary、instruction 重发现，更偏 session memory |
@@ -270,7 +270,7 @@ flowchart LR
 概念差异最终会落在实现路径上：
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|-------------|-------|------------|----------|
+| :------| :-------------| :-------| :------------| :----------|
 | **持久化后端** | JSONL transcript | SQLite WAL + rollout / logs | JSON session file | SQLite + `Storage` JSON |
 | **写入时机** | transcript entry 追加写，运行态主要留内存 | 线程元数据写 SQLite，rollout 持续记录 | recording 增量更新后整体重写 JSON | message / part 流式写库 |
 | **恢复粒度** | 读 transcript，重建 compact boundary | 按 `thread_id` / rollout 恢复到 `Thread / Turn / Item` | 读取 recording JSON 恢复整段会话 | `MessageV2.stream()` + `hydrate()` 回放整个 session |
@@ -295,7 +295,7 @@ flowchart LR
 它们写盘的语义边界并不一样：
 
 | 工具 | 先写什么 | 中间过程怎么存 | 最后恢复时看到什么 |
-|------|----------|----------------|--------------------|
+| :------| :----------| :----------------| :--------------------|
 | Claude Code | transcript entry | token 级过程主要留在运行态，最终追加 entry | transcript entries |
 | Codex | 新 `Turn` / rollout 事件 | `ThreadItem`、command、file change 按协议落盘 | `Thread / Turn / ThreadItem` |
 | Gemini CLI | `ChatRecording.turns[]` | 录制服务更新会话对象，再整体重写 JSON | 一份 recording |
@@ -348,7 +348,7 @@ flowchart LR
 真正困难的问题不是"怎么删历史"，而是"删完之后，下一轮 prompt 还像不像原来的会话"。
 
 | 工具 | 控长主策略 | 保形方式 |
-|------|-----------|---------|
+| :------| :-----------| :---------|
 | Claude Code | tool result budget → snip → microcompact → collapse → autocompact | compact boundary、SessionMemory、relevant memory recall 共同维持语义连续 |
 | Codex | `ContextManager` + compaction + memories pipeline | 压缩历史后重建 `reference_context_item` 基线，并让 memories pipeline 异步补知识 |
 | Gemini CLI | `ChatCompressionService` + `ToolOutputMaskingService` | 保留最近约 30%，旧大输出落盘 |
@@ -382,7 +382,7 @@ flowchart TB
 如果昨天已经讨论过"统一用 `sqlx`"、"测试必须带 integration test"、"这个子目录有特殊 `AGENTS.md` 规则"，四个工具回流知识的方式也不同：
 
 | 工具 | 长期知识载体 | 进入 prompt 的方式 | 关键取舍 |
-|------|--------------|-------------------|---------|
+| :------| :--------------| :-------------------| :---------|
 | Claude Code | `MEMORY.md`、topic files、KAIROS daily log、SessionMemory | system prompt + relevant memory attachment + compact notes | 召回更智能，但系统复杂度最高 |
 | Codex | `AGENTS.md` + memories pipeline 结果 | `project_doc.rs` 拼 base instructions，memory pipeline 异步补充 | 长期知识显式，短期经验半自动 |
 | Gemini CLI | global / extension / project `GEMINI.md` | global 进 system，extension / project 进会话内容 | 文件系统透明，但越久越容易膨胀 |
@@ -434,7 +434,7 @@ flowchart TB
 所有四个工程的 Agent 都无法感知超出其工具和上下文之外的信息：Slack 消息、Google Docs 内容、人脑里的隐性知识——这些对 Agent 不存在，除非被显式地工具化并注入上下文。这个边界对 harness 设计的含义是：任何团队想让 Agent 考虑的信息，都必须通过可见渠道（文件、工具、上下文）明确传递，而不能假设 Agent "自然会知道"。
 
 | 工程 | 上下文组成 | 信息边界 |
-|------|-----------|---------|
+| :------| :-----------| :---------|
 | Claude Code | System/User Context + CLAUDE.md 四层 + compact boundary 梯度体系 | git status, date, CLAUDE.md 内容，relevant memory recall（最多5个） |
 | Codex | 当前 session + Phase 1/2 记忆整合 + ContextManager 三件事 | rollout 历史提炼 + 当前任务，MCP/web search 污染时降级 |
 | Gemini CLI | GEMINI.md 三层（JIT 分层注入）+ Tool 调用结果 | global memory 进 system prompt，extension/project memory 作会话内容注入 |
@@ -445,7 +445,7 @@ flowchart TB
 ## 总结对比表
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|-------------|-------|------------|----------|
+| :------| :-------------| :-------| :------------| :----------|
 | Context 分层 | System/User 两层 + compact boundary 梯度体系 | Phase 1/2 跨 session 分离 + ContextManager 三件事，最深 | Global/Ext/Project 三层，JIT 分层注入 | 六来源三层编译，目录堆栈隐式分层 |
 | Compact 策略 | 梯度体系（tool result budget→snip→microcompact→context collapse→autocompact→reactive compact），autocompact 先试 SessionMemory 快路径 | ContextManager compaction + memories pipeline memory_mode_polluted 降级 | ChatCompressionService（50%触发、保留最近30%、大工具输出落盘）+ ToolOutputMaskingService | CompactionTask→summary agent→SessionSummary.summarize()，不可逆 |
 | 知识版本化 | Git + 文件系统（四层）+ KAIROS daily log + team memory scope | DB + 时间戳 + 使用统计 + 两阶段 consolidation，最完整 | 文件系统 + Agent 可主动写入（save_memory 追加到 ## Gemini Added Memories） | 文件系统（无使用统计）+ SessionSummary 文件级 diff 追踪 |

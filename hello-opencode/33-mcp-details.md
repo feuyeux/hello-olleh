@@ -10,7 +10,6 @@ B09 里把 MCP 定位为"扩展面之一"，但那篇只讲了它产出 tool/pro
 
 ---
 
-
 **目录**
 
 - [1. MCP 在 OpenCode 里到底是什么](#1-mcp-在-opencode-里到底是什么)
@@ -64,10 +63,12 @@ B09 里把 MCP 定位为"扩展面之一"，但那篇只讲了它产出 tool/pro
 `325-446` 处理远程 server。关键逻辑：
 
 **传输层选择**：会同时尝试两种 transport，优先用能连上的：
+
 1. `StreamableHTTPClientTransport`（MCP 官方标准）
 2. `SSEClientTransport`（Server-Sent Events 降级）
 
 **认证处理**：
+
 - 默认开启 OAuth（`oauth: false` 可禁用）
 - OAuth 配置可以是内联 `clientId`/`clientSecret`，也可以让 provider 自动发现
 - `UnauthorizedError` 会触发 `needs_auth` 或 `needs_client_registration` 状态
@@ -155,6 +156,7 @@ authenticate(mcpName)
 ### 6.3 Token 刷新和动态注册
 
 `oauth-provider.ts` 实现了完整的 OAuth 客户端能力：
+
 - 有 `clientId`/`clientSecret` 时走 `client_secret_post`
 - 无密钥时用 `none`（公共客户端）
 - `clientInformation()` 会优先查配置，其次查已动态注册的 stored entry
@@ -208,7 +210,7 @@ client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `McpClientManager` | `mcp/client.ts` | MCP 客户端生命周期管理：创建、复用、销毁连接 |
 | state machine transitions | `mcp/client.ts` | 五态（disconnected/connecting/connected/error/disabled）转换驱动 |
 | `convertMcpTool()` | `mcp/tool.ts` | 将 MCP tool schema 转换为 opencode 内部 Tool 格式 |

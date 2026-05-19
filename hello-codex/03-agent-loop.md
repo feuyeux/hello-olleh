@@ -851,7 +851,7 @@ let _guard = if supports_parallel {
 `needs_follow_up` 是决定 turn 循环继续或退出的核心标志，其设置点分散在多个层：
 
 | 设置位置 | 代码行 | 触发条件 |
-|----------|--------|----------|
+| :----------| :--------| :----------|
 | 工具调用派发 | `codex.rs:7299` | `handle_output_item_done()` 返回含工具 future |
 | 待处理输入 | `codex.rs:7395` | `sess.has_pending_input().await` 为 true |
 | 轮循环判断 | `codex.rs:5922` | `!needs_follow_up` → break |
@@ -862,7 +862,7 @@ let _guard = if supports_parallel {
 Codex 独特之处在于审批不在 loop 内部轮询，而是通过 `submission_loop` 的 `Op` 通道异步注入：
 
 | 审批类型 | Op 变体 | 代码位置 | 机制 |
-|----------|---------|----------|------|
+| :----------| :---------| :----------| :------|
 | 命令执行审批 | `Op::ExecApproval` | `codex.rs:4382-4391` | `approval_store` 查找 → 解除阻塞 |
 | Patch 审批 | `Op::PatchApproval` | `codex.rs:4830` | `ReviewDecision` 路由 → apply/reject/review |
 | 历史回滚 | `Op::ThreadRollback` | `codex.rs:5110-5193` | 从 history 移除最后 N 个 turn |
@@ -887,7 +887,7 @@ if retries >= max_retries && client_session.try_switch_fallback_transport(...) {
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 行号 | 职责 |
-|----------|------|------|------|
+| :----------| :------| :------| :------|
 | `submission_loop()` | `codex-rs/core/src/codex.rs` | 4289 | 第一层：会话事件分发器，单线程顺序处理所有 `UserInput` |
 | `run_turn()` | `codex-rs/core/src/codex.rs` | 5584 | 第二层：单轮控制器，token 预算检查 + 循环终止判断 |
 | `run_sampling_request()` | `codex-rs/core/src/codex.rs` | 6363 | 第三层：LLM 调用编排与重试，构造完整 streaming 请求 |

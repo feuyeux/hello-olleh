@@ -6,7 +6,6 @@ title: "REPL 与交互层：TUI、非交互模式与输入分发"
 
 本文分析 Codex 的交互层实现，包括 TUI 渲染、非交互（headless）模式及输入事件分发机制。
 
-
 **目录**
 
 - [1. 双模式入口](#1-双模式入口)
@@ -122,7 +121,7 @@ pub async fn run_headless(prompt: String, config: Config) -> ExitCode {
 ## 4. 与 Claude Code REPL 的对比
 
 | 特性 | Codex | Claude Code |
-|------|-------|-------------|
+| :------| :-------| :-------------|
 | **UI 框架** | ratatui（Rust）| Ink（React/Node）|
 | **Headless 模式** | ✅ stdin/args | ✅ `--print` / pipe |
 | **流式渲染** | ✅ token 级 | ✅ token 级 |
@@ -134,7 +133,7 @@ pub async fn run_headless(prompt: String, config: Config) -> ExitCode {
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Repl::run()` | `codex-rs/tui/src/repl.rs` | TUI REPL 主循环：读取用户输入，发送到 agent，渲染响应 |
 | `InputHandler` | `codex-rs/tui/src/input.rs` | 键盘事件处理：多行输入、历史导航、快捷键绑定 |
 | `AppState` | `codex-rs/tui/src/state.rs` | TUI 全局状态：当前会话、消息列表、加载状态、选中工具 |

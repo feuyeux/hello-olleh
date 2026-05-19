@@ -10,7 +10,6 @@ title: "OpenCode 深度专题 B11：Worktree 与 Sandbox 机制"
 
 ---
 
-
 **目录**
 
 - [1. 先把 `sandbox` 的代码语义钉住](#1-先把-sandbox-的代码语义钉住)
@@ -54,7 +53,7 @@ title: "OpenCode 深度专题 B11：Worktree 与 Sandbox 机制"
 先把这四个名词分开，否则后面很容易看乱：
 
 | 名称 | 含义 | 典型值 |
-|---|---|---|
+| :---| :---| :---|
 | `directory` | 当前请求/当前会话真正进入的目录 | `/repo/packages/web` |
 | `sandbox` | 当前目录所属的那个 worktree 顶层目录 | `/repo` 或 `~/.local/share/opencode/worktree/<project-id>/calm-cabin` |
 | `Instance.worktree` | 当前 instance 使用的 worktree 根；在代码里它实际被赋值为 `sandbox` | 同上 |
@@ -462,13 +461,12 @@ path.relative(Instance.worktree, target)
 | `opencode/packages/opencode/src/worktree/index.ts:351` | `git worktree add` | 真正创建 Git worktree |
 | `opencode/packages/opencode/src/worktree/index.ts:381` | 新目录二次 bootstrap | 对应“新 sandbox 进入运行时” |
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | sandbox path resolver | `sandbox/sandbox.ts` | 解析 workspace 路径为沙盒挂载路径，确保文件操作在边界内 |
 | sandbox bootstrap | `sandbox/sandbox.ts` | 启动沙盒环境：初始化目录结构、设置权限、注入环境变量 |
 | `Worktree.create()` | `worktree/worktree.ts` | 基于 `git worktree add` 创建隔离工作树 |

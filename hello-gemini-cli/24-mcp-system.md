@@ -6,7 +6,6 @@ title: "Gemini CLI 的 MCP 系统"
 
 本篇讨论 MCP 客户端、传输层、认证体系、工具/提示词发现，以及与 Gemini CLI 工具总线的集成。
 
-
 **目录**
 
 - [1. MCP 系统概述](#1-mcp-系统概述)
@@ -74,7 +73,7 @@ flowchart TB
 ### 2.1 组件拓扑
 
 | 组件 | 路径 | 职责 |
-|------|------|------|
+| :------| :------| :------|
 | McpClientManager | `gemini-cli/packages/core/src/tools/mcp-client-manager.ts` | 客户端生命周期管理 |
 | McpClient | `gemini-cli/packages/core/src/tools/mcp-client.ts` | 单个 MCP 服务器连接 |
 | Auth Provider | `gemini-cli/packages/core/src/mcp/auth-provider.ts` | 认证抽象接口 |
@@ -369,7 +368,7 @@ stateDiagram-v2
 ## 10. 与 Claude Code 的差异
 
 | 特性 | Claude Code | Gemini CLI |
-|------|-------------|------------|
+| :------| :-------------| :------------|
 | 传输类型 | Stdio, SSE, HTTP, WebSocket, in-process | Stdio, SSE, StreamableHTTP |
 | 认证 | XAA, OAuth, Bearer Token | Google Credentials, SA 模拟, OAuth PKCE |
 | 工具发现 | `loadMcpTools()` | `discoverTools()` |
@@ -379,7 +378,7 @@ stateDiagram-v2
 ## 11. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
-|------|----------|------|
+| :------| :----------| :------|
 | 客户端管理 | `gemini-cli/packages/core/src/tools/mcp-client-manager.ts` | 生命周期管理 |
 | 客户端实现 | `gemini-cli/packages/core/src/tools/mcp-client.ts` | 单服务器连接 |
 | OAuth | `gemini-cli/packages/core/src/mcp/oauth-provider.ts` | OAuth 2.0 实现 |

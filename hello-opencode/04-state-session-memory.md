@@ -29,7 +29,7 @@ title: "OpenCode 的状态、会话与记忆系统"
 OpenCode 的运行时可以概括成一句话：**先写库，再发事件，最后编译上下文**。
 
 | 子系统 | 核心职责 | 主要代码位置 |
-|--------|---------|------------|
+| :--------| :---------| :------------|
 | 状态管理 | 把每轮对话的 `message` / `part` 可靠写入 SQLite，并通过 Bus 广播事件 | `session/index.ts`、`storage/db.ts`、`message-v2.ts` |
 | 上下文管理 | 在调用模型前，把持久化历史、指令文件、运行时提醒编译成 `ModelMessage[]` | `session/prompt.ts`、`session/system.ts`、`session/llm.ts` |
 | 记忆系统 | 在 compaction / session 收束时，从 step 快照边界计算 diff，写回 durable state | `session/summary.ts`、`snapshot/index.ts` |
@@ -51,7 +51,7 @@ OpenCode 的运行时可以概括成一句话：**先写库，再发事件，最
 `session/index.ts:686-789` 集中了三组写入口：
 
 | API | 语义 | 代码坐标 |
-|-----|------|---------|
+| :-----| :------| :---------|
 | `Session.updateMessage()` | upsert message 头 | `686-706` |
 | `Session.updatePart()` | upsert part 快照 | `755-776` |
 | `Session.updatePartDelta()` | 发布 part 增量事件，不写库 | `778-789` |
@@ -59,7 +59,7 @@ OpenCode 的运行时可以概括成一句话：**先写库，再发事件，最
 #### 2.1.2 SQLite 三张核心表
 
 | 表 | 关键列 | 存什么 |
-|---|--------|-------|
+| :---| :--------| :-------|
 | `SessionTable` | `project_id / workspace_id / parent_id / directory / title / summary / revert / permission` | session 边界 |
 | `MessageTable` | `session_id / time_created / data(json)` | message header |
 | `PartTable` | `message_id / session_id / time_created / data(json)` | part 体 |
@@ -73,7 +73,7 @@ OpenCode 的运行时可以概括成一句话：**先写库，再发事件，最
 #### 2.1.4 Message 与 Part 的关系
 
 | 层 | 职责 |
-|---|------|
+| :---| :------|
 | message header | 轮次边界：`role / agent / model / tokens / cost / finish` |
 | part | 轮次内部节点：`text / reasoning / tool / step / patch` |
 | durable 写入 | message 和 part 分开存 |
@@ -93,7 +93,7 @@ OpenCode 的事件流可以拆成三条独立消费链：
 #### 2.1.6 MessageV2 关键函数
 
 | 函数 | 文件坐标 | 功能 |
-|------|---------|------|
+| :------| :---------| :------|
 | `MessageV2.stream()` | `message-v2.ts:827-849` | 按"新到旧"产出消息 |
 | `MessageV2.filterCompacted()` | `message-v2.ts:882-898` | 过滤已压缩历史，返回活动历史 |
 | `MessageV2.hydrate()` | `message-v2.ts:533-557` | 把 message rows 与 part rows 组装成 `WithParts` |
@@ -109,7 +109,7 @@ OpenCode 的事件流可以拆成三条独立消费链：
 #### 2.1.8 SessionStatus 与 Durable State 的区别
 
 | 对象 | 存储位置 | 语义 |
-|------|---------|------|
+| :------| :---------| :------|
 | `Session.Info` | SQLite `SessionTable` | durable 执行边界 |
 | `MessageV2.Info` | SQLite `MessageTable` | durable 轮次边界 |
 | `MessageV2.Part` | SQLite `PartTable` | durable 轮次内部节点 |
@@ -132,7 +132,7 @@ OpenCode 的事件流可以拆成三条独立消费链：
 在 `v1.3.2` 中，送进模型的上下文主要来自 6 个来源：
 
 | 来源 | 代码坐标 | 在哪一层进入 |
-|------|---------|------------|
+| :------| :---------| :------------|
 | 用户原始输入 | `session/prompt.ts:986-1386` | `createUserMessage()` 编译 part |
 | 文件 / MCP / agent 附件展开 | `prompt.ts:1000-1325` | 仍属于 user message 编译阶段 |
 | provider / agent 基础提示 | `session/system.ts:18-26`、`session/llm.ts:70-82` | `LLM.stream()` 组 system |
@@ -230,7 +230,7 @@ OpenCode 当前的工具上下文有两层裁剪：
 `packages/opencode/src/session/summary.ts` 当前导出三个函数：
 
 | 函数 | 代码位置 | 做什么 |
-|------|---------|-------|
+| :------| :---------| :-------|
 | `summarize` | `71-89` | 对指定 message 触发 session 摘要和 message 摘要两条计算 |
 | `diff` | `123-142` | 读取 / 规范化 `session_diff`，返回 `FileDiff[]` |
 | `computeDiff` | `144-169` | 从 message history 的 step 快照中计算 diff |
@@ -289,7 +289,7 @@ await Promise.all([
 OpenCode 当前章节里的"记忆"并不是 Claude Code / Gemini CLI 那种可长期累积的知识文件系统，而是**session 级别的文件变更追踪与摘要**：
 
 | 维度 | OpenCode 当前实现 |
-|------|------------------|
+| :------| :------------------|
 | 文件级 | 由 step 开始 / 结束快照构成可差分版本链 |
 | 变更级 | `FileDiff` 包含 `additions / deletions / changes` |
 | 持久化级 | diff 数据存在 `Storage`（JSON 文件）里，不是纯内存态 |
@@ -459,7 +459,7 @@ await Promise.all([
 ### 6.1 状态管理
 
 | 函数 | 文件坐标 | 功能 |
-|------|---------|------|
+| :------| :---------| :------|
 | `Session.updateMessage()` | `session/index.ts:686-706` | upsert message 头 |
 | `Session.updatePart()` | `session/index.ts:755-776` | upsert part 快照 |
 | `Session.updatePartDelta()` | `session/index.ts:778-789` | 发布 part 增量事件，不写库 |
@@ -475,7 +475,7 @@ await Promise.all([
 ### 6.2 上下文管理
 
 | 函数 / 类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `resolvePromptParts()` | `session/prompt.ts` | 将模板引用预编译成具体 part |
 | `createUserMessage()` | `session/prompt.ts:986-1386` | 编译 user message / parts，处理文件展开和 `@agent` 改写 |
 | `insertReminders()` | `session/prompt.ts:1389-1527` | 注入 plan / build 运行时提醒 |
@@ -489,7 +489,7 @@ await Promise.all([
 ### 6.3 记忆系统
 
 | 函数 / 类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `SessionSummary.summarize()` | `session/summary.ts:71-89` | 主入口：并行触发 session 级和 message 级摘要 |
 | `summarizeSession()` | `session/summary.ts:91-106` | 写 session 级聚合 diff 和计数 |
 | `summarizeMessage()` | `session/summary.ts:108-121` | 写 message 级细粒度 diff |

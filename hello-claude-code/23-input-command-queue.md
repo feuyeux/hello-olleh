@@ -6,7 +6,6 @@ title: "用户输入、Slash 命令与队列分发"
 
 本篇梳理用户提交输入后，系统如何完成输入分类、队列调度和 slash command 分流。
 
-
 **目录**
 
 - [1. 这一层解决什么问题](#1-这一层解决什么问题)
@@ -409,7 +408,7 @@ slash command 是前置控制层，而不是单纯的文本宏。
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `InputQueue` | `src/ui/inputQueue.ts` | 用户输入缓冲：多行输入暂存，Enter 确认后一次性发送 |
 | `CommandParser.parse()` | `src/commands/parser.ts` | 解析 `/` 开头的斜杠命令，返回 Command 对象 |
 | `CommandRegistry` | `src/commands/registry.ts` | 内置命令注册表：`/clear` `/model` `/resume` `/bug` 等入口 |
@@ -432,7 +431,7 @@ slash command 是前置控制层，而不是单纯的文本宏。
 本章（Claude Code）与同主题其他工具的差异：
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|------------|-------|------------|----------|
+| :------| :------------| :-------| :------------| :----------|
 | 核心主题 | Slash 命令 + QueryGuard 并发控制 | Mailbox + Command Canonicalization + Exec | CommandService + Shell 状态 | PromptInput 编译 + Durable Message |
 | 独有机制 | `QueryGuard` 防并发 query | `Mailbox` 跨 Agent 通信 | `Shell 状态管理` | `Part` 编译类型系统 |
 | 命令返回 | 可改变工具/模型/effort | 命令规范化元数据 | CommandService 统一分发 | 模板化 command 编译 |

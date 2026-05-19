@@ -6,7 +6,6 @@ title: "启动链路：入口点、CLI 参数解析、初始化顺序与 Subcomm
 
 主向导对应章节：`启动链路`
 
-
 **目录**
 
 - [1. 总体流程图](#1-总体流程图)
@@ -358,7 +357,7 @@ sequenceDiagram
 ## 关键函数清单
 
 | 函数/符号 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `main()` (JS) | `codex-cli/src/cli.ts` | node 入口：设置 PATH，spawn Rust binary |
 | `cli_main()` | `codex-rs/cli/src/main.rs:88` | Rust 入口：argv[0] 多工具分发 |
 | `Subcommand` 枚举 | `codex-rs/cli/src/main.rs:590` | 所有 CLI 子命令路由表 |

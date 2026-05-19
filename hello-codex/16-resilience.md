@@ -6,7 +6,6 @@ title: "Codex 韧性机制：重试策略、错误归一化与恢复路径"
 
 本文档分析 Codex 的韧性系统，涵盖错误处理、重试策略与恢复机制。
 
-
 **目录**
 
 - [1. 韧性在 Codex 里的定位](#1-韧性在-codex-里的定位)
@@ -205,7 +204,7 @@ Codex 的韧性机制并不只停留在“重试 + 沙箱”：
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `BackoffRetry` | `codex-rs/core/src/retry.rs` | 指数退避重试：处理 429/503/网络错误，最大重试次数可配置 |
 | `ContextOverflowHandler` | `codex-rs/core/src/context.rs` | 检测 context length 超限并触发 trim 策略 |
 | `PanicSummary` | `codex-rs/cli/src/main.rs` | 顶层 panic 捕获：生成用户友好的错误摘要并建议操作 |

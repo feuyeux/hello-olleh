@@ -11,7 +11,6 @@ A06 已经说明请求如何进入 `streamText()`。A07 接着说明返回流如
 
 ---
 
-
 **目录**
 
 - [1. A07 覆盖的主线范围](#1-a07-覆盖的主线范围)
@@ -953,13 +952,12 @@ flowchart TD
 
 这条闭环支撑了 OpenCode 的恢复、fork、compaction、多端订阅与历史重放。A 系列到这里完成了从入口、路由、输入编译、编排、模型请求到 durable state 投影的完整主线。
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Session.update*()` API | `session/index.ts` | Durable 写入口：updateMessage/updatePart/updatePartDelta 三级粒度写库 |
 | `Database.effect()` | `storage/db.ts:121-146` | 事务效果批处理：先写库再发事件，保证 durable → event 顺序 |
 | `SessionProcessor.process()` | `session/processor.ts` | 将流事件翻译成 durable part 更新的核心处理器 |

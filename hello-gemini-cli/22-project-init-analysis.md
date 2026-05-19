@@ -6,7 +6,6 @@ title: "项目初始化分析报告：首次进入 Gemini CLI 仓库时该先看
 
 这份总览面向第一次进入 Gemini CLI 仓库的读者。重点不是罗列所有目录，而是先建立一套和当前源码一致的阅读地图。
 
-
 **目录**
 
 - [1. 仓库基本信息](#1-仓库基本信息)
@@ -169,7 +168,7 @@ gemini-cli/packages/cli/src/gemini.tsx
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `main()` | `gemini-cli/packages/cli/src/index.ts` | CLI 最顶层入口，解析 argv 并分发给 `gemini.tsx` |
 | `Config.initialize()` | `gemini-cli/packages/core/src/config/config.ts:1289` | 所有服务的固定装配入口：ToolRegistry、MCP、GeminiClient |
 | `startInteractiveUI()` | `gemini-cli/packages/cli/src/gemini.tsx` | 交互路径启动：初始化 Ink TUI + AppContainer |

@@ -6,7 +6,6 @@ title: "设置系统、托管策略与环境变量注入"
 
 本篇梳理 `settings` 如何通过多源合并、托管策略和 trust 前后分阶段注入影响运行时行为。
 
-
 **目录**
 
 - [1. 为什么这是一条独立主线](#1-为什么这是一条独立主线)
@@ -375,7 +374,7 @@ flowchart LR
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `loadConfig()` | `src/config/config.ts` | 配置加载入口：合并 global / project / env / CLI 四层 |
 | `GlobalSettings` | `src/config/types.ts` | `~/.claude/settings.json` 对应类型，最低优先级 |
 | `ProjectSettings` | `src/config/types.ts` | `.claude/settings.json` 项目级配置类型 |

@@ -14,7 +14,6 @@ title: "执行主线索引：OpenCode 运行主线深度解析"
 
 ---
 
-
 **目录**
 
 - [1. 当前主线文档分别卡在哪一跳](#1-当前主线文档分别卡在哪一跳)
@@ -140,7 +139,7 @@ sequenceDiagram
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `cli/index.ts` entry | `cli/index.ts` | CLI 入口：解析参数，根据 `--tui`/`--http` 分发到不同 transport |
 | `server/server.ts` | `server/server.ts` | HTTP server 主文件：路由注册、中间件挂载、Bun.serve 启动 |
 | `loop()` (SessionPrompt) | `session/prompt.ts:278` | 核心主循环：驱动 session 状态机，是系统最重要的文件 |

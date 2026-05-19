@@ -36,7 +36,7 @@ title: "可插拔上下文与记忆模块：跨运行时内核的统一抽象"
 ### 1.2 设计原则
 
 | 原则 | 说明 |
-|------|------|
+| :------| :------|
 | **接口优先** | 先定义能力契约（interface），再实现适配器 |
 | **最小公约数 + 扩展点** | 核心接口覆盖两个系统的交集，通过 metadata/hooks 暴露差异化能力 |
 | **运行时无关** | 业务逻辑不依赖具体的 SQLite schema、Bus 实现或 Python/TypeScript 语言特性 |
@@ -49,7 +49,7 @@ title: "可插拔上下文与记忆模块：跨运行时内核的统一抽象"
 ### 2.1 OpenCode 架构特点
 
 | 维度 | OpenCode 实现 |
-|------|--------------|
+| :------| :--------------|
 | **状态持久化** | SQLite（SessionTable / MessageTable / PartTable）+ JSON Storage |
 | **上下文编译** | `SessionPrompt.prompt()` → `toModelMessages()` 投影 |
 | **记忆系统** | Session 级文件变更追踪（`SessionSummary.computeDiff()`） |
@@ -70,7 +70,7 @@ title: "可插拔上下文与记忆模块：跨运行时内核的统一抽象"
 ### 2.2 Hermes Agent 架构特点
 
 | 维度 | Hermes Agent 实现 |
-|------|------------------|
+| :------| :------------------|
 | **状态持久化** | SQLite（sessions / messages 表）+ FTS5 全文搜索 |
 | **上下文编译** | `PromptBuilder` + `ContextEngine` + `MemoryManager` |
 | **记忆系统** | `MemoryProvider` 抽象（builtin + 可选外部 provider） |
@@ -91,7 +91,7 @@ title: "可插拔上下文与记忆模块：跨运行时内核的统一抽象"
 ### 2.3 关键差异
 
 | 维度 | OpenCode | Hermes Agent |
-|------|----------|--------------|
+| :------| :----------| :--------------|
 | **消息模型** | Message + Part（细粒度节点） | 扁平 messages 列表 |
 | **压缩触发** | Compaction agent + summary | `ContextEngine.should_compress()` |
 | **记忆语义** | Session 级文件 diff | 跨 session 持久化知识 + FTS5 搜索 |
@@ -724,4 +724,3 @@ class CustomCompressionEngine implements ICompressionEngine {
 *文档版本: 1.0*  
 *创建日期: 2026-04-17*  
 *作者: Claude (Kiro)*
-

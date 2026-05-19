@@ -6,7 +6,6 @@ title: "REPL 与交互层：Ink TUI、非交互模式与输入分发"
 
 本文分析 Gemini CLI 的交互层实现，包括基于 Ink 的 TUI 渲染、非交互模式和输入事件处理。
 
-
 **目录**
 
 - [1. 双模式架构](#1-双模式架构)
@@ -105,7 +104,7 @@ export async function runNonInteractive(flags: CliFlags) {
 `InputBox` 组件处理键盘输入，支持：
 
 | 快捷键 | 功能 |
-|--------|------|
+| :--------| :------|
 | `Enter` | 提交输入（单行模式）|
 | `Shift+Enter` | 换行（多行模式）|
 | `Ctrl+C` | 中断当前 Agent 运行 |
@@ -115,7 +114,7 @@ export async function runNonInteractive(flags: CliFlags) {
 ## 5. 与 Claude Code REPL 的对比
 
 | 特性 | Gemini CLI | Claude Code |
-|------|------------|-------------|
+| :------| :------------| :-------------|
 | **UI 框架** | Ink（React/TS）| Ink（React/TS）|
 | **Headless** | `--no-interactive` / pipe | `--print` / pipe |
 | **Markdown 渲染** | ✅ | ✅ |
@@ -127,7 +126,7 @@ export async function runNonInteractive(flags: CliFlags) {
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `AppContainer` | `gemini-cli/packages/cli/src/ui/AppContainer.tsx:794` | CLI 顶层 React 组件：持有 resume、UI Action、生命周期管理 |
 | `useGeminiStream` | `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:214` | 核心 hook：管理流处理、工具调度触发、工具结果回注 |
 | `UIStateContext` | `gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx:213` | React Context：持有 currentTurn/messages/tools/status 等 UI 状态 |

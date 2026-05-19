@@ -6,7 +6,6 @@ title: "多代理与并行：Codex 的单代理架构与 child-agents 机制"
 
 本文分析 Codex 在多代理（Multi-Agent）方向的设计，包括其以单代理为核心的架构取向，以及通过 child-agents 实现任务分派的机制。
 
-
 **目录**
 
 - [1. 架构取向：单代理为主](#1-架构取向单代理为主)
@@ -20,6 +19,7 @@ title: "多代理与并行：Codex 的单代理架构与 child-agents 机制"
 ## 1. 架构取向：单代理为主
 
 Codex 的核心设计围绕**单线程 Agent 执行循环**（`submission_loop` → `run_turn`）展开，强调：
+
 - 执行的可预期性（Predictability）
 - 状态管理的简洁性（Thread 作为统一边界）
 - 调试的可追溯性（线程历史完整保留）
@@ -49,6 +49,7 @@ Codex 的核心设计围绕**单线程 Agent 执行循环**（`submission_loop` 
 ### 2.2 执行隔离
 
 每个 child-agent 运行在独立的 `Thread` 上下文中：
+
 - 独立的历史记录（不共享父 agent 的对话历史）
 - 独立的工具权限（继承父 agent 的 approval policy）
 - 独立的沙箱隔离（如果启用）
@@ -85,6 +86,7 @@ async fn execute_tool_calls(
 ```
 
 同一模型响应中的多个 tool_call 可以并发执行，适合：
+
 - 同时读取多个文件
 - 同时搜索多个目录
 - 同时运行多个独立的 shell 命令
@@ -92,7 +94,7 @@ async fn execute_tool_calls(
 ## 4. 与其他系统的对比
 
 | 特性 | Codex | Claude Code | Gemini CLI | OpenCode |
-|------|-------|-------------|-----------|---------|
+| :------| :-------| :-------------| :-----------| :---------|
 | **多代理模式** | Child-agents（可选） | Sub-agents（内置） | 本地/远程子代理 | Subagent 工具 |
 | **并行方式** | 单轮多工具并行 | Task 后台并行 | 子代理 + 工具并行 | 多工具并行 |
 | **代理间通信** | Thread 结果传递 | 消息传递 | tool result / 进度事件回传 | Bus 事件 |
@@ -109,6 +111,7 @@ async fn execute_tool_calls(
 4. **Rust 安全**：Rust 类型系统保障单线程逻辑的内存安全
 
 **child-agents 的适用场景**：
+
 - 明确可分解的子任务（如"独立分析每个模块"）
 - 需要隔离执行（一个 child 失败不影响父 agent）
 - 任务结果之间无强依赖关系
@@ -118,7 +121,7 @@ async fn execute_tool_calls(
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `ChildAgent` / `CodexAgent` | `codex-rs/core/src/agents/` | Child agent 定义：独立 tool set、独立 context、受限权限 |
 | `FuturesOrdered` (工具级并行) | `codex-rs/core/src/codex.rs:7176` | 在 `try_run_sampling_request()` 中并发执行多个工具调用 |
 | `submission_loop()` | `codex-rs/core/src/codex.rs:4289` | 主会话事件分发器：单线程顺序，防止多代理竞态 |

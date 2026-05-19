@@ -6,7 +6,6 @@ title: "用户输入、命令解析与 Mailbox 队列系统"
 
 本篇梳理 Codex 中用户提交输入后，系统如何完成命令解析、邮箱队列管理和跨 Agent 通信的完整流程。
 
-
 **目录**
 
 - [1. 核心架构概述](#1-核心架构概述)
@@ -29,7 +28,7 @@ title: "用户输入、命令解析与 Mailbox 队列系统"
 Codex 的输入处理涉及以下核心模块：
 
 | 模块 | 路径 | 职责 |
-|------|------|------|
+| :------| :------| :------|
 | CLI 入口 | `codex-rs/cli/src/main.rs` | 命令行解析，启动 TUI 或 headless |
 | TUI | `codex-rs/tui/src/lib.rs` | 交互式界面，事件循环 |
 | CodexThread | `codex-rs/core/src/codex_thread.rs` | 主 agent 线程封装 |
@@ -89,7 +88,7 @@ fn main() {
 ### 3.2 可用子命令
 
 | 子命令 | 路径 | 功能 |
-|--------|------|------|
+| :--------| :------| :------|
 | `exec` | `codex-rs/cli/src/exec.rs` | Headless 命令执行 |
 | `mcp` | `codex-rs/cli/src/mcp.rs` | MCP 服务器模式 |
 | `mcp-server` | `codex-rs/mcp-server/` | MCP 协议服务器 |
@@ -249,7 +248,7 @@ pub fn canonicalize_command(cmd: &str) -> String {
 ### 7.2 规范化策略
 
 | 原始 | 规范化后 |
-|------|----------|
+| :------| :----------|
 | `bash -c "echo hi"` | `__codex_shell_script__echo hi` |
 | `powershell -Command "dir"` | `__codex_powershell_script__dir` |
 | `/usr/bin/python3 script.py` | `__codex_shell_script__python3 script.py` |
@@ -327,7 +326,7 @@ pub async fn execute(
 ## 10. 与 Claude Code 的差异
 
 | 特性 | Claude Code | Codex |
-|------|-------------|-------|
+| :------| :-------------| :-------|
 | 入口架构 | TypeScript REPL | Rust CLI + TUI |
 | 队列实现 | `messageQueueManager.ts` + React hooks | `Mailbox.rs` (mpsc channels) |
 | 并发控制 | `QueryGuard` 状态机 | Watch channel 序列号 |
@@ -338,7 +337,7 @@ pub async fn execute(
 ## 11. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
-|------|----------|------|
+| :------| :----------| :------|
 | CLI 入口 | `codex-rs/cli/src/main.rs` | 子命令解析 |
 | TUI 主循环 | `codex-rs/tui/src/lib.rs:587` | `run_main()` |
 | CodexThread | `codex-rs/core/src/codex_thread.rs` | Agent 线程封装 |
@@ -367,7 +366,7 @@ Codex 的输入层特点：
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `InputQueue` | `codex-rs/tui/src/input.rs` | 用户输入队列：缓冲多行输入，等待 Enter 确认后统一发送 |
 | `CommandParser::parse()` | `codex-rs/tui/src/command.rs` | 解析以 `/` 开头的斜杠命令，返回 `Command` 枚举 |
 | `Command` enum | `codex-rs/tui/src/command.rs` | 内置命令集：/clear /model /resume /history /help 等 |
@@ -390,7 +389,7 @@ Codex 的输入层特点：
 本章（Codex）与同主题其他工具的差异：
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|------------|-------|------------|----------|
+| :------| :------------| :-------| :------------| :----------|
 | 核心主题 | Slash 命令 + QueryGuard 并发控制 | Mailbox + Command Canonicalization + Exec | CommandService + Shell 状态 | PromptInput 编译 + Durable Message |
 | 独有机制 | `QueryGuard` 防并发 query | `Mailbox` 跨 Agent 通信 | `Shell 状态管理` | `Part` 编译类型系统 |
 | 命令返回 | 可改变工具/模型/effort | 命令规范化元数据 | CommandService 统一分发 | 模板化 command 编译 |

@@ -6,7 +6,6 @@ title: "Hooks 生命周期与运行时语义"
 
 本篇梳理 hooks 的来源、执行方式以及独立的安全和运行时约束。
 
-
 **目录**
 
 - [1. 为什么 hooks 需要单独成篇](#1-为什么-hooks-需要单独成篇)
@@ -373,7 +372,7 @@ flowchart LR
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `HookRunner.runPreTool()` | `src/hooks/hookRunner.ts` | 前置钩子执行器：工具调用前运行，可修改参数或中止调用 |
 | `HookRunner.runPostTool()` | `src/hooks/hookRunner.ts` | 后置钩子执行器：工具调用后运行，可审计或转换结果 |
 | `LifecycleEvent` enum | `src/hooks/types.ts` | 生命周期事件类型：PreToolUse / PostToolUse / Stop / SubagentStop |

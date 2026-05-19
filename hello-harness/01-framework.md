@@ -89,7 +89,7 @@ Harness Engineering 借鉴软件质量保证的分层概念，把控制行为分
 ### Claude Code
 
 | 维度 | 实现 | 证据 |
-|------|------|------|
+| :------| :------| :------|
 | Maintainability | 分层 CLAUDE.md + .claude/rules/ 目录 | `claude-md.ts:1-26` |
 | Architecture Fitness | feature flag 系统 | `claude-code/src/tools.ts:14-135`（但 feature() 始终 false） |
 | Behaviour | VerifyPlanExecutionTool | `process.env.CLAUDE_CODE_VERIFY_PLAN === 'true'`（反编译环境下不触发） |
@@ -97,7 +97,7 @@ Harness Engineering 借鉴软件质量保证的分层概念，把控制行为分
 ### Codex
 
 | 维度 | 实现 | 证据 |
-|------|------|------|
+| :------| :------| :------|
 | Maintainability | Rust 类型系统 + clippy | `codex-rs/Cargo.toml` |
 | Architecture Fitness | approval policy 四模式 | `unless_trusted.md`、`on_failure.md` |
 | Behaviour | 两阶段记忆管道 + outcome 标签 | `stage_one_system.md:1-569` |
@@ -105,7 +105,7 @@ Harness Engineering 借鉴软件质量保证的分层概念，把控制行为分
 ### Gemini CLI
 
 | 维度 | 实现 | 证据 |
-|------|------|------|
+| :------| :------| :------|
 | Maintainability | vitest 测试 + 29+ eval 文件 | `gemini-cli/evals/*.eval.ts` |
 | Architecture Fitness | 模型选择约束 + Snippet 函数边界 | `config.ts`、`models.ts` |
 | Behaviour | Hook System BeforeModel/AfterModel | `hookSystem.ts:149-444` |
@@ -113,7 +113,7 @@ Harness Engineering 借鉴软件质量保证的分层概念，把控制行为分
 ### OpenCode
 
 | 维度 | 实现 | 证据 |
-|------|------|------|
+| :------| :------| :------|
 | Maintainability | Bun + TypeScript strict | `opencode/tsconfig.json` |
 | Architecture Fitness | Effect-ts Layer 模式 | `permission/index.ts:138` |
 | Behaviour | Permission 即代码（allow/deny/ask） | `permission/index.ts:292-307` |

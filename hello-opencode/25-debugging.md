@@ -8,7 +8,6 @@ title: "OpenCode 深度专题 C01：断点调试指南"
 
 B 系列前面讲的都是代码架构和执行逻辑，这篇换一个工程视角：如何在 VS Code 和 JetBrains 里对 `packages/opencode` 源码设置断点、调试具体命令、以及一边断点一边看日志。这对想深入主链路或排查运行时问题的人来说是实用工具。
 
-
 **目录**
 
 - [调试前准备](#调试前准备)
@@ -181,15 +180,11 @@ RUN:
 
 - `Arguments` / `Program arguments`：`run --model <provider>/<model> --variant high "hello"`
 
-
-
->  查看opencode的模型使用如下命令。
-> 
+> 查看opencode的模型使用如下命令。
+>
 ```powershell
 opencode models
 ```
-
-
 
 调 MCP:
 
@@ -216,15 +211,15 @@ JetBrains 如果要看同样的日志，把下面这段放到 `Arguments` / `Pro
 ### 总结
 
 - VS Code：先跑 `bun run --inspect-brk=6499/opencode --cwd packages/opencode --conditions=browser src/index.ts`，再附加 `opencode (attach 6499)`
-- ###### JetBrains：直接建一个 `Bun` 运行配置，`File` 指向 `packages/opencode/src/index.ts`，`Bun parameters` 填 `--cwd packages/opencode --conditions=browser`，具体子命令和模型参数都放到 `Arguments` / `Program arguments`，然后点 `Debug`
 
+- ###### JetBrains：直接建一个 `Bun` 运行配置，`File` 指向 `packages/opencode/src/index.ts`，`Bun parameters` 填 `--cwd packages/opencode --conditions=browser`，具体子命令和模型参数都放到 `Arguments` / `Program arguments`，然后点 `Debug`
 
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `--inspect-brk` flag | Bun/Node.js | 启动时暂停等待 debugger 附加，适合调试启动链路 |
 | `bun run --inspect` | Bun | Bun 内置 debugger 模式，VS Code 通过 attach 接入 |
 | `opencode (attach 6499)` | VS Code launch.json | VS Code attach 配置，调试已运行的 opencode 进程 |

@@ -10,7 +10,6 @@ A06 进入模型请求出站链路。在 `v1.3.2` 中，大模型请求会经过
 
 ---
 
-
 **目录**
 
 - [1. 入口坐标](#1-入口坐标)
@@ -628,13 +627,12 @@ A06 讲的是请求怎样被拼出来、怎样发出去；A07 才讲返回流怎
 | `opencode/packages/opencode/src/session/llm.ts:272` | `wrapLanguageModel()` middleware | 对应请求拦截/修复层 |
 | `opencode/packages/opencode/src/provider/transform.ts:878` | provider options remap | 说明 OpenCode 的模型适配集中在 transform |
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `LLM.stream()` | `llm/llm.ts` | 顶层 LLM 请求接口：接收 messages+tools，返回 `fullStream` |
 | system prompt assembler | `llm/prompt.ts` | 四层 system prompt 拼接：base+context+agent+user override |
 | `streamText()` | `ai-sdk/stream.ts` (via AI SDK) | Vercel AI SDK 底层流式调用，适配各提供商 |

@@ -11,7 +11,6 @@ title: "OpenCode A04：loop()"
 
 ---
 
-
 **目录**
 
 - [1. `loop()` 之前，先有一套 session 级并发闸门](#1-loop-之前先有一套-session-级并发闸门)
@@ -533,13 +532,12 @@ loop 最后会重新扫描 durable history：
 | `opencode/packages/opencode/src/session/prompt.ts:695` | 投影为模型消息 | 对应四项目 prompt assembly |
 | `opencode/packages/opencode/src/session/prompt.ts:747` | 最终再次遍历 durable history | 说明结果以数据库历史为准 |
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `loop()` | `session/loop.ts` | Session 核心状态机：驱动 idle/running/waiting/done 四态转换 |
 | concurrency gate | `session/loop.ts` | 并发锁：同一 session 只允许一个 loop 实例运行 |
 | exit condition check | `session/loop.ts` | 检测 `processor` 返回的 `done`/`error`/`continue` 信号决定退出 |

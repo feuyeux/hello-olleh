@@ -163,6 +163,7 @@ pub(crate) struct ActiveTurn {
 ```
 
 TurnState 含：
+
 - `pending_approvals: HashMap<String, oneshot::Sender<ReviewDecision>>`
 - `pending_request_permissions: HashMap<...>`
 - `pending_user_input: HashMap<...>`
@@ -392,7 +393,7 @@ flowchart LR
 #### 两种形式对比
 
 | 类型 | 实现 | 生命周期 | 控制方式 |
-|------|------|---------|---------|
+| :------| :------| :---------| :---------|
 | **会话内 Memory** | `memories pipeline`（自动提取） | 单次会话 | 自动 |
 | **跨会话 Memory** | `AGENTS.md`（手动维护） | 永久 | 用户手动更新 |
 
@@ -475,7 +476,7 @@ Codex 没有自动化的跨会话 Memory 存储。长期记忆由用户通过 `A
 #### 与其他系统的对比
 
 | 特性 | Codex | Claude Code | Gemini CLI | OpenCode |
-|------|-------|-------------|-----------|---------|
+| :------| :-------| :-------------| :-----------| :---------|
 | **会话内 Memory** | memories pipeline（自动） | 无独立机制 | 分层 `GEMINI.md` + JIT context | 无独立机制 |
 | **跨会话 Memory** | `AGENTS.md`（手动） | `CLAUDE.md` + memory files | 全局/项目 `GEMINI.md` + `save_memory` | Memory 系统 |
 | **自动持久化** | 部分（会话内提取） | 无 | 部分（文件持久化，非自动总结） | 是（SQLite） |
@@ -484,11 +485,13 @@ Codex 没有自动化的跨会话 Memory 存储。长期记忆由用户通过 `A
 #### 设计权衡
 
 Codex 的 Memory 设计偏向简洁：
+
 - 自动 memories 仅存在于当前会话，降低"幽灵记忆"风险
 - 跨会话知识通过显式的 `AGENTS.md` 管理，用户完全可见、可控
 - 无需维护单独的 Memory 数据库，降低复杂度
 
 局限：
+
 - 缺乏自动跨会话 Memory（需用户手动维护 `AGENTS.md`）
 - 会话内 memories 消耗额外 LLM 调用
 - 大规模项目的 `AGENTS.md` 可能变得难以维护
@@ -615,7 +618,7 @@ pub async fn consolidate(
 ### 上下文管理
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `ContextManager` | `codex-rs/core/src/context_manager.rs` | 管理模型可见历史边界：决定哪些 turn/item 进入请求 |
 | `build_prompt()` | `codex-rs/core/src/codex.rs` | 三类输入收束：system message + tool descriptions + conversation history |
 | `auto_compact_limit` check | `codex-rs/core/src/codex.rs:5584` | token 预算在 `run_turn()` 入口检查，触发 compaction 或停止 |
@@ -625,7 +628,7 @@ pub async fn consolidate(
 ### 记忆系统
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `RollingWindowContext` | `codex-rs/core/src/context.rs` | 滚动窗口上下文：限制消息历史到最近 N 条 |
 | `TokenBudgetManager` | `codex-rs/core/src/context.rs` | token budget 管理：根据模型限制截断历史 |
 | `context_trim()` | `codex-rs/core/src/context.rs` | 触发历史消息裁剪，保留最新消息优先 |
@@ -643,17 +646,20 @@ pub async fn consolidate(
 ### 优点
 
 **状态管理层面**：
+
 - **三层状态分离清晰**：内存操作态（TurnContext）、可持久线程态（Thread）、持久会话态（Session）三层边界明确，避免了单一大状态对象带来的锁竞争和难以追踪的状态混乱。
 - **双 SQLite 职责分离**：state DB 和 logs DB 各司其职，日志可单独清理而不影响线程结构，符合最小耦合原则。
 - **Rollout 记录与回放**：`record_conversation_items()` 持续记录，支持无损重建会话，使 session resume 成为一等公民而非事后补丁。
 - **并发控制简洁**：每个 session 单线程操作，借助 Tokio actor 模式消除绝大多数状态同步代码。
 
 **上下文管理层面**：
+
 - **三层收束模型清晰**：system message / tool descriptions / conversation history 三类输入在 `build_prompt()` 统一汇聚，无隐式注入路径。
 - **token 预算双重保险**：`run_turn()` 入口和 `try_run_sampling_request()` 出口各有一次 token 检查，防止无限膨胀。
 - **Memory 异步管道不占用主循环**：记忆提取在独立 pipeline 中异步运行，不阻塞 submission_loop 的主请求路径。
 
 **记忆系统层面**：
+
 - **滚动窗口保证实时性**：RollingWindowContext 保留最新 N 条消息，LLM 始终能看到最新上下文，不会因历史过长遗漏最近指令。
 - **磁盘持久化支持恢复**：对话历史写入本地文件，`--resume` 标志可续接上次会话，无需依赖服务端状态。
 - **token budget 自适应**：TokenBudgetManager 根据当前模型的 context window 动态调整裁剪阈值，兼容不同容量模型。
@@ -661,18 +667,20 @@ pub async fn consolidate(
 ### 风险与改进点
 
 **状态管理层面**：
+
 - **实验性特性标记不清**：`persist_extended_history`、`experimental_raw_events` 等字段虽标注 experimental，但没有统一的 feature flag 管控，测试覆盖和弃用路径不明确。
 - **ThreadMetadataBuilder 字段多**：`build()` 方法依赖大量字段正确填充，缺少运行时校验，字段遗漏会导致缺省值静默生效而非快速失败。
 - **history/path overrides 供内部服务使用**：这类"内部专用但对外可见"的字段存在 API 泄露风险，若外部用户意外使用，未来难以安全移除。
 - **文件系统路径硬编码风险**：history db 路径与 thread db 路径的构造逻辑散落在 Config 初始化中，难以在测试环境中替换为内存 DB。
 
 **上下文管理层面**：
+
 - **`ContextManager` 裁剪策略不可配置**：历史裁剪的阈值和保留策略硬编码，不同任务类型（长代码分析 vs 短对话）无法动态调整。
 - **Memory pipeline 与 submission_loop 无同步点**：异步 memory 更新可能在下一轮请求前未完成，导致该轮请求用到的是上一轮的记忆快照。
 - **`build_prompt()` 无工具声明 token 预算**：工具描述会随注册工具数量增长占用大量 token，当前无独立的工具描述 token 上限，可能挤压可用 context 窗口。
 
 **记忆系统层面**：
+
 - **纯内存历史无对话隔离**：多个并发 shell 实例共享同一历史文件，并发写入可能导致历史文件损坏。
 - **trim 策略不可配置**：`context_trim()` 固定截取最旧消息，无法配置为"保留工具调用对""保留重要标记消息"等策略。
 - **历史文件无加密**：`~/.codex/history/` 中以明文存储对话历史，包含的代码片段和指令无访问控制保护。
-

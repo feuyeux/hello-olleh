@@ -6,7 +6,6 @@ title: "Codex 的 MCP/RMCP 系统"
 
 本篇讨论 Codex 的 MCP 客户端实现、RMCP 远程协议、工具调用审批流程和 OAuth 认证。
 
-
 **目录**
 
 - [1. MCP 系统概述](#1-mcp-系统概述)
@@ -67,7 +66,7 @@ flowchart TB
 ## 2. 核心组件
 
 | 组件 | 路径 | 职责 |
-|------|------|------|
+| :------| :------| :------|
 | McpConnectionManager | `codex-rs/core/src/mcp_connection_manager.rs` | MCP 连接生命周期管理 |
 | RmcpClient | `codex-rs/rmcp-client/src/rmcp_client.rs` | 远程 MCP 客户端实现 |
 | McpToolCall | `codex-rs/core/src/mcp_tool_call.rs` | 工具调用处理器 |
@@ -423,7 +422,7 @@ flowchart TB
 ## 12. 与 Claude Code 的差异
 
 | 特性 | Claude Code | Codex |
-|------|-------------|-------|
+| :------| :-------------| :-------|
 | 客户端实现 | TypeScript `@modelcontextprotocol/sdk` | Rust `rmcp-client` |
 | 传输类型 | Stdio, SSE, HTTP, WebSocket, in-process | Stdio, StreamableHttp |
 | 认证 | XAA, OAuth, Bearer Token | OAuth + Keyring |
@@ -435,7 +434,7 @@ flowchart TB
 ## 13. 关键源码锚点
 
 | 主题 | 代码锚点 | 说明 |
-|------|----------|------|
+| :------| :----------| :------|
 | 连接管理 | `codex-rs/core/src/mcp_connection_manager.rs` | 生命周期管理 |
 | RMCP 客户端 | `codex-rs/rmcp-client/src/rmcp_client.rs` | 核心客户端 |
 | 工具调用 | `codex-rs/core/src/mcp_tool_call.rs` | 调用与审批 |
@@ -465,7 +464,7 @@ Codex 的 MCP 系统特点：
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `McpServerManager` | `codex-rs/mcp-client/src/manager.rs` | 管理所有 MCP server 的生命周期：启动、健康检查、关闭 |
 | `McpClient::list_tools()` | `codex-rs/mcp-client/src/lib.rs` | 查询 MCP server 可用工具列表 |
 | `McpClient::call_tool()` | `codex-rs/mcp-client/src/lib.rs` | 发送 `tools/call` 请求并返回结构化结果 |

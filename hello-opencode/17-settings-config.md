@@ -10,7 +10,6 @@ title: "OpenCode 深度专题 B08：启动与配置加载，从全局目录到 .
 
 ---
 
-
 **目录**
 
 - [0. 工程框架概览：代码组织与构建体系](#0-工程框架概览代码组织与构建体系)
@@ -350,7 +349,7 @@ OpenCode 当前的启动/配置链可以压成四句话：
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Config.get()` | `config/config.ts` | 编译配置树：global → project → `.opencode` 三层叠加，并做兼容归一化 |
 | `Config.compile()` | `config/config.ts:143-166` | 发现并合并 global config + project 配置，支持 template 展开 |
 | `InstanceBootstrap()` | `project/bootstrap.ts` | 完整 project runtime 启动入口：注册 tools/MCP/LSP/session store |

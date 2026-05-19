@@ -186,7 +186,7 @@ Each segment is evaluated independently for sandbox restrictions and approval re
 ## 总结对比表
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|-------------|-------|------------|----------|
+| :------| :-------------| :-------| :------------| :----------|
 | 工具注册方式 | 运行时对象，JSON Schema | 静态类型，编译期验证 | 运行时注册表 + 名称常量 | Permission 过滤，关注点分离 |
 | 权限粒度 | 粗（工具级 Allowlist，硬编码） | 细（Policy + 命令分段） | 中（Tool + Confirmation 模式） | 细（Action + Pattern + Deferred） |
 | 沙箱强度 | 无沙箱 | 三层沙箱（macos-seatbelt/generic/outside） | 有沙箱类型定义，toolSandboxingEnabled 配置 | 无沙箱 |

@@ -57,6 +57,7 @@ URL pull 是 OpenCode Skill 系统的独特能力：团队可以把 Skill 库放
 这是一个具体的扩展场景测试：如果我想为 Agent 添加一个自定义的代码质量检查工具（Lint 传感器），我需要修改哪些文件，是否需要改动核心代码？这个测试揭示了工程的扩展成本结构。
 
 **Claude Code**：最小修改点为 3 处：
+
 1. `src/tools/<NewLintTool>/` — 创建新工具目录和实现
 2. `src/tools.ts` — 在 `getAllBaseTools()` 注册新工具
 3. （如需条件启用）相关的 feature flag — 但 feature() 始终 false，等于无效
@@ -64,18 +65,21 @@ URL pull 是 OpenCode Skill 系统的独特能力：团队可以把 Skill 库放
 核心路径不需要修改，工具系统是解耦的。但类型系统失效使开发过程缺乏安全保证。整体中等成本。
 
 **Codex**：最小修改点深入 Rust 代码：
+
 1. `codex-rs/app-server/src/` — 新工具的 Rust 实现
 2. `codex-rs/protocol/src/prompts/` — 如需修改 Prompt 以说明新工具的使用
 
 Rust 的学习曲线和编译时间是实质性的成本。任何 Rust 代码修改都需要完整的编译流程（可能需要数分钟），这使迭代周期相对较长。高成本，但稳定性最高。
 
 **Gemini CLI**：最小修改点仅 2 处：
+
 1. `packages/core/src/tools/<NewLintTool>.ts` — 新工具实现
 2. `packages/core/src/tools/tool-registry.ts` — 注册（如需要，部分工具通过自动发现注册）
 
 不改核心，完全模块化。TypeScript 的修改-编译-测试循环比 Rust 快得多，且 eval 套件提供了即时的回归测试。低成本。
 
 **OpenCode**：最小修改点也是 2 处：
+
 1. `packages/opencode/src/permission/index.ts` — 新 Permission 规则（如果新工具需要特殊权限）
 2. `packages/opencode/src/skill/index.ts` — 新 Skill 定义（如果新工具需要说明指令）
 
@@ -100,7 +104,7 @@ Rust 的学习曲线和编译时间是实质性的成本。任何 Rust 代码修
 ## 总结对比表
 
 | 维度 | Claude Code | Codex | Gemini CLI | OpenCode |
-|------|-------------|-------|------------|----------|
+| :------| :-------------| :-------| :------------| :----------|
 | MCP 接入 | **3** — 运行时接入，简单实用 | **3** — Plugin + OAuth，企业级认证支持 | **4** — 完整 MCP Client Manager，连接生命周期管理 | **3** — MCP 命名空间，无 Manager 层 |
 | Skill 版本化 | **1** — 无独立版本管理 | **3** — frontmatter 版本化，可锁定版本 | **1** — 依赖文件系统，无版本锁定 | **2** — URL pull 支持独立仓库，但无锁定机制 |
 | 扩展最小成本 | **3** — 中等（TypeScript + 注册，类型不安全） | **2** — 高（Rust 编译 + 学习曲线） | **4** — 低（模块化 TypeScript，eval 快速验证） | **3** — 低（熟悉 Effect-ts 后）或高（学习期） |

@@ -27,7 +27,7 @@ Hello Harness 是 `hello-claude-code/`、`hello-codex/`、`hello-gemini-cli/`、
 ### 核心设计文档
 
 | 文档 | 内容 | 状态 |
-|------|------|------|
+| :------| :------| :------|
 | [14-source-analysis-quality.md](14-source-analysis-quality.md) | 四套 `hello-*` 源码分析质量、证据密度和补强策略 | 完成 |
 | [15-topic-alignment-matrix.md](15-topic-alignment-matrix.md) | 四项目 `01-25` 共享主干与项目附录规则 | 完成 |
 | [16-tool-governance-comparison.md](16-tool-governance-comparison.md) | 工具注册、权限、审批、沙箱、结果回注横向对比 | 完成 |

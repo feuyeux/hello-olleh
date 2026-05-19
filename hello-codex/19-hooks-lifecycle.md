@@ -6,7 +6,6 @@ title: "Hooks 与生命周期：Codex 的事件拦截与扩展点"
 
 本文分析 Codex 的生命周期事件体系与 Hook 扩展机制。
 
-
 **目录**
 
 - [1. Codex 生命周期概览](#1-codex-生命周期概览)
@@ -87,6 +86,7 @@ thread.persist().await?;
 ### 3.3 会话边界
 
 `Op::Shutdown` 触发时执行清理：
+
 ```rust
 Op::Shutdown => {
     thread_manager.flush_all().await;
@@ -98,7 +98,7 @@ Op::Shutdown => {
 ## 4. 与 Claude Code Hooks 的对比
 
 | 特性 | Codex | Claude Code |
-|------|-------|-------------|
+| :------| :-------| :-------------|
 | **Hook 注册方式** | 代码级（Rust trait）| 配置级（settings.json hooks 字段）|
 | **触发事件** | Op 枚举 | PreToolCall / PostToolCall / 等 |
 | **用户可配置** | 否（需修改源码）| 是（JSON 配置）|
@@ -111,7 +111,7 @@ Codex 的生命周期拦截是代码层面的扩展点，适合二次开发；Cl
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `HookRunner::run_before()` | `codex-rs/core/src/hook.rs` | 执行工具调用前置钩子：验证权限或修改参数 |
 | `HookRunner::run_after()` | `codex-rs/core/src/hook.rs` | 执行工具调用后置钩子：审计日志、结果转换 |
 | `LifecycleHook` enum | `codex-rs/core/src/hook.rs` | 钩子类型枚举：BeforeTool / AfterTool / SessionStart / SessionEnd |

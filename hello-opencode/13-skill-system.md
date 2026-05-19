@@ -12,7 +12,6 @@ title: "OpenCode 深度专题 B10：SKILL，技能是怎样被发现、授权、
 
 ---
 
-
 **目录**
 
 - [1. Skill 不是单个文件，而是五层结构](#1-skill-不是单个文件而是五层结构)
@@ -301,13 +300,12 @@ OpenCode 当前的 Skill 系统可以压成四句话：
 
 > 在 OpenCode 里，Skill 不是“提示词附件”，而是被发现、授权、注入并再次投影到主链路上的技能包系统。
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Skill.all()` | `skill/index.ts:168-226` | 返回所有可用技能列表，触发 lazy ensure 确保远端 skill 已缓存 |
 | `Skill.discover()` | `skill/discovery.ts:11-100` | 从远端 `index.json` 下载 skill pack 到本地 cache |
 | `skill` tool | `tool/skill.ts:8-90` | 按需加载具体 skill 的完整指令并注入 context |

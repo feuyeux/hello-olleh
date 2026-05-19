@@ -10,7 +10,6 @@ title: "OpenCode A02：Server 与路由边界"
 
 ---
 
-
 **目录**
 
 - [概览：一条请求进入 runtime 要经历三个阶段](#概览一条请求进入-runtime-要经历三个阶段)
@@ -248,13 +247,12 @@ HTTP 请求
 
 有了这两个坐标，再看 `13-17` 这条 `prompt -> loop -> processor -> llm -> writeback` 主线，就不会把 transport 和 runtime 混在一起。
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `Bun.serve()` | `server/server.ts` | 统一 HTTP server 入口，路由所有请求 |
 | `Instance` middleware | `server/middleware.ts` | 上下文绑定层：从请求中解析 instance 并注入 scope |
 | `WorkspaceContext` 中间件 | `server/middleware.ts` | 从 URL/header 解析 workspace context，确保请求落在正确 runtime |

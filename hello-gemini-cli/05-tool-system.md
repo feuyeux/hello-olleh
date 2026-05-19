@@ -6,7 +6,6 @@ title: "工具调用机制：Tool 注册、权限策略与执行闭环"
 
 工具系统（Tool System）是 Gemini CLI 具备实际行动能力的核心。它通过一整套安全策略和调度框架，将 LLM 的决策转化为本地代码执行。
 
-
 **目录**
 
 - [1. 核心抽象与角色（含源码行号）](#1-核心抽象与角色含源码行号)
@@ -22,7 +21,7 @@ title: "工具调用机制：Tool 注册、权限策略与执行闭环"
 ## 1. 核心抽象与角色（含源码行号）
 
 | 角色 | 代码路径 | 关键方法 | 行号 | 职责 |
-|---|---|---|---|---|
+| :---| :---| :---| :---| :---|
 | **ToolRegistry** | `gemini-cli/packages/core/src/tools/tool-registry.ts` | `discoverAllTools()` | 352 | 工具发现与注册 |
 | **ToolRegistry** | `gemini-cli/packages/core/src/tools/tool-registry.ts` | `getFunctionDeclarations()` | 635 | 导出 JSON Schema 给模型 |
 | **PolicyEngine** | `gemini-cli/packages/core/src/policy/policy-engine.ts` | `check()` / `checkShellCommand()` | 492 / 336 | 风险评估与 Shell 命令规则决策 |
@@ -33,6 +32,7 @@ title: "工具调用机制：Tool 注册、权限策略与执行闭环"
 ## 2. 工具注册与发现 (Discovery)
 
 系统启动时，`Config` 会调用 `ToolRegistry.discoverAllTools()`。
+
 - **内建工具**：如 `grep_search`、`read_file`、`run_shell_command`。
 - **命令工具 (Command Tools)**：基于特定脚本发现的工具。
 - **MCP 工具**：从配置的 MCP Server（通过 `McpClientManager`）动态加载的工具。
@@ -61,16 +61,18 @@ flowchart LR
 ## 4. 权限策略 (Tool Policy) 的实现
 
 `PolicyEngine.checkShellCommand()` 是最核心的安全防御点。
+
 - **静态规则**：根据工具名和参数（如 Shell 命令中的关键词）进行正则匹配。
 - **模式分支**：
-    - `YOLO`：全自动执行，无需用户确认。
-    - `AUTO_EDIT`：对文件修改操作自动确认，但敏感命令仍需确认。
-    - `INTERACTIVE`：默认模式，高风险操作必须用户通过 TUI 确认。
+  - `YOLO`：全自动执行，无需用户确认。
+  - `AUTO_EDIT`：对文件修改操作自动确认，但敏感命令仍需确认。
+  - `INTERACTIVE`：默认模式，高风险操作必须用户通过 TUI 确认。
 - **安全检查器 (Checkers)**：例如检查是否尝试修改敏感系统文件或环境变量。
 
 ## 5. 关键机制：输出截断与蒸馏
 
 当工具输出过大（超过 Token 限制）时，`ToolExecutor` 会触发保护机制：
+
 - **截断 (Truncation)**：保留头部和尾部，中间部分用占位符替代，并将完整输出保存至临时文件。
 - **蒸馏 (Distillation)**：调用 `ToolOutputDistillationService` 利用模型对输出进行摘要压缩。
 - **历史遮罩 (Masking)**：`ToolOutputMaskingService` 会在上下文重建阶段把已完成工具输出替换为更短的可追溯摘要，避免长会话里旧工具结果持续挤压窗口。
@@ -78,7 +80,7 @@ flowchart LR
 ## 6. 关键函数清单
 
 | 函数/类 | 源码锚点 | 作用 |
-|---|---|---|
+| :---| :---| :---|
 | `ToolRegistry.registerTool()` | `gemini-cli/packages/core/src/tools/tool-registry.ts:269` | 将工具实例写入注册表，是内建工具、发现工具、MCP 工具的共同入口 |
 | `ToolRegistry.discoverAllTools()` | `gemini-cli/packages/core/src/tools/tool-registry.ts:352` | 执行命令工具、MCP 工具等动态发现 |
 | `ToolRegistry.getFunctionDeclarations()` | `gemini-cli/packages/core/src/tools/tool-registry.ts:635` | 生成模型可见的函数声明 |
@@ -92,10 +94,12 @@ flowchart LR
 ## 7. 代码质量评估 (Code Quality Assessment)
 
 ### 7.1 优点
+
 - **PolicyEngine 策略可扩展**：规则以插件形式注册，新增规则只需实现 `Rule` 接口，无需修改核心逻辑。
 - **Scheduler 与 Policy 解耦**：`Scheduler` 通过 `checkPolicy()` 调用 Policy，结果不影响 Scheduler 自身状态。
 
 ### 7.2 改进点
+
 - **`DiscoveredToolInvocation.execute()` 使用子进程 `spawn`**：`gemini-cli/packages/core/src/tools/tool-registry.ts:59` 通过子进程执行命令工具，存在参数边界风险，尽管 PolicyEngine 会预检，但建议对参数做二次结构化校验。
 
 ## 8. 横向对齐补强：Gemini 的工具闭环是“流后调度”
@@ -111,6 +115,7 @@ flowchart LR
 | 回注模型 | `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts` | 完成工具后触发 continuation |
 
 横向读本章时，应优先关注 Scheduler 三阶段，而不是只看 ToolRegistry。ToolRegistry 解决“有哪些工具”，Scheduler 才解决“什么时候、以什么权限、如何执行并回注”。
+
 - **工具发现链路复杂**：`discoverAllTools()` 涉及文件系统扫描、MCPServer 连接、Shell 命令探测多个阶段，启动时延影响明显。
 - **输出蒸馏缺少基准**：未验证蒸馏后的压缩率与语义保真度，生产环境可能出现信息丢失。
 

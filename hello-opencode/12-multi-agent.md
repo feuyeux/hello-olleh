@@ -10,7 +10,6 @@ title: "OpenCode 深度专题 B03：高级编排，Subagent、Command、Compacti
 
 ---
 
-
 **目录**
 
 - [1. 编排层的真正核心还是 `loop()`](#1-编排层的真正核心还是-loop)
@@ -201,13 +200,12 @@ Subagent、command、compaction 看起来是高级能力，但在实现上都被
 
 这就是 OpenCode 当前编排层的核心风格：**扩展能力很多，但骨架只有一条。**
 
-
 ---
 
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `loop()` | `session/prompt.ts` | session 编排核心：while 循环处理 subtask/compaction/overflow/推理分支 |
 | `Session.create(parentId)` | `session/index.ts` | 创建 child session（subagent 本体），关联父 session |
 | `task` tool | `tool/task.ts` | 触发子代理执行的工具，loop 感知 subtask part 后调用 |

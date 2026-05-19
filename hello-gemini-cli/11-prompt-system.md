@@ -6,7 +6,6 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 
 当前 Gemini CLI 的 Prompt 系统，核心不是一组静态模板文件，而是 `PromptProvider` 按运行时配置拼出最终 system prompt，再把记忆与模式相关内容附到末尾。
 
-
 **目录**
 
 - [1. 入口只有一个：`PromptProvider`](#1-入口只有一个promptprovider)
@@ -136,7 +135,7 @@ title: "Gemini CLI Prompt 系统：PromptProvider、片段组合与技能注入"
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `PromptProvider.getCoreSystemPrompt()` | `gemini-cli/packages/core/src/prompts/promptProvider.ts` | 按运行态（模式/skill/subagent/memory）动态拼装 system prompt |
 | `PromptProvider.getCompressionPrompt()` | `gemini-cli/packages/core/src/prompts/promptProvider.ts` | 生成上下文压缩专用 prompt（独立于主 system prompt）|
 | `renderFinalShell()` | `gemini-cli/packages/core/src/prompts/snippets.ts` | 将 userMemory 追加到 system prompt 末尾 |

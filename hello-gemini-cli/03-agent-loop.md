@@ -49,7 +49,7 @@ AppContainer.handleFinalSubmit()
 到用户第一次触发 `handleFinalSubmit()` 时，启动阶段已经准备好三类"地基"（详情见 [02-startup-flow.md](./02-startup-flow.md)）。以下只列出对 agent loop 有直接影响的产物：
 
 | 启动产物 | 关键方法 | 代码位置 | 对请求流程的影响 |
-|---|---|---|---|
+| :---| :---| :---| :---|
 | Config ready 标志 | `AppContainer.useEffect()` | `AppContainer.tsx:398-427` | `handleFinalSubmit()` 在 `isConfigInitialized === false` 时不放行普通 prompt |
 | MCP ready 标志 | `useMcpStatus()` | `gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15-50` | 普通 prompt 等 MCP discovery 完成后才进入 loop |
 | 首轮会话壳 | `GeminiClient.initialize()` → `startChat()` | `gemini-cli/packages/core/src/core/client.ts:245-248`, `358-388` | 首轮 `submitQuery()` 复用已创建的 `GeminiChat` |
@@ -117,7 +117,7 @@ sequenceDiagram
 ### 2.3 各跳职责说明
 
 | 调用链 | 符号定义 | 关键调用点 | 职责 |
-|---|---|---|---|
+| :---| :---| :---| :---|
 | `handleFinalSubmit() → submitQuery()` | `AppContainer.tsx:1262-1333` | `1312, 1319` | TUI 总入口；处理 slash command、hint、权限确认 |
 | `submitQuery() → prepareQueryForGemini()` | `useGeminiStream.ts:1455-1651` | `1502-1507` | 预处理用户输入、上下文文件、slash command 产物 |
 | `submitQuery() → sendMessageStream()` | `useGeminiStream.ts:1455-1651` | `1538-1547` | 启动一次新的流式交互 |
@@ -174,7 +174,7 @@ flowchart LR
 ### 4.1 `Turn.run()` 不做什么
 
 | 职责 | 实际承担者 |
-|------|-----------|
+| :------| :-----------|
 | 调用 `Scheduler.schedule()` | `useToolScheduler.schedule()` |
 | 构造 `functionResponse` | `useGeminiStream.handleCompletedTools()` |
 | Loop detection | `GeminiClient.processTurn()` / `LoopDetectionService` |
@@ -257,7 +257,7 @@ flowchart LR
 ### 5.4 安全闸门：`Scheduler._processToolCall()`
 
 | 步骤 | 方法 | 调用点 |
-|------|------|--------|
+| :------| :------| :--------|
 | before-tool hook | `evaluateBeforeToolHook(...)` | `gemini-cli/packages/core/src/scheduler/scheduler.ts:580-585` |
 | 策略检查 | `checkPolicy(...)` | `gemini-cli/packages/core/src/scheduler/scheduler.ts:610-614` |
 | 用户审批 | `resolveConfirmation(...)` | `gemini-cli/packages/core/src/scheduler/scheduler.ts:643-653` |
@@ -352,7 +352,7 @@ flowchart LR
 ## 7. 关键函数清单
 
 | 文件 | 函数 | 行号 | 职责 |
-|------|------|------|------|
+| :------| :------| :------| :------|
 | `AppContainer.tsx` | `handleFinalSubmit()` | `1262-1333` | TUI 输入总入口，处理 slash command / 权限确认，决定是否提交给 agent |
 | `useGeminiStream.ts` | `submitQuery()` | `1455-1651` | 预处理输入，启动流式交互，闭环重入点 |
 | `useGeminiStream.ts` | `processGeminiStreamEvents()` | `1330-1453` | 消费 Turn 产出的事件流，收集 ToolCallRequest |
@@ -481,7 +481,7 @@ private _isParallelizable(request: ToolCallRequestInfo): boolean {
 `processTurn()` 中的循环检测（`gemini-cli/packages/core/src/core/client.ts:629-641`）实现了两级响应策略：
 
 | 检测次数 | 响应 | 行号 |
-|----------|------|------|
+| :----------| :------| :------|
 | `count === 1`（首次检测到循环） | 注入反馈消息尝试恢复：`_recoverFromLoop()` | `gemini-cli/packages/core/src/core/client.ts:681` |
 | `count > 1`（二次循环） | 强制终止：`yield LoopDetected` | `gemini-cli/packages/core/src/core/client.ts:673` |
 
@@ -494,7 +494,7 @@ private _isParallelizable(request: ToolCallRequestInfo): boolean {
 三种工具的 agent loop 设计取向不同，下表横向对比关键维度：
 
 | 维度 | opencode | gemini-cli | claude-code |
-|------|----------|------------|-------------|
+| :------| :----------| :------------| :-------------|
 | **核心理念** | "AI SDK 优先"——使用统一的 AI SDK 作为底层适配层 | "Gemini 事件流优先"——内部定义稳定的事件流抽象层 | "Anthropic query loop 优先"——自建完整状态机和工具上下文 |
 | **LLM 调用封装** | 直接使用 AI SDK 的 `streamText()`，通过 `session/llm.ts` 统一调用 | 自建 `GeminiChat.sendMessageStream()` 和 `makeApiCallAndProcessStream()`，事件流在 `Turn.run()` 中拆解 | 自建 `StreamingToolExecutor` 和 `runTools()`，通过 `services/api/claude.ts` 直接调用 Anthropic API |
 | **工具调用抽象** | 使用 AI SDK 的 `dynamicTool()` 和 `ToolSet`，在 `provider/provider.ts` 注册 | 自建 `ToolCallRequest` 事件和 `ToolExecutor`，在 `core/scheduler/` 实现工具调度 | 自建 `ToolUseContext` 和 `StreamingToolExecutor`，在 `src/query.ts` 中处理 |

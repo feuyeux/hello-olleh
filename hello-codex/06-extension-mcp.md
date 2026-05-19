@@ -6,7 +6,6 @@ title: "扩展性：MCP Server 集成、Plugin/Skill 加载与新增工具的修
 
 主向导对应章节：`扩展性`
 
-
 **目录**
 
 - [扩展机制总览](#扩展机制总览)
@@ -269,6 +268,7 @@ pub(crate) async fn resolve_skill_dependencies_for_turn(
 ```
 
 流程：
+
 1. 检查现有 session env
 2. 从 `env::var()` 加载缺失值
 3. 通过 UI 请求缺失值（标记为 secret/密码输入）
@@ -300,6 +300,7 @@ pub(crate) dynamic_tools: Vec<DynamicToolSpec>,
 ```
 
 来源：
+
 1. 显式 session 参数
 2. 从 rollout 数据库持久化
 3. 从对话历史检索
@@ -376,6 +377,7 @@ pub async fn run_codex_tool_session(
 ```
 
 执行流程：
+
 1. 通过 `thread_manager.start_thread(config)` 启动新线程
 2. 提交初始 prompt（`sub_id = MCP request_id`）
 3. 流式传送所有回合事件作为 MCP notifications
@@ -392,6 +394,7 @@ pub async fn list_accessible_connectors_from_mcp_tools(
 ```
 
 缓存策略：
+
 - Key：Account ID + ChatGPT User ID + workspace status
 - TTL：15 分钟（`CONNECTORS_CACHE_TTL`）
 - 静态缓存 + instant-based 过期
@@ -401,11 +404,13 @@ pub async fn list_accessible_connectors_from_mcp_tools(
 ### 情况 A：新增外部 MCP server 暴露的工具
 
 通常**不需要改 core 主链路**。原因：
+
 - `ToolRouter::build_tool_call()` 已能识别 namespaced MCP tool
 - `build_specs_with_discoverable_tools()` 会把 MCP tools 纳入注册
 - `McpHandler` 已是通用处理器
 
 需要做的工作：
+
 1. 让新 server/tool 出现在 MCP 配置或插件发现结果里
 2. 确认 tool schema 能被 `rmcp` 和 tool registry 正常发现
 3. 若是 Apps/Connector 工具，检查启用条件和 connector 过滤逻辑
@@ -436,7 +441,7 @@ pub async fn list_accessible_connectors_from_mcp_tools(
 ## 关键函数清单
 
 | 函数/类型 | 文件 | 职责 |
-|----------|------|------|
+| :----------| :------| :------|
 | `McpClient::connect()` | `codex-rs/core/src/mcp/...` | 连接 MCP server（stdio / SSE）|
 | `McpClient::list_tools()` | `codex-rs/core/src/mcp/...` | 拉取远程工具声明列表 |
 | `McpClient::call_tool()` | `codex-rs/core/src/mcp/...` | 调用单个 MCP 工具 |

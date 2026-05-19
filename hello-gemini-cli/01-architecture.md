@@ -6,7 +6,6 @@ title: "架构全景：多宿主外壳、Core 组合根与 Agent 执行闭环"
 
 > 基于 `gemini-cli` `v0.36.0` 源码校对。本文重点核对 `packages/cli`、`packages/core`、`packages/sdk`、`packages/a2a-server` 与 `packages/vscode-ide-companion` 的真实调用关系，而不是沿用其它文档里的抽象名称。
 
-
 **目录**
 
 - [1. 一句话结论](#1-一句话结论)
@@ -259,6 +258,7 @@ flowchart LR
 ---
 
 > 关联阅读：
+>
 > - [02-startup-flow.md](./02-startup-flow.md)
 > - [03-agent-loop.md](./03-agent-loop.md)
 > - [04-tool-system.md](./05-tool-system.md)
@@ -271,7 +271,7 @@ flowchart LR
 ## 关键类与函数清单
 
 | 类/函数 | 文件 | 职责 |
-|--------|------|------|
+| :--------| :------| :------|
 | `Config` | `gemini-cli/packages/core/src/config/config.ts` | 组合根 + 服务容器：持有 GeminiClient、ToolRegistry、PromptProvider、Scheduler 等所有核心依赖 |
 | `Config.initialize()` | `gemini-cli/packages/core/src/config/config.ts:1289` | 启动初始化：创建 ToolRegistry、MCP 服务器、Skills、GeminiClient |
 | `GeminiClient` | `gemini-cli/packages/core/src/core/client.ts` | 模型调用门面：管理 GeminiChat、processTurn、工具声明刷新 |

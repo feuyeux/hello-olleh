@@ -77,7 +77,7 @@ sequenceDiagram
 ### 3.1 Part 编译路径
 
 | part 类型 | 编译行为 |
-|---------|---------|
+| :---------| :---------|
 | `text` | 原样直通 |
 | `file` | 文本文件执行 `ReadTool`，内容内联成 synthetic text；目录列出条目；二进制转 data URL |
 | `agent` | 生成 synthetic text 提示模型调用 task 工具 |
@@ -110,7 +110,7 @@ sequenceDiagram
 ### 4.1 Session 级并发闸门
 
 | 操作 | 函数 | 语义 |
-|------|------|------|
+| :------| :------| :------|
 | 第一次进入占住运行权 | `start(sessionID)` | 创建 `AbortController`，建 `callbacks` 队列 |
 | 恢复原 loop 时重用 abort signal | `resume(sessionID)` | 直接取出已有的 `abort.signal` |
 | 释放运行态 | `cancel(sessionID)` | `abort.abort()`，状态置回 `idle` |
@@ -169,7 +169,7 @@ flowchart TD
 ### 5.1 AI SDK fullStream 21 种状态
 
 | 分组 | 状态 | OpenCode 处理 |
-|------|------|--------------|
+| :------| :------| :--------------|
 | 文本 | `text-start/delta/end` | 创建 text part，增量广播，收尾写快照 |
 | 推理 | `reasoning-start/delta/end` | 创建 reasoning part，增量广播，收尾写快照 |
 | 工具 | `tool-input-start/delta/end` | 当前忽略（不持久化参数生成过程）|
@@ -212,7 +212,7 @@ if (lastThree.length === DOOM_LOOP_THRESHOLD &&
 `processor.ts:354-377` 中的错误处理区分两类错误：
 
 | 错误类型 | 处理方式 | 代码位置 |
-|----------|----------|----------|
+| :----------| :----------| :----------|
 | `ContextOverflowError` | 不重试，设置 `needsCompaction = true` | `processor.ts:354-360` |
 | 可重试 API 错误 | 指数退避重试 | `processor.ts:362-377` |
 | 不可重试 API 错误 | 标记 error，return "stop" | `processor.ts:375` |
@@ -239,7 +239,7 @@ export function delay(attempt: number, error?: MessageV2.APIError) {
 ### 5.5 SQLite 写入时机
 
 | 操作 | 触发函数 | 写入目标 | 是否在关键路径 |
-|------|----------|----------|----------------|
+| :------| :----------| :----------| :----------------|
 | 用户消息创建 | `Session.updateMessage()` | MessageTable | 是（loop 前） |
 | 助手消息骨架 | `Session.updateMessage()` | MessageTable(finish=null) | 是 |
 | 工具开始 | `Session.updatePart()` | PartTable(status=running) | 是 |
@@ -426,7 +426,7 @@ if (part.state.status === "completed") {
 ## 7. 关键函数清单
 
 | 函数 | 文件坐标 | 功能 |
-|------|---------|------|
+| :------| :---------| :------|
 | `SessionPrompt.prompt()` | `prompt.ts:162-188` | 外部请求入口，先落 durable user message，再决定是否进入 loop |
 | `createUserMessage()` | `prompt.ts:986-1386` | 把输入编译成 durable user message/parts |
 | `resolvePromptParts()` | `prompt.ts:191-240` | 解析模板里的文件/目录/agent 引用 |
@@ -483,5 +483,6 @@ if (part.state.status === "completed") {
 | Processor | `opencode/packages/opencode/src/session/processor.ts:46`, `opencode/packages/opencode/src/session/processor.ts:54` | fullStream 处理和 `LLM.stream()` 调用 |
 | LLM 请求 | `opencode/packages/opencode/src/session/prompt.ts:2013` | prompt 侧直接调用 `LLM.stream()` 的路径 |
 | Server route | `opencode/packages/opencode/src/server/routes/session.ts:819`, `opencode/packages/opencode/src/server/routes/session.ts:544` | HTTP prompt 与 loop 触发点 |
+
 - **`loop()` 是单一大函数**：`prompt.ts:242-756` 超过 500 行，承载了 subtask / compaction / overflow / normal round 四条分支，测试和局部修改的代价较高。
 - **工具结果缺乏结构化错误分类**：工具执行失败后只有字符串错误信息，模型无法据此区分"工具崩溃"还是"工具返回无效结果"，影响 loop 的自愈路径。

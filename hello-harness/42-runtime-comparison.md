@@ -14,7 +14,7 @@ title: "OpenCode vs Hermes Agent: 运行时对比分析"
 ## 1. 核心架构对比
 
 | 维度 | OpenCode v1.3.2 | Hermes Agent v0.6.0 |
-|------|-----------------|---------------------|
+| :------| :-----------------| :---------------------|
 | **语言** | TypeScript | Python 3.11+ |
 | **运行时** | Bun (原生 HTTP/SQLite) | CPython (标准库) |
 | **并发模型** | 单线程事件循环 + Worker | 多线程 (gateway) / 单线程 (CLI) |
@@ -52,6 +52,7 @@ type Part =
 ```
 
 **特点**：
+
 - 细粒度节点：一个 message 可以包含多个 part
 - 实时流式更新：part 可以增量写入（`updatePartDelta`）
 - 类型安全：每种 part 有独立的 schema
@@ -69,6 +70,7 @@ messages = [
 ```
 
 **特点**：
+
 - 简单直接：符合 OpenAI API 格式
 - 易于序列化：直接 JSON 存储
 - 工具调用内嵌：`tool_calls` 和 `tool` role 处理工具
@@ -77,7 +79,7 @@ messages = [
 ### 2.3 统一抽象的挑战
 
 | 挑战 | 解决方案 |
-|------|---------|
+| :------| :---------|
 | Part 粒度不匹配 | 在 OpenCode 适配器中将 part 聚合成完整 message |
 | 流式更新语义 | 统一接口只处理完整消息，流式更新由适配器内部处理 |
 | 工具调用表示 | 使用 `metadata.toolCalls` 统一表示，适配器负责转换 |
@@ -105,6 +107,7 @@ prompt() → createUserMessage() → 写 SQLite
 ```
 
 **特点**：
+
 - **主动展开**：文件附件在写入前就被读取和展开
 - **Synthetic text**：系统生成的解释性文本（如 "@agent 改写"）
 - **多层合并**：system prompt 是多个来源的运行时合并结果
@@ -131,6 +134,7 @@ prompt() → createUserMessage() → 写 SQLite
 ```
 
 **特点**：
+
 - **分层清晰**：system prompt / memory / compression 各司其职
 - **Provider 抽象**：支持多个 memory provider 并行工作
 - **Fenced context**：记忆上下文用 `<memory-context>` 标签隔离
@@ -139,7 +143,7 @@ prompt() → createUserMessage() → 写 SQLite
 ### 3.3 统一抽象的映射
 
 | 统一接口方法 | OpenCode 实现 | Hermes 实现 |
-|-------------|--------------|-------------|
+| :-------------| :--------------| :-------------|
 | `compileSystemPrompt()` | `system.ts` 多层合并 | `PromptBuilder.build_system_prompt()` |
 | `compileMessages()` | `toModelMessages()` 投影 | 直接返回 messages 列表 |
 | `injectReminders()` | `insertReminders()` | 通过 system prompt 注入 |
@@ -170,6 +174,7 @@ Storage.write(['session_diff', sessionID], diffs)
 ```
 
 **特点**：
+
 - **Session 作用域**：记忆不跨 session
 - **文件中心**：追踪文件级别的变更
 - **快照驱动**：diff 来自 step 开始/结束快照
@@ -196,6 +201,7 @@ SessionDB: SQLite + FTS5 索引
 ```
 
 **特点**：
+
 - **跨 Session**：记忆在所有对话中共享
 - **知识中心**：追踪事实、偏好、技能
 - **FTS5 搜索**：全文搜索历史对话
@@ -204,7 +210,7 @@ SessionDB: SQLite + FTS5 索引
 ### 4.3 统一抽象的桥接
 
 | 统一接口方法 | OpenCode 实现 | Hermes 实现 |
-|-------------|--------------|-------------|
+| :-------------| :--------------| :-------------|
 | `prefetch()` | 读取 session_diff（扩展） | `MemoryManager.prefetch_all()` |
 | `syncTurn()` | 自动通过 updateMessage/Part | `MemoryManager.sync_all()` |
 | `write()` | 写入 Storage | `memory` tool → MEMORY.md |
@@ -254,6 +260,7 @@ class ContextEngine(ABC):
 ```
 
 **特点**：
+
 - **可插拔**：通过 `context.engine` 配置选择
 - **Token-aware**：基于实际 token 使用情况决策
 - **工具集成**：压缩引擎可以暴露工具给 agent
@@ -261,7 +268,7 @@ class ContextEngine(ABC):
 ### 5.3 统一抽象的设计
 
 | 统一接口方法 | OpenCode 实现 | Hermes 实现 |
-|-------------|--------------|-------------|
+| :-------------| :--------------| :-------------|
 | `shouldCompress()` | 检查历史长度 | `ContextEngine.should_compress()` |
 | `compress()` | 触发 CompactionTask | `ContextEngine.compress()` |
 | `updateTokenUsage()` | 更新 session tokens | `ContextEngine.update_from_response()` |
@@ -317,6 +324,7 @@ interface IMessageStore {
 ```
 
 **适配策略**：
+
 - OpenCode: 聚合 message + parts 成完整 Message
 - Hermes: 直接映射 messages 表
 - 搜索: OpenCode 扩展支持 FTS，Hermes 直接用 FTS5
@@ -387,6 +395,7 @@ interface IMemoryProvider {
 ```
 
 **适配策略**：
+
 - OpenCode: 在 Bus 事件处理器中调用生命周期方法
 - Hermes: 直接映射到现有钩子
 
@@ -443,6 +452,7 @@ interface IMemoryProvider {
 ```
 
 **适配策略**：
+
 - OpenCode: 扩展 ToolRegistry 支持 memory 工具
 - Hermes: 直接映射 MemoryManager 的工具接口
 
@@ -540,6 +550,7 @@ interface ContextMemoryConfig {
 **决策**：使用扁平 Message 列表作为统一接口，OpenCode 适配器负责聚合 part
 
 **理由**：
+
 - Hermes 的扁平模型更通用
 - OpenCode 的 part 粒度是实现细节，不应暴露给业务逻辑
 - 通过 `metadata` 可以保留 part 级别的信息
@@ -549,6 +560,7 @@ interface ContextMemoryConfig {
 **决策**：分离 system prompt 编译和 message 编译
 
 **理由**：
+
 - 两个系统的 system prompt 组装逻辑差异较大
 - Message 编译相对统一（都是历史投影）
 - 分离后可以独立优化
@@ -558,6 +570,7 @@ interface ContextMemoryConfig {
 **决策**：使用 Provider 抽象，支持多个 provider 并行工作
 
 **理由**：
+
 - Hermes 的 MemoryManager 设计已经很成熟
 - OpenCode 可以通过扩展 session_diff 实现跨 session 记忆
 - Provider 抽象支持外部记忆后端（Honcho / LangChain）
@@ -567,6 +580,7 @@ interface ContextMemoryConfig {
 **决策**：使用 Engine 抽象，支持可插拔的压缩策略
 
 **理由**：
+
 - 两个系统的压缩触发机制差异较大
 - Engine 抽象可以统一 token-based 和 agent-based 两种模式
 - 支持第三方压缩策略（如 LCM）
@@ -576,6 +590,7 @@ interface ContextMemoryConfig {
 **决策**：不暴露事件机制，使用生命周期方法
 
 **理由**：
+
 - OpenCode 的 Bus 和 Hermes 的钩子语义不同
 - 生命周期方法更通用，易于适配
 - 业务逻辑不应依赖具体的事件实现
@@ -592,19 +607,18 @@ interface ContextMemoryConfig {
 
 ### Phase 2: 记忆系统（中优先级）
 
-4. **IMemoryProvider**: 记忆系统是差异化能力
-5. OpenCode 扩展: 实现跨 session 记忆
-6. Hermes 适配: 封装 MemoryManager
+1. **IMemoryProvider**: 记忆系统是差异化能力
+2. OpenCode 扩展: 实现跨 session 记忆
+3. Hermes 适配: 封装 MemoryManager
 
 ### Phase 3: 生态扩展（低优先级）
 
-7. 第三方存储后端（PostgreSQL / Redis）
-8. 第三方压缩策略（LCM / DAG）
-9. 第三方记忆提供者（Honcho / LangChain）
+1. 第三方存储后端（PostgreSQL / Redis）
+2. 第三方压缩策略（LCM / DAG）
+3. 第三方记忆提供者（Honcho / LangChain）
 
 ---
 
 *文档版本: 1.0*  
 *创建日期: 2026-04-17*  
 *作者: Claude (Kiro)*
-
