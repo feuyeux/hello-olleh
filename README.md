@@ -8,9 +8,11 @@
 | 工程 | 版本 | 语言/框架 | 架构特点 |
 |:-----|:-----|:----------|:---------|
 | [claude-code](sources/claude-code) | v2.1.87（反编译） | TypeScript / React | src/ 目录，React TUI，REPL 交互，Hooks 生命周期 |
-| [codex](https://github.com/openai/codex.git) | rust-v0.118.0 | **Rust**（86 crate）+ TypeScript SDK | Rust workspace 为运行时中心，TS 只做分发/封装 |
-| [gemini-cli](https://github.com/google-gemini/gemini-cli.git) | v0.36.0 | TypeScript monorepo | packages/core 内核 + packages/cli（TUI/Ink）+ SDK + A2A server |
-| [opencode](https://github.com/anomalyco/opencode.git) | v1.3.2 | **Bun** + Effect-ts | Hono Server + SQLite Durable State，A/B/C 三层文档结构 |
+| [codex](https://github.com/openai/codex.git) | rust-v0.141.0 | **Rust**（86 crate）+ TypeScript SDK | Rust workspace 为运行时中心，TS 只做分发/封装 |
+| [gemini-cli](https://github.com/google-gemini/gemini-cli.git) | v0.47.0 | TypeScript monorepo | packages/core 内核 + packages/cli（TUI/Ink）+ SDK + A2A server |
+| [opencode](https://github.com/anomalyco/opencode.git) | v1.4.14 | **Bun** + Effect-ts | Hono Server + SQLite Durable State，A/B/C 三层文档结构 |
+| [hermes-agent](https://github.com/nousresearch/hermes-agent.git) | v2026.6.5 | Python / FastAPI | Nous Research 的多模态 Agent 框架 |
+| [nanobot](https://github.com/HKUDS/nanobot.git) | v0.2.1 | Python / LangChain | HKUDS 轻量级 Agent 框架 |
 
 ![](pages/hello-harness.png)
 

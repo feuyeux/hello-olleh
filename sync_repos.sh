@@ -6,11 +6,11 @@
 
 # 仓库及对应版本（与 README 一致；空 tag 表示取远端默认分支）
 repo_specs='
-openai/codex.git rust-v0.118.0
-anomalyco/opencode.git v1.3.2
-google-gemini/gemini-cli.git v0.36.0
-nousresearch/hermes-agent.git
-HKUDS/nanobot.git
+openai/codex.git rust-v0.141.0
+anomalyco/opencode.git v1.4.14
+google-gemini/gemini-cli.git v0.47.0
+nousresearch/hermes-agent.git v2026.6.5
+HKUDS/nanobot.git v0.2.1
 '
 
 # base_dir 解析为脚本所在目录下的 sources/，并按需创建

@@ -5,9 +5,11 @@
 
 **Current upstream versions:**
 - Claude Code: v2.1.87 (decompiled snapshot)
-- Codex: rust-v0.118.0
-- Gemini CLI: v0.36.0
-- OpenCode: v1.3.2
+- Codex: rust-v0.141.0
+- Gemini CLI: v0.47.0
+- OpenCode: v1.4.14
+- Hermes Agent: v2026.6.5
+- Nanobot: v0.2.1
 
 `pages/` contains the Jekyll-based GitHub Pages site. The site is built from the repo root via `pages/_config.yml` with `source: ..`, so content in `docs/hello-*` is rendered into the site without being copied into `pages/`. The active presentation layer is concentrated in `pages/_layouts/default.html`, `pages/_layouts/content.html`, `pages/index.md`, and `pages/style.css`; those files currently define an editorial / newspaper-inspired reading experience. Root files remain lightweight: [`README.md`](README.md) records scope and upstream versions, [`prompts/hello.txt`](prompts/hello.txt) defines the baseline analysis brief, and [`sync_repos.sh`](sync_repos.sh) refreshes local clones into `sources/`.
 
