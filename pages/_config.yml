@@ -3,7 +3,7 @@ description: AI Coding CLI 源码分析工作区
 url: "https://feuyeux.github.io/hello-olleh"
 baseurl: "/hello-olleh"
 
-# Build from repo root so hello-* directories are accessible
+# Build from repo root so docs/hello-* directories are accessible
 source: ..
 layouts_dir: pages/_layouts
 
@@ -26,10 +26,10 @@ timezone: Asia/Shanghai
 
 # Exclude upstream source directories and non-doc files from Jekyll processing
 exclude:
-  - claude-code
-  - codex
-  - gemini-cli
-  - opencode
+  - sources/claude-code
+  - sources/codex
+  - sources/gemini-cli
+  - sources/opencode
   - claw-code
   - hello-olleh-memory
   - prompts

@@ -34,7 +34,7 @@ permalink: /
         也可以直接跳进某个工程，像翻技术周刊一样连续浏览章节卡片。
       </p>
       <div class="lead-actions">
-        <a class="editor-link" href="{{ 'hello-harness/' | relative_url }}">阅读 Harness 专刊</a>
+        <a class="editor-link" href="{{ 'docs/hello-harness/' | relative_url }}">阅读 Harness 专刊</a>
         <a class="editor-link subtle" href="https://github.com/feuyeux/hello-olleh" target="_blank" rel="noreferrer">查看 GitHub 仓库</a>
       </div>
     </article>
@@ -111,35 +111,35 @@ permalink: /
       <p>每个入口都是一组“专刊”，继续点进去就是分主题的章节卡片。</p>
     </div>
     <div class="cli-grid">
-      <a class="cli-card" href="{{ 'hello-claude-code/' | relative_url }}">
+      <a class="cli-card" href="{{ 'docs/hello-claude-code/' | relative_url }}">
         <span class="chapter-number">01</span>
         <div>
           <div class="cli-name">Claude Code</div>
           <div class="cli-version">TypeScript / React</div>
         </div>
       </a>
-      <a class="cli-card" href="{{ 'hello-codex/' | relative_url }}">
+      <a class="cli-card" href="{{ 'docs/hello-codex/' | relative_url }}">
         <span class="chapter-number">02</span>
         <div>
           <div class="cli-name">OpenAI Codex</div>
           <div class="cli-version">Rust + TypeScript</div>
         </div>
       </a>
-      <a class="cli-card" href="{{ 'hello-gemini-cli/' | relative_url }}">
+      <a class="cli-card" href="{{ 'docs/hello-gemini-cli/' | relative_url }}">
         <span class="chapter-number">03</span>
         <div>
           <div class="cli-name">Gemini CLI</div>
           <div class="cli-version">TypeScript monorepo</div>
         </div>
       </a>
-      <a class="cli-card" href="{{ 'hello-opencode/' | relative_url }}">
+      <a class="cli-card" href="{{ 'docs/hello-opencode/' | relative_url }}">
         <span class="chapter-number">04</span>
         <div>
           <div class="cli-name">OpenCode</div>
           <div class="cli-version">Bun + Effect-ts</div>
         </div>
       </a>
-      <a class="cli-card" href="{{ 'hello-harness/' | relative_url }}">
+      <a class="cli-card" href="{{ 'docs/hello-harness/' | relative_url }}">
         <span class="chapter-number">05</span>
         <div>
           <div class="cli-name">Harness Engineering</div>
@@ -154,11 +154,11 @@ permalink: /
 <footer class="site-footer page-wrapper">
   <div class="footer-links">
     <a href="https://github.com/feuyeux/hello-olleh">GitHub</a>
-    <a href="{{ 'hello-harness/' | relative_url }}">Harness 框架</a>
-    <a href="{{ 'hello-claude-code/' | relative_url }}">Claude Code</a>
-    <a href="{{ 'hello-codex/' | relative_url }}">Codex</a>
-    <a href="{{ 'hello-gemini-cli/' | relative_url }}">Gemini CLI</a>
-    <a href="{{ 'hello-opencode/' | relative_url }}">OpenCode</a>
+    <a href="{{ 'docs/hello-harness/' | relative_url }}">Harness 框架</a>
+    <a href="{{ 'docs/hello-claude-code/' | relative_url }}">Claude Code</a>
+    <a href="{{ 'docs/hello-codex/' | relative_url }}">Codex</a>
+    <a href="{{ 'docs/hello-gemini-cli/' | relative_url }}">Gemini CLI</a>
+    <a href="{{ 'docs/hello-opencode/' | relative_url }}">OpenCode</a>
   </div>
   <p>Hello AI Coding &middot; AI Coding 工程源码分析 &middot; 2026</p>
 </footer>

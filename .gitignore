@@ -19,14 +19,17 @@ vendor/bundle/
 # macOS
 .DS_Store
 
-# Upstream source code (external repos)
+# Upstream source code (external repos; cloned by sync_repos.sh)
+sources/codex/
+sources/gemini-cli/
+sources/opencode/
+# sources/claude-code/ is committed (decompiled snapshot); do not ignore
+
+# Legacy aliases (pre-sources reorg; kept temporarily for any in-flight tooling)
+# Remove after a release cycle.
 claw-code/
-codex/
-gemini-cli/
 openclaw/
-opencode/
 zeroclaw/
-claw-code/
 
 # Build output
 dist/
@@ -37,7 +40,6 @@ node_modules/
 .env
 .env.*
 !.env.example
-nul
 
 # Scripts
 *.ps1
