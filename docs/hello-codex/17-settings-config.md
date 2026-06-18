@@ -110,13 +110,13 @@ Codex 的配置加载不是一个单独 `load_config()` 函数，而是 `Config`
 
 | 阶段 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| 配置主结构 | `codex/codex-rs/core/src/config/mod.rs:233` | `Config` 持有模型、权限、MCP、cwd、feature、project doc 等运行时字段 |
-| 权限策略 | `codex/codex-rs/core/src/config/mod.rs:191` | `approval_policy` 与 `sandbox_policy` 是 constrained policy |
-| CLI 覆写 | `codex/codex-rs/core/src/config/mod.rs:1374` | `ConfigOverrides` 承接命令行传入的 model、cwd、approval、sandbox 等 |
-| profile 字段 | `codex/codex-rs/config/src/profile_toml.rs:31` | profile 可覆写 approval、model、model instruction file 等 |
-| CLI full-auto | `codex/codex-rs/cli/src/main.rs:1258` | `--full-auto` 会推导 approval policy 与 sandbox 组合 |
-| AGENTS.md 字节上限 | `codex/codex-rs/core/src/config/mod.rs:420` | `project_doc_max_bytes` 控制项目指令注入量 |
-| MCP 配置 | `codex/codex-rs/core/src/config/mod.rs:393` | `mcp_servers` 作为受约束 map 进入 runtime |
+| 配置主结构 | `sources/codex/codex-rs/core/src/config/mod.rs:233` | `Config` 持有模型、权限、MCP、cwd、feature、project doc 等运行时字段 |
+| 权限策略 | `sources/codex/codex-rs/core/src/config/mod.rs:191` | `approval_policy` 与 `sandbox_policy` 是 constrained policy |
+| CLI 覆写 | `sources/codex/codex-rs/core/src/config/mod.rs:1374` | `ConfigOverrides` 承接命令行传入的 model、cwd、approval、sandbox 等 |
+| profile 字段 | `sources/codex/codex-rs/config/src/profile_toml.rs:31` | profile 可覆写 approval、model、model instruction file 等 |
+| CLI full-auto | `sources/codex/codex-rs/cli/src/main.rs:1258` | `--full-auto` 会推导 approval policy 与 sandbox 组合 |
+| AGENTS.md 字节上限 | `sources/codex/codex-rs/core/src/config/mod.rs:420` | `project_doc_max_bytes` 控制项目指令注入量 |
+| MCP 配置 | `sources/codex/codex-rs/core/src/config/mod.rs:393` | `mcp_servers` 作为受约束 map 进入 runtime |
 
 ## 6. 项目级配置（`.codex/` 目录）
 
@@ -151,12 +151,12 @@ mode = "full-auto"  # 在 CI 中使用全自动模式
 
 | 函数/类型 | 文件 | 职责 |
 | :----------| :------| :------|
-| `Config` | `codex/codex-rs/core/src/config/mod.rs:233` | 运行时配置快照，session/turn/tool 都读取它 |
-| `ConfigOverrides` | `codex/codex-rs/core/src/config/mod.rs:1374` | CLI 或外部入口传入的高优先级覆写 |
-| `ProfileToml` | `codex/codex-rs/config/src/profile_toml.rs:31` | profile 层可覆写 approval、model、instructions 等 |
-| `load_global_mcp_servers()` | `codex/codex-rs/core/src/config/mod.rs:1100` | 从 merged TOML 中读取 `mcp_servers` |
-| `filter_mcp_servers_by_requirements()` | `codex/codex-rs/core/src/config/mod.rs:1005` | 按 requirements 裁剪 MCP server |
-| `uses_deprecated_instructions_file()` | `codex/codex-rs/core/src/config/mod.rs:2563` | 识别废弃的 instructions 配置并发 warning |
+| `Config` | `sources/codex/codex-rs/core/src/config/mod.rs:233` | 运行时配置快照，session/turn/tool 都读取它 |
+| `ConfigOverrides` | `sources/codex/codex-rs/core/src/config/mod.rs:1374` | CLI 或外部入口传入的高优先级覆写 |
+| `ProfileToml` | `sources/codex/codex-rs/config/src/profile_toml.rs:31` | profile 层可覆写 approval、model、instructions 等 |
+| `load_global_mcp_servers()` | `sources/codex/codex-rs/core/src/config/mod.rs:1100` | 从 merged TOML 中读取 `mcp_servers` |
+| `filter_mcp_servers_by_requirements()` | `sources/codex/codex-rs/core/src/config/mod.rs:1005` | 按 requirements 裁剪 MCP server |
+| `uses_deprecated_instructions_file()` | `sources/codex/codex-rs/core/src/config/mod.rs:2563` | 识别废弃的 instructions 配置并发 warning |
 
 ---
 
@@ -180,10 +180,10 @@ Codex 配置不只是 CLI 参数集合，而是影响 turn loop、approval、san
 
 | 配置面 | 源码入口 | 影响 |
 | --- | --- | --- |
-| TOML/Profiles | `codex/codex-rs/core/src/config/mod.rs:1542` | 模型、approval、sandbox、feature、provider |
-| AGENTS.md 限制 | `codex/codex-rs/core/src/agents_md.rs:125` | 项目指令搜索、合并、最大字节数 |
-| approval/sandbox | `codex/codex-rs/core/src/config/mod.rs:1872` | 决定 shell/apply_patch/network 是否需要审批 |
-| MCP servers | `codex/codex-rs/core/src/config/mod.rs:2224` | 动态扩展可用工具集合 |
-| session 配置 | `codex/codex-rs/core/src/session/mod.rs:520` | session 初始化时解析 user instructions |
+| TOML/Profiles | `sources/codex/codex-rs/core/src/config/mod.rs:1542` | 模型、approval、sandbox、feature、provider |
+| AGENTS.md 限制 | `sources/codex/codex-rs/core/src/agents_md.rs:125` | 项目指令搜索、合并、最大字节数 |
+| approval/sandbox | `sources/codex/codex-rs/core/src/config/mod.rs:1872` | 决定 shell/apply_patch/network 是否需要审批 |
+| MCP servers | `sources/codex/codex-rs/core/src/config/mod.rs:2224` | 动态扩展可用工具集合 |
+| session 配置 | `sources/codex/codex-rs/core/src/session/mod.rs:520` | session 初始化时解析 user instructions |
 
 横向看，Codex 配置的优势是类型化和测试覆盖强；代价是很多行为需要跨 config、session、tools 三层才能看完整。

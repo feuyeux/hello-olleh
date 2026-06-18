@@ -5,7 +5,7 @@ title: "Codex 源码分析 README"
 
 # Codex 源码分析 README
 
-本目录记录 OpenAI Codex `rust-v0.118.0` 的源码阅读结果。分析对象是 `codex/` 上游快照，重点不是复述 Rust workspace 目录，而是追踪 Codex 如何把 CLI/TUI/SDK 输入收束到同一套 Rust runtime、thread protocol、tool execution、sandbox approval 和 session state。
+本目录记录 OpenAI Codex `rust-v0.118.0` 的源码阅读结果。分析对象是 `sources/codex/` 上游快照，重点不是复述 Rust workspace 目录，而是追踪 Codex 如何把 CLI/TUI/SDK 输入收束到同一套 Rust runtime、thread protocol、tool execution、sandbox approval 和 session state。
 
 ## 阅读入口
 

@@ -547,18 +547,18 @@ sequenceDiagram
 
 | 阶段 | Claude 侧源码锚点 | 说明 |
 | --- | --- | --- |
-| Server lifecycle | `claude-code/src/cli/print.ts:1535`, `claude-code/src/cli/print.ts:5457` | SDK/control message 可以动态更新 MCP server |
-| Auth | `claude-code/src/services/mcp/auth.ts:847`, `claude-code/src/services/mcp/auth.ts:664` | remote MCP 覆盖 OAuth 和 XAA |
-| Plugin diff | `claude-code/src/cli/print.ts:1795` | plugin 状态变化会重算 MCP server 集合 |
-| Permission | `claude-code/src/utils/settings/permissionValidation.ts:102`, `claude-code/src/utils/permissions/permissions.ts:236` | MCP 工具仍受权限规则约束 |
+| Server lifecycle | `sources/claude-code/src/cli/print.ts:1535`, `sources/claude-code/src/cli/print.ts:5457` | SDK/control message 可以动态更新 MCP server |
+| Auth | `sources/claude-code/src/services/mcp/auth.ts:847`, `sources/claude-code/src/services/mcp/auth.ts:664` | remote MCP 覆盖 OAuth 和 XAA |
+| Plugin diff | `sources/claude-code/src/cli/print.ts:1795` | plugin 状态变化会重算 MCP server 集合 |
+| Permission | `sources/claude-code/src/utils/settings/permissionValidation.ts:102`, `sources/claude-code/src/utils/permissions/permissions.ts:236` | MCP 工具仍受权限规则约束 |
 | Tool result | `queryLoop()` 的普通 tool result 路径 | MCP result 不应被视为 bridge 事件或 prompt 资源旁路 |
 
 ## 源码锚点补强
 
 | MCP 子系统 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| OAuth 主流程 | `claude-code/src/services/mcp/auth.ts:847` | 远程 MCP 认证入口 |
-| XAA 流程 | `claude-code/src/services/mcp/auth.ts:664` | 共享 IdP cross-app access |
-| 动态 server reconciliation | `claude-code/src/cli/print.ts:1535`, `claude-code/src/cli/print.ts:5457` | SDK/control message 更新 MCP server |
-| plugin MCP diff | `claude-code/src/cli/print.ts:1795` | plugin 状态变化后重算 MCP |
-| MCP 权限规则 | `claude-code/src/utils/settings/permissionValidation.ts:102`, `claude-code/src/utils/permissions/permissions.ts:236` | MCP rule validation 与匹配 |
+| OAuth 主流程 | `sources/claude-code/src/services/mcp/auth.ts:847` | 远程 MCP 认证入口 |
+| XAA 流程 | `sources/claude-code/src/services/mcp/auth.ts:664` | 共享 IdP cross-app access |
+| 动态 server reconciliation | `sources/claude-code/src/cli/print.ts:1535`, `sources/claude-code/src/cli/print.ts:5457` | SDK/control message 更新 MCP server |
+| plugin MCP diff | `sources/claude-code/src/cli/print.ts:1795` | plugin 状态变化后重算 MCP |
+| MCP 权限规则 | `sources/claude-code/src/utils/settings/permissionValidation.ts:102`, `sources/claude-code/src/utils/permissions/permissions.ts:236` | MCP rule validation 与匹配 |

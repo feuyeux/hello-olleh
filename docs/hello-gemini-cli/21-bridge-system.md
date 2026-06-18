@@ -23,11 +23,11 @@ title: "桥接与集成：CLI、SDK、IDE Companion 与 A2A 接口"
 
 | 桥接面 | 代码锚点 | 作用 |
 | --- | --- | --- |
-| CLI 宿主 | `gemini-cli/packages/cli/src/gemini.tsx:227`、`gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | 交互式终端与 headless 管道接入 |
-| SDK | `gemini-cli/packages/sdk/src/agent.ts:19`、`gemini-cli/packages/sdk/src/session.ts:171` | 以程序方式嵌入 Gemini CLI 能力 |
-| IDE Companion | `gemini-cli/packages/vscode-ide-companion/src/ide-server.ts:107` | 向 CLI 提供编辑器上下文与 diff 能力 |
-| MCP / Extensions | `gemini-cli/packages/cli/src/config/extension-manager.ts:103`、`gemini-cli/packages/core/src/tools/mcp-client-manager.ts:34` | 把外部工具、资源、prompt 接到主运行时 |
-| A2A/Remote Agent | `gemini-cli/packages/core/src/agents/a2a-client-manager.ts:52`、`gemini-cli/packages/core/src/agents/remote-invocation.ts:78` | 以远程 agent task 形式桥接外部 agent |
+| CLI 宿主 | `sources/gemini-cli/packages/cli/src/gemini.tsx:227`、`sources/gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | 交互式终端与 headless 管道接入 |
+| SDK | `sources/gemini-cli/packages/sdk/src/agent.ts:19`、`sources/gemini-cli/packages/sdk/src/session.ts:171` | 以程序方式嵌入 Gemini CLI 能力 |
+| IDE Companion | `sources/gemini-cli/packages/vscode-ide-companion/src/ide-server.ts:107` | 向 CLI 提供编辑器上下文与 diff 能力 |
+| MCP / Extensions | `sources/gemini-cli/packages/cli/src/config/extension-manager.ts:103`、`sources/gemini-cli/packages/core/src/tools/mcp-client-manager.ts:34` | 把外部工具、资源、prompt 接到主运行时 |
+| A2A/Remote Agent | `sources/gemini-cli/packages/core/src/agents/a2a-client-manager.ts:52`、`sources/gemini-cli/packages/core/src/agents/remote-invocation.ts:78` | 以远程 agent task 形式桥接外部 agent |
 
 ## 2. CLI 本身就是第一层桥接协议
 
@@ -151,13 +151,13 @@ Gemini CLI 的优势是边界比较清楚、协议更分散也更可替换；代
 
 | 函数/类型 | 文件 | 职责 |
 | :----------| :------| :------|
-| `startInteractiveUI()` | `gemini-cli/packages/cli/src/gemini.tsx:227` | 交互模式 CLI 桥接入口 |
-| `runNonInteractive()` | `gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | Headless / pipe 模式桥接入口 |
-| `GeminiCliAgent` | `gemini-cli/packages/sdk/src/agent.ts:19` | SDK 对外 agent facade |
-| `GeminiCliSession.sendStream()` | `gemini-cli/packages/sdk/src/session.ts:171` | SDK 流式会话接口 |
-| `A2AClientManager` | `gemini-cli/packages/core/src/agents/a2a-client-manager.ts:52` | 远程 A2A agent 通讯管理 |
-| `McpClientManager` | `gemini-cli/packages/core/src/tools/mcp-client-manager.ts:34` | 外部系统桥接：将 MCP server 能力引入运行时 |
-| `ExtensionManager` | `gemini-cli/packages/cli/src/config/extension-manager.ts:103` | 扩展发现、加载、启停和配置管理 |
+| `startInteractiveUI()` | `sources/gemini-cli/packages/cli/src/gemini.tsx:227` | 交互模式 CLI 桥接入口 |
+| `runNonInteractive()` | `sources/gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | Headless / pipe 模式桥接入口 |
+| `GeminiCliAgent` | `sources/gemini-cli/packages/sdk/src/agent.ts:19` | SDK 对外 agent facade |
+| `GeminiCliSession.sendStream()` | `sources/gemini-cli/packages/sdk/src/session.ts:171` | SDK 流式会话接口 |
+| `A2AClientManager` | `sources/gemini-cli/packages/core/src/agents/a2a-client-manager.ts:52` | 远程 A2A agent 通讯管理 |
+| `McpClientManager` | `sources/gemini-cli/packages/core/src/tools/mcp-client-manager.ts:34` | 外部系统桥接：将 MCP server 能力引入运行时 |
+| `ExtensionManager` | `sources/gemini-cli/packages/cli/src/config/extension-manager.ts:103` | 扩展发现、加载、启停和配置管理 |
 
 ---
 
@@ -175,11 +175,11 @@ Gemini CLI 的 bridge 不等同于 Claude Code 的远程 REPL bridge，也不等
 
 | Bridge 面 | 典型源码 | 说明 |
 | --- | --- | --- |
-| Headless/non-interactive | `gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | 无 TUI 的单次或脚本化执行 |
-| SDK session | `gemini-cli/packages/sdk/src/session.ts:171` | 外部程序以库方式消费 stream |
-| A2A/remote agent | `gemini-cli/packages/core/src/agents/a2a-client-manager.ts:52` | 将 Gemini CLI 能力转成远程 agent task |
-| IDE context | `gemini-cli/packages/vscode-ide-companion/src/ide-server.ts:107` | 与编辑器、诊断、上下文同步集成 |
-| MCP/extension | `gemini-cli/packages/core/src/tools/mcp-client-manager.ts:34` | 外部系统工具与资源接入 |
+| Headless/non-interactive | `sources/gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | 无 TUI 的单次或脚本化执行 |
+| SDK session | `sources/gemini-cli/packages/sdk/src/session.ts:171` | 外部程序以库方式消费 stream |
+| A2A/remote agent | `sources/gemini-cli/packages/core/src/agents/a2a-client-manager.ts:52` | 将 Gemini CLI 能力转成远程 agent task |
+| IDE context | `sources/gemini-cli/packages/vscode-ide-companion/src/ide-server.ts:107` | 与编辑器、诊断、上下文同步集成 |
+| MCP/extension | `sources/gemini-cli/packages/core/src/tools/mcp-client-manager.ts:34` | 外部系统工具与资源接入 |
 
 ## 状态边界补强
 

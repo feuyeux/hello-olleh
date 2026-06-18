@@ -379,9 +379,9 @@ Claude Code 的会话恢复核心是 transcript 和 `parentUuid` 链，而不是
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `claude-code/src/utils/sessionStorage.ts:3311` | transcript parent 前缀和链式关系处理 | 对应 Codex rollout reconstruction |
-| `claude-code/src/utils/sessionStorage.ts:3414` | 依据 `parentUuid` 遍历历史链 | 说明 Claude 恢复依赖消息拓扑 |
-| `claude-code/src/utils/sessionStorage.ts:3473` | `loadTranscriptFile` 加载 JSONL transcript | 对应 Gemini 文件式 conversation |
-| `claude-code/src/utils/sessionStorage.ts:3709` | resume 候选叶子节点收集 | 对比 OpenCode 从 durable message/part 恢复 |
-| `claude-code/src/utils/sessionRestore.ts:96` | session restore 入口类型与状态 | 说明恢复结果要重新注入 runtime |
-| `claude-code/src/main.tsx:3355` | CLI resume 流程接入点 | 对应其他工具的启动期 session 选择 |
+| `sources/claude-code/src/utils/sessionStorage.ts:3311` | transcript parent 前缀和链式关系处理 | 对应 Codex rollout reconstruction |
+| `sources/claude-code/src/utils/sessionStorage.ts:3414` | 依据 `parentUuid` 遍历历史链 | 说明 Claude 恢复依赖消息拓扑 |
+| `sources/claude-code/src/utils/sessionStorage.ts:3473` | `loadTranscriptFile` 加载 JSONL transcript | 对应 Gemini 文件式 conversation |
+| `sources/claude-code/src/utils/sessionStorage.ts:3709` | resume 候选叶子节点收集 | 对比 OpenCode 从 durable message/part 恢复 |
+| `sources/claude-code/src/utils/sessionRestore.ts:96` | session restore 入口类型与状态 | 说明恢复结果要重新注入 runtime |
+| `sources/claude-code/src/main.tsx:3355` | CLI resume 流程接入点 | 对应其他工具的启动期 session 选择 |

@@ -551,12 +551,12 @@ Claude Bridge 章节应和 SDK/Transport 区分：它关注远程 REPL、多 ses
 
 | 维度 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| WebSocket base URL | `claude-code/src/remote/SessionsWebSocket.ts:108` | remote session 把 OAuth base API URL 转成 WSS |
-| 认证方式 | `claude-code/src/remote/SessionsWebSocket.ts:79` | 连接后发送 OAuth credential/auth message |
-| 未授权关闭码 | `claude-code/src/remote/SessionsWebSocket.ts:35` | 4003 表示 unauthorized |
-| fresh token | `claude-code/src/remote/SessionsWebSocket.ts:113` | 每次连接尝试取 fresh token，降低过期风险 |
-| permission bridge | `claude-code/src/remote/RemoteSessionManager.ts:153` | remote control request 可转成本地 permission prompt |
-| permission response | `claude-code/src/remote/RemoteSessionManager.ts:246` | 本地审批结果回传远端 |
+| WebSocket base URL | `sources/claude-code/src/remote/SessionsWebSocket.ts:108` | remote session 把 OAuth base API URL 转成 WSS |
+| 认证方式 | `sources/claude-code/src/remote/SessionsWebSocket.ts:79` | 连接后发送 OAuth credential/auth message |
+| 未授权关闭码 | `sources/claude-code/src/remote/SessionsWebSocket.ts:35` | 4003 表示 unauthorized |
+| fresh token | `sources/claude-code/src/remote/SessionsWebSocket.ts:113` | 每次连接尝试取 fresh token，降低过期风险 |
+| permission bridge | `sources/claude-code/src/remote/RemoteSessionManager.ts:153` | remote control request 可转成本地 permission prompt |
+| permission response | `sources/claude-code/src/remote/RemoteSessionManager.ts:246` | 本地审批结果回传远端 |
 
 安全评估时要分清两条链：身份验证链决定能否连接远端 session；permission bridge 链决定远端 agent 请求本地危险操作时如何让用户确认。二者缺一不可。
 
@@ -564,7 +564,7 @@ Claude Bridge 章节应和 SDK/Transport 区分：它关注远程 REPL、多 ses
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `claude-code/src/bridge/bridgeEnabled.ts:120` | Bridge 启用判断 | 对应其他项目的 server/control-plane 开关 |
-| `claude-code/src/bridge/initReplBridge.ts:397` | REPL bridge 初始化 | 说明它接在本地交互循环旁路 |
-| `claude-code/src/bridge/replBridge.ts:1532` | bridge 消息处理深层逻辑 | 对比 OpenCode server route / SSE |
-| `claude-code/src/bridge/types.ts:227` | Bridge 类型协议 | 用于区分 transport、auth 和 session control |
+| `sources/claude-code/src/bridge/bridgeEnabled.ts:120` | Bridge 启用判断 | 对应其他项目的 server/control-plane 开关 |
+| `sources/claude-code/src/bridge/initReplBridge.ts:397` | REPL bridge 初始化 | 说明它接在本地交互循环旁路 |
+| `sources/claude-code/src/bridge/replBridge.ts:1532` | bridge 消息处理深层逻辑 | 对比 OpenCode server route / SSE |
+| `sources/claude-code/src/bridge/types.ts:227` | Bridge 类型协议 | 用于区分 transport、auth 和 session control |

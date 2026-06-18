@@ -6,7 +6,7 @@ title: "14 - 源码分析质量横向评估"
 
 # 源码分析质量横向评估
 
-本章评估 `hello-claude-code/`、`hello-codex/`、`hello-gemini-cli/`、`hello-opencode/` 对各自上游源码的分析质量。结论只用于完善文档结构，不替代单项目章节的源码细读。
+本章评估 `docs/hello-claude-code/`、`docs/hello-codex/`、`docs/hello-gemini-cli/`、`docs/hello-opencode/` 对各自上游源码的分析质量。结论只用于完善文档结构，不替代单项目章节的源码细读。
 
 ## 1. 评价维度
 
@@ -31,7 +31,7 @@ title: "14 - 源码分析质量横向评估"
 | `24` MCP | 至少覆盖 server config、连接/认证、tool discovery、tool call |
 | `25` 调试 | 至少覆盖按症状定位的源码入口 |
 
-锚点格式统一使用 repo-root 路径，例如 `opencode/packages/opencode/src/session/prompt.ts:162` 或 `claude-code/src/query.ts:241`。
+锚点格式统一使用 repo-root 路径，例如 `sources/opencode/packages/opencode/src/session/prompt.ts:162` 或 `sources/claude-code/src/query.ts:241`。
 
 ## 2. 横向判断
 
@@ -57,10 +57,10 @@ title: "14 - 源码分析质量横向评估"
 
 | 项目 | 代表章节 | 代表源码锚点 | 说明 |
 | --- | --- | --- | --- |
-| Claude Code | `hello-claude-code/03-agent-loop.md`, `05-tool-system.md`, `11-prompt-system.md` | `claude-code/src/query.ts:241`, `claude-code/src/Tool.ts:123`, `claude-code/src/constants/prompts.ts` | 覆盖 query 主链、工具上下文和 prompt 资产 |
-| Codex | `hello-codex/03-agent-loop.md`, `05-tool-system.md`, `24-mcp-system.md` | `codex/codex-rs/core/src/codex.rs:4289`, `codex/codex-rs/core/src/tools/orchestrator.rs:111`, `codex/codex-rs/core/src/mcp_connection_manager.rs:183` | 覆盖 submission loop、工具治理和 MCP 连接 |
-| Gemini CLI | `hello-gemini-cli/03-agent-loop.md`, `05-tool-system.md`, `11-prompt-system.md` | `gemini-cli/packages/core/src/core/client.ts:868`, `gemini-cli/packages/core/src/tools/tool-registry.ts:352`, `gemini-cli/packages/core/src/prompts/promptProvider.ts` | 覆盖 core turn、工具注册和 PromptProvider |
-| OpenCode | `hello-opencode/03-agent-loop.md`, `11-prompt-system.md`, `27-session-loop.md` | `opencode/packages/opencode/src/session/prompt.ts:162`, `opencode/packages/opencode/src/session/prompt.ts:278`, `opencode/packages/opencode/src/session/processor.ts:46` | 覆盖 durable prompt、loop 和 stream processor |
+| Claude Code | `docs/hello-claude-code/03-agent-loop.md`, `05-tool-system.md`, `11-prompt-system.md` | `sources/claude-code/src/query.ts:241`, `sources/claude-code/src/Tool.ts:123`, `sources/claude-code/src/constants/prompts.ts` | 覆盖 query 主链、工具上下文和 prompt 资产 |
+| Codex | `docs/hello-codex/03-agent-loop.md`, `05-tool-system.md`, `24-mcp-system.md` | `sources/codex/codex-rs/core/src/codex.rs:4289`, `sources/codex/codex-rs/core/src/tools/orchestrator.rs:111`, `sources/codex/codex-rs/core/src/mcp_connection_manager.rs:183` | 覆盖 submission loop、工具治理和 MCP 连接 |
+| Gemini CLI | `docs/hello-gemini-cli/03-agent-loop.md`, `05-tool-system.md`, `11-prompt-system.md` | `sources/gemini-cli/packages/core/src/core/client.ts:868`, `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:352`, `sources/gemini-cli/packages/core/src/prompts/promptProvider.ts` | 覆盖 core turn、工具注册和 PromptProvider |
+| OpenCode | `docs/hello-opencode/03-agent-loop.md`, `11-prompt-system.md`, `27-session-loop.md` | `sources/opencode/packages/opencode/src/session/prompt.ts:162`, `sources/opencode/packages/opencode/src/session/prompt.ts:278`, `sources/opencode/packages/opencode/src/session/processor.ts:46` | 覆盖 durable prompt、loop 和 stream processor |
 
 ## 2.3 本轮补强状态
 
@@ -86,10 +86,10 @@ title: "14 - 源码分析质量横向评估"
 
 | 目录 | 修正动作 |
 | --- | --- |
-| `hello-claude-code/` | 保留深读文字，补“关键源码锚点”表；反编译推断统一标注 |
-| `hello-codex/` | 以 `03-agent-loop.md` 的证据密度为样板，保持 `11-21` 的字段级链路可校验 |
-| `hello-gemini-cli/` | 保持短章节优势，但每章至少补“生命周期位置”和“关键函数清单” |
-| `hello-opencode/` | `03` 保持总览，`27-29` 保持深挖，`36` 只做导航 |
+| `docs/hello-claude-code/` | 保留深读文字，补“关键源码锚点”表；反编译推断统一标注 |
+| `docs/hello-codex/` | 以 `03-agent-loop.md` 的证据密度为样板，保持 `11-21` 的字段级链路可校验 |
+| `docs/hello-gemini-cli/` | 保持短章节优势，但每章至少补“生命周期位置”和“关键函数清单” |
+| `docs/hello-opencode/` | `03` 保持总览，`27-29` 保持深挖，`36` 只做导航 |
 
 ## 5. 质量门禁
 

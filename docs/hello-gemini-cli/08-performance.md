@@ -41,14 +41,14 @@ flowchart TD
 
 | 函数/类 | 文件路径 | 行号 | 性能相关职责 |
 | :---| :---| :---| :---|
-| `RipGrepTool.execute()` | `gemini-cli/packages/core/src/tools/ripGrep.ts` | — | 调用 ripgrep 二进制，跳过 node_modules |
-| `GrepTool.execute()` | `gemini-cli/packages/core/src/tools/grep.ts` | — | fallback grep 实现 |
-| `ToolExecutor.execute()` | `gemini-cli/packages/core/src/scheduler/tool-executor.ts` | — | 检测输出大小，超阈值触发蒸馏 |
-| `ToolOutputDistillationService` | `gemini-cli/packages/core/src/tools/` | — | 调用模型对大输出进行摘要压缩 |
-| `Scheduler.schedule()` | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | :191 | 只读工具并行调度 |
-| `sendMessageStream()` | `gemini-cli/packages/core/src/core/geminiChat.ts` | :303 | AsyncGenerator 流式 yield |
-| `tokenLimit.check()` | `gemini-cli/packages/core/src/core/tokenLimits.ts` | — | Token 数量预估与截断 |
-| `canUseRipgrep()` | `gemini-cli/packages/core/src/tools/ripGrep.ts` | — | 检测 ripgrep 可用性 |
+| `RipGrepTool.execute()` | `sources/gemini-cli/packages/core/src/tools/ripGrep.ts` | — | 调用 ripgrep 二进制，跳过 node_modules |
+| `GrepTool.execute()` | `sources/gemini-cli/packages/core/src/tools/grep.ts` | — | fallback grep 实现 |
+| `ToolExecutor.execute()` | `sources/gemini-cli/packages/core/src/scheduler/tool-executor.ts` | — | 检测输出大小，超阈值触发蒸馏 |
+| `ToolOutputDistillationService` | `sources/gemini-cli/packages/core/src/tools/` | — | 调用模型对大输出进行摘要压缩 |
+| `Scheduler.schedule()` | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts` | :191 | 只读工具并行调度 |
+| `sendMessageStream()` | `sources/gemini-cli/packages/core/src/core/geminiChat.ts` | :303 | AsyncGenerator 流式 yield |
+| `tokenLimit.check()` | `sources/gemini-cli/packages/core/src/core/tokenLimits.ts` | — | Token 数量预估与截断 |
+| `canUseRipgrep()` | `sources/gemini-cli/packages/core/src/tools/ripGrep.ts` | — | 检测 ripgrep 可用性 |
 
 ## 3. 大文件与大输出的处理优化
 
@@ -70,8 +70,8 @@ flowchart TD
 
 项目在 `integration-tests/` 中包含了专门的性能与行为回归用例：
 
-- `policy-headless.test.ts`（`gemini-cli/integration-tests/policy-headless.test.ts`）：验证无头模式下的策略决策速度。
-- `browser-agent.test.ts`（`gemini-cli/integration-tests/browser-agent.test.ts`）：验证加载真实浏览器时的端到端响应时间。
+- `policy-headless.test.ts`（`sources/gemini-cli/integration-tests/policy-headless.test.ts`）：验证无头模式下的策略决策速度。
+- `browser-agent.test.ts`（`sources/gemini-cli/integration-tests/browser-agent.test.ts`）：验证加载真实浏览器时的端到端响应时间。
 
 ## 5. 代码质量分析 (Pros & Cons)
 

@@ -324,9 +324,9 @@ pub struct ThreadMetadata {
 
 | 层 | 关键代码 | 作用 |
 | --- | --- | --- |
-| 项目级指令层 | `codex/codex-rs/core/src/project_doc.rs` | 读取 `Config::user_instructions`、层级 `AGENTS.md`、可选 JS REPL / child-agents 附加说明 |
-| 会话上下文层 | `codex/codex-rs/core/src/context_manager/history.rs` | 维护模型可见历史、做规范化、估算 token、处理 compaction 与 rollback 基线 |
-| 轻量记忆层 | `codex/codex-rs/core/src/memories/*` | 从 rollout 抽取 raw memories、做两阶段 consolidation，并把 memory citation 写回线程结果 |
+| 项目级指令层 | `sources/codex/codex-rs/core/src/project_doc.rs` | 读取 `Config::user_instructions`、层级 `AGENTS.md`、可选 JS REPL / child-agents 附加说明 |
+| 会话上下文层 | `sources/codex/codex-rs/core/src/context_manager/history.rs` | 维护模型可见历史、做规范化、估算 token、处理 compaction 与 rollback 基线 |
+| 轻量记忆层 | `sources/codex/codex-rs/core/src/memories/*` | 从 rollout 抽取 raw memories、做两阶段 consolidation，并把 memory citation 写回线程结果 |
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%

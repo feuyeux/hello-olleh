@@ -399,10 +399,10 @@ flowchart TD
 
 | 阶段 | 源码锚点 | 失败边界 |
 | --- | --- | --- |
-| CLI bootstrap | `opencode/packages/opencode/src/cli/bootstrap.ts:7` | 入口只声明 init，具体失败多在下游 service 暴露 |
-| Config schema / MCP config | `opencode/packages/opencode/src/config/config.ts:565`, `opencode/packages/opencode/src/config/config.ts:1124` | 配置错误应在编译/读取阶段暴露，避免进入 session 后才失败 |
-| Instance dispose | `opencode/packages/opencode/src/config/config.ts:1353`, `opencode/packages/opencode/src/config/config.ts:1444` | 配置变化会触发 instance dispose / disposeAll |
-| File watcher | `opencode/packages/opencode/src/file/watcher.ts:155` | watcher 初始化失败会影响配置/文件变更感知 |
-| MCP 工具变更 | `opencode/packages/opencode/src/mcp/index.ts:116` | MCP server 状态变化通过 Bus 通知工具刷新 |
+| CLI bootstrap | `sources/opencode/packages/opencode/src/cli/bootstrap.ts:7` | 入口只声明 init，具体失败多在下游 service 暴露 |
+| Config schema / MCP config | `sources/opencode/packages/opencode/src/config/config.ts:565`, `sources/opencode/packages/opencode/src/config/config.ts:1124` | 配置错误应在编译/读取阶段暴露，避免进入 session 后才失败 |
+| Instance dispose | `sources/opencode/packages/opencode/src/config/config.ts:1353`, `sources/opencode/packages/opencode/src/config/config.ts:1444` | 配置变化会触发 instance dispose / disposeAll |
+| File watcher | `sources/opencode/packages/opencode/src/file/watcher.ts:155` | watcher 初始化失败会影响配置/文件变更感知 |
+| MCP 工具变更 | `sources/opencode/packages/opencode/src/mcp/index.ts:116` | MCP server 状态变化通过 Bus 通知工具刷新 |
 
 这说明 OpenCode 配置章节不能只列 schema。配置值会直接影响 Instance 级服务装配，失败也可能表现为 session tool 缺失、MCP tool 不刷新、FileWatcher 不工作或 provider auth 失败。

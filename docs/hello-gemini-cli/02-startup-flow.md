@@ -44,21 +44,21 @@ flowchart LR
 
 | 函数/方法 | 文件路径 | 行号 | 职责 |
 | :---| :---| :---| :---|
-| `main()` | `gemini-cli/packages/cli/src/gemini.tsx` | :186 | 程序入口，参数解析，沙箱决策 |
-| `parseArguments()` | `gemini-cli/packages/cli/src/config/config.ts` | :155 | Yargs 子命令解析 |
-| `loadSandboxConfig()` | `gemini-cli/packages/cli/src/config/sandboxConfig.ts` | :126 | 沙箱配置加载（命令检测、镜像路径、allowedPaths） |
-| `start_sandbox()` | `gemini-cli/packages/cli/src/utils/sandbox.ts` | :46 | 沙箱子进程启动（Docker/LXC/Seatbelt 等） |
-| `initializeApp()` | `gemini-cli/packages/cli/src/core/initializer.ts` | :38 | Auth 校验、IDE 连接预热、主题验证；返回 `InitializationResult` |
-| `Config._initialize()` | `gemini-cli/packages/core/src/config/config.ts` | :1299 | 工具注册/MCP 启动/Skill 发现/Hook 系统初始化/GeminiClient 初始化 |
-| `startInteractiveUI()` | `gemini-cli/packages/cli/src/interactiveCli.tsx` | :53 | React + Ink TUI 挂载 |
-| `runNonInteractive()` | `gemini-cli/packages/cli/src/nonInteractiveCli.ts` | :58 | Headless stdin/stdout 模式 |
-| `loadTrustedFolders()` | `gemini-cli/packages/cli/src/config/trustedFolders.ts` | :249 | 工作区信任校验 |
+| `main()` | `sources/gemini-cli/packages/cli/src/gemini.tsx` | :186 | 程序入口，参数解析，沙箱决策 |
+| `parseArguments()` | `sources/gemini-cli/packages/cli/src/config/config.ts` | :155 | Yargs 子命令解析 |
+| `loadSandboxConfig()` | `sources/gemini-cli/packages/cli/src/config/sandboxConfig.ts` | :126 | 沙箱配置加载（命令检测、镜像路径、allowedPaths） |
+| `start_sandbox()` | `sources/gemini-cli/packages/cli/src/utils/sandbox.ts` | :46 | 沙箱子进程启动（Docker/LXC/Seatbelt 等） |
+| `initializeApp()` | `sources/gemini-cli/packages/cli/src/core/initializer.ts` | :38 | Auth 校验、IDE 连接预热、主题验证；返回 `InitializationResult` |
+| `Config._initialize()` | `sources/gemini-cli/packages/core/src/config/config.ts` | :1299 | 工具注册/MCP 启动/Skill 发现/Hook 系统初始化/GeminiClient 初始化 |
+| `startInteractiveUI()` | `sources/gemini-cli/packages/cli/src/interactiveCli.tsx` | :53 | React + Ink TUI 挂载 |
+| `runNonInteractive()` | `sources/gemini-cli/packages/cli/src/nonInteractiveCli.ts` | :58 | Headless stdin/stdout 模式 |
+| `loadTrustedFolders()` | `sources/gemini-cli/packages/cli/src/config/trustedFolders.ts` | :249 | 工作区信任校验 |
 
 ## 3. 核心初始化顺序
 
 ### 3.1 参数解析 (Yargs)
 
-系统在 `gemini-cli/packages/cli/src/config/config.ts` 中使用 `yargs` 定义了丰富的子命令和运行标志。解析后的 `argv` 决定了：
+系统在 `sources/gemini-cli/packages/cli/src/config/config.ts` 中使用 `yargs` 定义了丰富的子命令和运行标志。解析后的 `argv` 决定了：
 
 - 运行模式（交互 vs. 非交互）
 - 认证方式
@@ -242,18 +242,18 @@ GEMINI_SANDBOX=docker
 交互模式下，`AppContainer` 会先挂载 UI，再异步做运行时初始化：
 
 1. `AppContainer.useEffect()`
-   文件：`gemini-cli/packages/cli/src/ui/AppContainer.tsx:398-427`
+   文件：`sources/gemini-cli/packages/cli/src/ui/AppContainer.tsx:398-427`
    调用点：`404` 调 `config.initialize()`；`406` 初始化完成后置 `setConfigInitialized(true)`。
 2. `Config.initialize()` / `Config._initialize()`
-   文件：`gemini-cli/packages/core/src/config/config.ts:1289-1397`
+   文件：`sources/gemini-cli/packages/core/src/config/config.ts:1289-1397`
 3. `useMcpStatus()`
-   文件：`gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`
+   文件：`sources/gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`
    职责：把 MCP discovery 状态折叠成 `isMcpReady`。
 4. `AppContainer.handleFinalSubmit()`
-   文件：`gemini-cli/packages/cli/src/ui/AppContainer.tsx:1262-1333`
+   文件：`sources/gemini-cli/packages/cli/src/ui/AppContainer.tsx:1262-1333`
    调用点：`1298-1329` 只有在 `isConfigInitialized && isMcpReady` 时才真正放行普通 prompt；否则只入队。
 5. `useMessageQueue()`
-   文件：`gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts:30-96`
+   文件：`sources/gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts:30-96`
    调用点：`68-80` 当 `isConfigInitialized && isMcpReady && streamingState === Idle` 时，才自动冲刷排队消息。
 
 这意味着启动阶段直接塑造了请求入口语义：
@@ -265,13 +265,13 @@ GEMINI_SANDBOX=docker
 #### 影响 2：首轮请求看到的 system prompt 是启动阶段生成的
 
 1. `Config._initialize()`
-   文件：`gemini-cli/packages/core/src/config/config.ts:1395`
+   文件：`sources/gemini-cli/packages/core/src/config/config.ts:1395`
    调用点：`await this._geminiClient.initialize()`。
 2. `GeminiClient.initialize()`
-   文件：`gemini-cli/packages/core/src/core/client.ts:245-248`
+   文件：`sources/gemini-cli/packages/core/src/core/client.ts:245-248`
    调用点：`246` 调 `this.startChat()`。
 3. `GeminiClient.startChat()`
-   文件：`gemini-cli/packages/core/src/core/client.ts:358-388`
+   文件：`sources/gemini-cli/packages/core/src/core/client.ts:358-388`
    调用点：`373-375` 调 `getCoreSystemPrompt(this.config, systemMemory)`，把结果作为 `systemInstruction` 注入 `GeminiChat`。
 
 所以**第一轮请求并不是在提交时才“临时生成上下文”**，而是继承启动阶段已经构建好的 `GeminiChat` 会话壳：
@@ -286,16 +286,16 @@ GEMINI_SANDBOX=docker
 #### 影响 3：启动阶段注册的工具，决定了请求期 `setTools()` 能下发什么函数声明
 
 1. `Config._initialize()`
-   文件：`gemini-cli/packages/core/src/config/config.ts:1335`
+   文件：`sources/gemini-cli/packages/core/src/config/config.ts:1335`
    调用点：创建 `this._toolRegistry = await this.createToolRegistry()`。
 2. `Config.createToolRegistry()`
-   文件：`gemini-cli/packages/core/src/config/config.ts:3257-3259`
+   文件：`sources/gemini-cli/packages/core/src/config/config.ts:3257-3259`
    调用点：`3257` 执行 `registry.discoverAllTools()`，之后 `sortTools()`。
 3. `GeminiClient.setTools()`
-   文件：`gemini-cli/packages/core/src/core/client.ts:288-302`
+   文件：`sources/gemini-cli/packages/core/src/core/client.ts:288-302`
    调用点：`298-301` 从 `toolRegistry.getFunctionDeclarations(modelId)` 取出函数声明并写入 chat。
 4. `GeminiClient.processTurn()`
-   文件：`gemini-cli/packages/core/src/core/client.ts:585-865`
+   文件：`sources/gemini-cli/packages/core/src/core/client.ts:585-865`
    调用点：`726-727` 在每轮请求前执行 `await this.setTools(modelToUse)`。
 
 这条链说明：**请求阶段虽然每轮都会调用 `setTools()`，但它使用的是启动阶段构建好的 `ToolRegistry`。**
@@ -304,12 +304,12 @@ GEMINI_SANDBOX=docker
 #### 影响 4：MCP 初始化时机决定请求期是否能调用 MCP 工具
 
 1. `Config._initialize()`
-   文件：`gemini-cli/packages/core/src/config/config.ts:1337-1362`
+   文件：`sources/gemini-cli/packages/core/src/config/config.ts:1337-1362`
    调用点：`1349-1352` 异步启动 `startConfiguredMcpServers()` 和 `extensionLoader.start(this)`。
 2. 在交互模式下
    调用点：`1347-1358` 不阻塞 UI；`1360-1362` 只在非交互/ACP 模式才 `await this.mcpInitializationPromise`。
 3. `useMcpStatus()`
-   文件：`gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`
+   文件：`sources/gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15-50`
    调用点：`42-44` 只有 `discoveryState === COMPLETED` 才算 `isMcpReady`。
 
 因此请求流程会受到两层影响：
@@ -320,13 +320,13 @@ GEMINI_SANDBOX=docker
 #### 影响 5：启动时的 trust / sandbox / approval 约束会延续到每一轮工具调用
 
 1. `Config.isTrustedFolder()`
-   文件：`gemini-cli/packages/core/src/config/config.ts:2742-2749`
+   文件：`sources/gemini-cli/packages/core/src/config/config.ts:2742-2749`
    职责：给出当前工作区是否 trusted。
 2. `Config.setApprovalMode()`
-   文件：`gemini-cli/packages/core/src/config/config.ts:2389-2394`
+   文件：`sources/gemini-cli/packages/core/src/config/config.ts:2389-2394`
    约束：untrusted folder 下不能启用 `DEFAULT` 之外的特权 approval mode。
 3. `Config._initialize()`
-   文件：`gemini-cli/packages/core/src/config/config.ts:1367-1371`
+   文件：`sources/gemini-cli/packages/core/src/config/config.ts:1367-1371`
    调用点：`discoverSkills(..., this.isTrustedFolder())`，trust 状态直接影响 skill 发现。
 4. 沙箱阶段
    文档前文已描述 `start_sandbox()` 的文件系统/网络/环境变量过滤。
@@ -356,7 +356,7 @@ Gemini CLI 支持两种主要的运行模式，它们共享相同的 `packages/c
 
 ### 4.2 非交互模式 (Non-Interactive Headless)
 
-调用 `runNonInteractive()`（`gemini-cli/packages/cli/src/nonInteractiveCli.ts`）。
+调用 `runNonInteractive()`（`sources/gemini-cli/packages/cli/src/nonInteractiveCli.ts`）。
 
 - **同步 IO**：从 stdin 读取输入，并将其折叠成一次 Agent Loop 执行。
 - **线性输出**：适合流水线集成，支持以 JSON 格式输出结果。

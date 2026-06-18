@@ -16,14 +16,14 @@ title: "10 - 人类引导"
 
 ### Claude Code
 
-`claude-code/src/constants/tools.ts:36-112` 的工具 Allowlist 把权限管理硬编码在 TypeScript 文件里。人类用户看到的是工具的允许/禁止结果，但不能看到也不能修改审批的规则本身（除非修改源码）.
+`sources/claude-code/src/constants/tools.ts:36-112` 的工具 Allowlist 把权限管理硬编码在 TypeScript 文件里。人类用户看到的是工具的允许/禁止结果，但不能看到也不能修改审批的规则本身（除非修改源码）.
 
 **粒度**：工具级——要么整个工具被允许，要么整个工具被禁止。没有"允许这个工具但不允许这个参数组合"的表达能力。
 **透明度**：低。用户知道某个工具会被允许或拒绝，但不知道原因是什么规则导致的，也无法查看完整的权限规则列表。
 
 ### Codex
 
-`codex/codex-rs/protocol/src/prompts/permissions/approval_policy/` 的四种 policy 文件是人类可读的 Markdown 文档。团队可以直接读取这些文件，理解当前的审批策略是什么，以及为什么这样设计。
+`sources/codex/codex-rs/protocol/src/prompts/permissions/approval_policy/` 的四种 policy 文件是人类可读的 Markdown 文档。团队可以直接读取这些文件，理解当前的审批策略是什么，以及为什么这样设计。
 
 - `never.md` — 从不请求人工审批（完全信任 Agent）
 - `on_failure.md` — 仅在操作失败时请求审批
@@ -42,7 +42,7 @@ title: "10 - 人类引导"
 
 ### OpenCode
 
-`opencode/packages/opencode/src/permission/index.ts:19-24` 的 `Action` 枚举（allow/deny/ask）加上路径模式匹配，提供了最细粒度的权限表达：每条权限规则明确对应一个路径模式和一个操作类型。`ask` 状态把决策权推给用户，但用户在决策时有具体的上下文（"你要求读取 `/etc/passwd`，是否允许？"），而不是模糊的"工具 X 请求权限"。
+`sources/opencode/packages/opencode/src/permission/index.ts:19-24` 的 `Action` 枚举（allow/deny/ask）加上路径模式匹配，提供了最细粒度的权限表达：每条权限规则明确对应一个路径模式和一个操作类型。`ask` 状态把决策权推给用户，但用户在决策时有具体的上下文（"你要求读取 `/etc/passwd`，是否允许？"），而不是模糊的"工具 X 请求权限"。
 
 **粒度**：细，Pattern + Action 的组合。
 **透明度**：中。Schema 定义清晰，但运行时的审批请求是否携带足够上下文取决于实现。
@@ -55,7 +55,7 @@ title: "10 - 人类引导"
 
 **Claude Code**：`/clear` 命令触发 `clearSystemPromptSections()`（`systemPromptSections.ts:60-68`），清理缓存状态。这是简单中断，无结构化恢复路径——中断后 session 重置，之前的进度不能被直接续接。中断代价高，对用户形成"不到万不得已不要中断"的心理压力。
 
-**Codex**：`codex/codex-rs/core/templates/review/history_message_interrupted.md` 专门为中断情况提供了模板。当任务被中断时，审查模板引导模型从执行记录里推断任务在中断前的进度，并生成合理的恢复建议。状态 DB 支持跨 session 恢复——Codex 的有状态架构使中断后能从接近中断点的位置继续，而不必从头开始。
+**Codex**：`sources/codex/codex-rs/core/templates/review/history_message_interrupted.md` 专门为中断情况提供了模板。当任务被中断时，审查模板引导模型从执行记录里推断任务在中断前的进度，并生成合理的恢复建议。状态 DB 支持跨 session 恢复——Codex 的有状态架构使中断后能从接近中断点的位置继续，而不必从头开始。
 
 **Gemini CLI**：`hookSystem.ts:220-225` 的 `fireSessionStartEvent` 在每次 session 开始时触发，这为恢复逻辑提供了注入点——Hook 实现者可以在 SessionStart 里检查是否有未完成的任务，并相应地恢复上下文。这是事件化的中断恢复：框架提供了钩子，具体恢复能力取决于 Hook 实现。
 
@@ -69,7 +69,7 @@ title: "10 - 人类引导"
 
 **Claude Code**：`claudemd.ts:1-26` 的四层文件体系（Managed → User → Project → Local）天然映射了团队责任分工：系统管理员管理 Managed 层，个人用户管理 User 和 Local 层，团队共同维护 Project 层（通过 Git）。`.claude/rules/*.md` 的条件规则使团队可以按文件路径分配不同规则集，实现"这条规则只对这个目录下的文件生效"的精细控制。
 
-**Codex**：`codex/docs/agents_md.md` 是专门给团队工程师阅读的 AGENTS.md 规范文档，解释了规则的语义、优先级和冲突解决方式。`default.md:17-27` 里的嵌套优先规则（更深嵌套的 AGENTS.md 优先级更高）提供了可预测的冲突解决机制。这是四个工程里团队治理规范最完整的实现——既有给工程师的文档，又有给 Agent 的规范。
+**Codex**：`sources/codex/docs/agents_md.md` 是专门给团队工程师阅读的 AGENTS.md 规范文档，解释了规则的语义、优先级和冲突解决方式。`default.md:17-27` 里的嵌套优先规则（更深嵌套的 AGENTS.md 优先级更高）提供了可预测的冲突解决机制。这是四个工程里团队治理规范最完整的实现——既有给工程师的文档，又有给 Agent 的规范。
 
 **Gemini CLI**：`HierarchicalMemory` 的三层接口（global / extension / project）提供了清晰的责任分工框架：global 由组织配置，extension 由扩展维护，project 由项目团队协作维护。每层的来源和权威性是明确的。
 

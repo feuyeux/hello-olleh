@@ -24,7 +24,7 @@ gemini [--prompt "..."] [--no-interactive]
   └─ 非交互模式      → 标准输入/输出
 ```
 
-真实分流点在 CLI 入口：`startInteractiveUI()` 负责启动 Ink UI（`gemini-cli/packages/cli/src/gemini.tsx:227`），最终导入 `interactiveCli.tsx` 并渲染 `AppContainer`（`gemini-cli/packages/cli/src/interactiveCli.tsx:56`, `gemini-cli/packages/cli/src/interactiveCli.tsx:115`）。非交互模式走 `runNonInteractive()`（`gemini-cli/packages/cli/src/nonInteractiveCli.ts:59`），主入口根据 `config.isInteractive()` 分派到两条路径（`gemini-cli/packages/cli/src/gemini.tsx:648`, `gemini-cli/packages/cli/src/gemini.tsx:737`）。
+真实分流点在 CLI 入口：`startInteractiveUI()` 负责启动 Ink UI（`sources/gemini-cli/packages/cli/src/gemini.tsx:227`），最终导入 `interactiveCli.tsx` 并渲染 `AppContainer`（`sources/gemini-cli/packages/cli/src/interactiveCli.tsx:56`, `sources/gemini-cli/packages/cli/src/interactiveCli.tsx:115`）。非交互模式走 `runNonInteractive()`（`sources/gemini-cli/packages/cli/src/nonInteractiveCli.ts:59`），主入口根据 `config.isInteractive()` 分派到两条路径（`sources/gemini-cli/packages/cli/src/gemini.tsx:648`, `sources/gemini-cli/packages/cli/src/gemini.tsx:737`）。
 
 ## 2. Ink TUI 组件树
 
@@ -127,12 +127,12 @@ export async function runNonInteractive(flags: CliFlags) {
 
 | 函数/类型 | 文件 | 职责 |
 | :----------| :------| :------|
-| `AppContainer` | `gemini-cli/packages/cli/src/ui/AppContainer.tsx:794` | CLI 顶层 React 组件：持有 resume、UI Action、生命周期管理 |
-| `useGeminiStream` | `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:214` | 核心 hook：管理流处理、工具调度触发、工具结果回注 |
-| `UIStateContext` | `gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx:213` | React Context：持有 currentTurn/messages/tools/status 等 UI 状态 |
-| `startInteractiveUI()` | `gemini-cli/packages/cli/src/gemini.tsx:227` | 交互模式启动入口：初始化 Ink + React render |
-| `runNonInteractive()` | `gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | Headless 模式入口：读取 stdin 或 prompt，直接调用模型 |
-| `ToolScheduler` hook | `gemini-cli/packages/cli/src/ui/hooks/useToolScheduler.ts:219` | 把工具确认、执行中、结果回注状态接入 stream |
+| `AppContainer` | `sources/gemini-cli/packages/cli/src/ui/AppContainer.tsx:794` | CLI 顶层 React 组件：持有 resume、UI Action、生命周期管理 |
+| `useGeminiStream` | `sources/gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:214` | 核心 hook：管理流处理、工具调度触发、工具结果回注 |
+| `UIStateContext` | `sources/gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx:213` | React Context：持有 currentTurn/messages/tools/status 等 UI 状态 |
+| `startInteractiveUI()` | `sources/gemini-cli/packages/cli/src/gemini.tsx:227` | 交互模式启动入口：初始化 Ink + React render |
+| `runNonInteractive()` | `sources/gemini-cli/packages/cli/src/nonInteractiveCli.ts:59` | Headless 模式入口：读取 stdin 或 prompt，直接调用模型 |
+| `ToolScheduler` hook | `sources/gemini-cli/packages/cli/src/ui/hooks/useToolScheduler.ts:219` | 把工具确认、执行中、结果回注状态接入 stream |
 
 ---
 
@@ -152,11 +152,11 @@ Gemini CLI 的交互状态主要分布在 Ink UI、`useGeminiStream`、Scheduler
 
 | 状态来源 | 职责 |
 | --- | --- |
-| Ink UI state | `gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx:213` | 输入框、渲染、用户确认、进度显示 |
-| `useGeminiStream` | `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:214` | 把用户输入、模型流、工具结果和 continuation 串起来 |
-| Scheduler state | `gemini-cli/packages/cli/src/ui/hooks/useToolScheduler.ts:219` | 管理待确认、执行中、完成/失败工具 |
-| Core client stream | `gemini-cli/packages/core/src/core/client.ts:887` | 提供模型事件和 tool call 请求 |
-| LoopDetectionService | `gemini-cli/packages/core/src/services/loopDetectionService.ts:133` | 在 turn 前和流处理中插入自愈/中断信号 |
+| Ink UI state | `sources/gemini-cli/packages/cli/src/ui/contexts/UIStateContext.tsx:213` | 输入框、渲染、用户确认、进度显示 |
+| `useGeminiStream` | `sources/gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:214` | 把用户输入、模型流、工具结果和 continuation 串起来 |
+| Scheduler state | `sources/gemini-cli/packages/cli/src/ui/hooks/useToolScheduler.ts:219` | 管理待确认、执行中、完成/失败工具 |
+| Core client stream | `sources/gemini-cli/packages/core/src/core/client.ts:887` | 提供模型事件和 tool call 请求 |
+| LoopDetectionService | `sources/gemini-cli/packages/core/src/services/loopDetectionService.ts:133` | 在 turn 前和流处理中插入自愈/中断信号 |
 
 横向看，Gemini 的状态模型可读但分散；完善文档时要避免只讲 UI hook，而要把 Scheduler 和 core client 放进同一张状态图。
 

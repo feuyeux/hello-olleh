@@ -111,7 +111,7 @@ Codex 严格来说有两层入口：
 
 ## 4. 从 `spawn()` 到 Rust `main()` 的交接层
 
-这里最容易误解的一点是：`codex.js` **不是**用 `exec()` 把自己替换掉，而是继续保留为父进程；真正的 Rust CLI 是它拉起的一个子进程（`codex/codex-cli/bin/codex.js:175-229`）。因此进程树更接近：
+这里最容易误解的一点是：`codex.js` **不是**用 `exec()` 把自己替换掉，而是继续保留为父进程；真正的 Rust CLI 是它拉起的一个子进程（`sources/codex/codex-cli/bin/codex.js:175-229`）。因此进程树更接近：
 
 ```text
 shell / terminal
@@ -119,7 +119,7 @@ shell / terminal
    └─ codex   # Rust 原生二进制
 ```
 
-从 `spawn()` 到 Rust `main()`，关键不是抽象表格，而是下面这段实际执行的代码（`codex/codex-cli/bin/codex.js:161-178`）：
+从 `spawn()` 到 Rust `main()`，关键不是抽象表格，而是下面这段实际执行的代码（`sources/codex/codex-cli/bin/codex.js:161-178`）：
 
 ```javascript
 const updatedPath = getUpdatedPath(additionalDirs);
@@ -152,9 +152,9 @@ const child = spawn(binaryPath, process.argv.slice(2), {
    这是启动链里最关键但最容易被忽略的一点。它表示 Rust 子进程直接复用当前终端的 stdin、stdout、stderr，而不是通过 Node 建一层 pipe 做转发。所以后面的 TUI、终端能力探测、alt-screen、信号响应，都是 Rust 进程直接面对真实终端完成的；Node 在这里没有充当“协议桥”。
 
 5. `child = spawn(...)`
-   真正“拉起 Rust 进程”的动作就发生在这一行。可以把它理解成 Node 向 OS 提交了一份启动请求：`binaryPath` 是要跑的程序，`process.argv.slice(2)` 是它的 argv，`env` 是它的环境变量，`stdio: "inherit"` 是它该绑定哪组三大标准流。OS 接到这个请求后才会创建新的原生子进程、装载对应平台二进制、初始化进程上下文，然后进入 Rust 可执行文件自己的入口代码。`spawn()` 返回的是一个 `ChildProcess` 句柄，这也解释了为什么包装层还能继续注册 `child.on("error")`、转发 `SIGINT/SIGTERM/SIGHUP`，并在子进程退出后镜像退出码（`codex/codex-cli/bin/codex.js:180-229`）。
+   真正“拉起 Rust 进程”的动作就发生在这一行。可以把它理解成 Node 向 OS 提交了一份启动请求：`binaryPath` 是要跑的程序，`process.argv.slice(2)` 是它的 argv，`env` 是它的环境变量，`stdio: "inherit"` 是它该绑定哪组三大标准流。OS 接到这个请求后才会创建新的原生子进程、装载对应平台二进制、初始化进程上下文，然后进入 Rust 可执行文件自己的入口代码。`spawn()` 返回的是一个 `ChildProcess` 句柄，这也解释了为什么包装层还能继续注册 `child.on("error")`、转发 `SIGINT/SIGTERM/SIGHUP`，并在子进程退出后镜像退出码（`sources/codex/codex-cli/bin/codex.js:180-229`）。
 
-把上面五点串起来，`spawn` 之后真正发生的是：Node 把“要执行哪个原生文件、带什么 argv、带什么 env、复用哪组 stdio”交给操作系统；操作系统据此创建 Rust 子进程并装载二进制；Rust 运行时完成最初的进程入口收尾后，控制权才落到仓库里的第一个业务入口 `cli/src/main.rs::main()`。整个过程中，完全依赖操作系统提供的“新建进程 + 传递 argv/env/stdio”机制；Codex 自己的业务启动，是从下面这个同步入口才正式开始的（`codex/codex-rs/cli/src/main.rs:595-600`）：
+把上面五点串起来，`spawn` 之后真正发生的是：Node 把“要执行哪个原生文件、带什么 argv、带什么 env、复用哪组 stdio”交给操作系统；操作系统据此创建 Rust 子进程并装载二进制；Rust 运行时完成最初的进程入口收尾后，控制权才落到仓库里的第一个业务入口 `cli/src/main.rs::main()`。整个过程中，完全依赖操作系统提供的“新建进程 + 传递 argv/env/stdio”机制；Codex 自己的业务启动，是从下面这个同步入口才正式开始的（`sources/codex/codex-rs/cli/src/main.rs:595-600`）：
 
 ```rust
 fn main() -> anyhow::Result<()> {
@@ -167,7 +167,7 @@ fn main() -> anyhow::Result<()> {
 
 ## 5. `main()` 之后的第一站：`arg0` 多工具分发
 
-Rust 入口 `main()` 的第一件事是调用 `arg0_dispatch_or_else()`（`codex/codex-rs/arg0/src/lib.rs:153-182`）：
+Rust 入口 `main()` 的第一件事是调用 `arg0_dispatch_or_else()`（`sources/codex/codex-rs/arg0/src/lib.rs:153-182`）：
 
 ```rust
 fn main() -> anyhow::Result<()> {
@@ -189,7 +189,7 @@ fn main() -> anyhow::Result<()> {
 
 ### 6.1 `MultitoolCli` 结构体
 
-`cli_main()` 首先解析 `MultitoolCli`（`codex/codex-rs/cli/src/main.rs:59-86`）：
+`cli_main()` 首先解析 `MultitoolCli`（`sources/codex/codex-rs/cli/src/main.rs:59-86`）：
 
 ```rust
 struct MultitoolCli {
@@ -274,7 +274,7 @@ sequenceDiagram
 
 ### 7.2 `tui::run_main()` 初始化序列
 
-`tui::run_main()`（`codex/codex-rs/tui/src/lib.rs:590-921`）的详细初始化步骤：
+`tui::run_main()`（`sources/codex/codex-rs/tui/src/lib.rs:590-921`）的详细初始化步骤：
 
 | 阶段 | 行号 | 动作 |
 | --- | --- | --- |
@@ -298,7 +298,7 @@ sequenceDiagram
 
 ### 7.4 `App::run()` Bootstrap
 
-`App::run()`（`codex/codex-rs/tui/src/app.rs:3483-3562`）：
+`App::run()`（`sources/codex/codex-rs/tui/src/app.rs:3483-3562`）：
 
 1. 设置事件 channel
 2. 发出初始警告
@@ -310,7 +310,7 @@ sequenceDiagram
 
 ## 8. 非交互分支：Exec 模式
 
-`exec` 子命令（`codex/codex-rs/exec/src/lib.rs:177-326`）的初始化与 TUI 类似但更简洁：
+`exec` 子命令（`sources/codex/codex-rs/exec/src/lib.rs:177-326`）的初始化与 TUI 类似但更简洁：
 
 1. 设置 originator
 2. 解析 CLI
@@ -327,7 +327,7 @@ sequenceDiagram
 
 ## 9. 服务分支：App Server 模式
 
-`app-server` 子命令（`codex/codex-rs/app-server/src/lib.rs:351-432`）：
+`app-server` 子命令（`sources/codex/codex-rs/app-server/src/lib.rs:351-432`）：
 
 1. 设置消息 channel
 2. 解析 CLI 覆盖

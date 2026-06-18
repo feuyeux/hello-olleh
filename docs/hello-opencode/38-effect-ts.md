@@ -446,12 +446,12 @@ return rt.runPromise(service.use(fn), options)
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `opencode/packages/opencode/src/tool/registry.ts:52` | ToolRegistry ServiceMap 声明 | 对应工具服务注入 |
-| `opencode/packages/opencode/src/permission/index.ts:138` | Permission ServiceMap 声明 | 权限服务可替换/可注入 |
-| `opencode/packages/opencode/src/session/status.ts:53` | SessionStatus ServiceMap 声明 | 运行态服务化 |
-| `opencode/packages/opencode/src/effect/instance-state.ts:15` | `InstanceState.make()` | 多实例状态缓存入口 |
-| `opencode/packages/opencode/src/snapshot/index.ts:68` | Snapshot 使用 InstanceState | 说明快照服务和实例作用域绑定 |
-| `opencode/packages/opencode/src/project/instance.ts:117` | `Instance.state()` | 把 Effect 状态绑定到工作目录 |
+| `sources/opencode/packages/opencode/src/tool/registry.ts:52` | ToolRegistry ServiceMap 声明 | 对应工具服务注入 |
+| `sources/opencode/packages/opencode/src/permission/index.ts:138` | Permission ServiceMap 声明 | 权限服务可替换/可注入 |
+| `sources/opencode/packages/opencode/src/session/status.ts:53` | SessionStatus ServiceMap 声明 | 运行态服务化 |
+| `sources/opencode/packages/opencode/src/effect/instance-state.ts:15` | `InstanceState.make()` | 多实例状态缓存入口 |
+| `sources/opencode/packages/opencode/src/snapshot/index.ts:68` | Snapshot 使用 InstanceState | 说明快照服务和实例作用域绑定 |
+| `sources/opencode/packages/opencode/src/project/instance.ts:117` | `Instance.state()` | 把 Effect 状态绑定到工作目录 |
 
 ## 8. 关键函数清单
 

@@ -21,7 +21,7 @@ Gemini CLI 当前的 skill 机制很明确：skill 是一个带 frontmatter 的 
 
 ## 1. Skill 文件的真实格式
 
-Skill 解析逻辑在 `gemini-cli/packages/core/src/skills/skillLoader.ts`。
+Skill 解析逻辑在 `sources/gemini-cli/packages/core/src/skills/skillLoader.ts`。
 
 当前 loader 只强依赖两项 frontmatter：
 
@@ -52,7 +52,7 @@ loader 默认扫描：
 
 ## 2. Skill 从哪些位置被发现
 
-`gemini-cli/packages/core/src/skills/skillManager.ts` 中的 `SkillManager.discoverSkills()` 会按优先级加载 skill：
+`sources/gemini-cli/packages/core/src/skills/skillManager.ts` 中的 `SkillManager.discoverSkills()` 会按优先级加载 skill：
 
 1. 内建 skill
 2. extension 提供的 skill
@@ -61,7 +61,7 @@ loader 默认扫描：
 
 具体目录包括：
 
-- `gemini-cli/packages/core/src/skills/builtin/`
+- `sources/gemini-cli/packages/core/src/skills/builtin/`
 - `~/.gemini/skills/`
 - `~/.agents/skills/`
 - `<project>/.gemini/skills/`
@@ -81,7 +81,7 @@ Gemini CLI 并没有一个“按关键词自动命中 skill”的中心注册器
 2. 模型需要更细的专用指令时，调用 `activate_skill`
 3. `activate_skill` 把 skill 正文和资源目录结构返回给模型
 
-激活逻辑在 `gemini-cli/packages/core/src/tools/activate-skill.ts`。
+激活逻辑在 `sources/gemini-cli/packages/core/src/tools/activate-skill.ts`。
 
 ## 4. `activate_skill` 真正做了什么
 
@@ -97,7 +97,7 @@ Gemini CLI 并没有一个“按关键词自动命中 skill”的中心注册器
 
 ## 5. Prompt 系统如何感知 skill
 
-`gemini-cli/packages/core/src/prompts/promptProvider.ts` 会从 `SkillManager.getSkills()` 拉取可用 skill 列表，再交给 `renderAgentSkills()` 写入 system prompt。
+`sources/gemini-cli/packages/core/src/prompts/promptProvider.ts` 会从 `SkillManager.getSkills()` 拉取可用 skill 列表，再交给 `renderAgentSkills()` 写入 system prompt。
 
 所以在当前实现里：
 
@@ -122,10 +122,10 @@ Gemini CLI 并没有一个“按关键词自动命中 skill”的中心注册器
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Skill 解析 | `gemini-cli/packages/core/src/skills/skillLoader.ts` | 解析 frontmatter 与正文 |
-| Skill 管理 | `gemini-cli/packages/core/src/skills/skillManager.ts` | 发现、覆盖、禁用、激活状态 |
-| 激活工具 | `gemini-cli/packages/core/src/tools/activate-skill.ts` | 把 skill 正文与资源注入上下文 |
-| Prompt 接入 | `gemini-cli/packages/core/src/prompts/promptProvider.ts` | 在 system prompt 中列出可用 skill |
+| Skill 解析 | `sources/gemini-cli/packages/core/src/skills/skillLoader.ts` | 解析 frontmatter 与正文 |
+| Skill 管理 | `sources/gemini-cli/packages/core/src/skills/skillManager.ts` | 发现、覆盖、禁用、激活状态 |
+| 激活工具 | `sources/gemini-cli/packages/core/src/tools/activate-skill.ts` | 把 skill 正文与资源注入上下文 |
+| Prompt 接入 | `sources/gemini-cli/packages/core/src/prompts/promptProvider.ts` | 在 system prompt 中列出可用 skill |
 
 ---
 
@@ -172,12 +172,12 @@ Gemini CLI 的 skill 生命周期可以拆成四步：
 
 | 阶段 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| 发现 | `gemini-cli/packages/core/src/skills/skillManager.ts:47` | `discoverSkills()` 扫描内建、extension、user、workspace skill |
-| 暴露 | `gemini-cli/packages/core/src/prompts/promptProvider.ts:58` | PromptProvider 从 `SkillManager.getSkills()` 取 skill 列表 |
-| 渲染 | `gemini-cli/packages/core/src/prompts/promptProvider.ts:111` | `renderAgentSkills()` 把可用 skill 名称/描述放入 system prompt |
-| 激活 | `gemini-cli/packages/core/src/tools/activate-skill.ts:130` | `activate_skill` 调用 `skillManager.activateSkill()`，再返回 skill body |
+| 发现 | `sources/gemini-cli/packages/core/src/skills/skillManager.ts:47` | `discoverSkills()` 扫描内建、extension、user、workspace skill |
+| 暴露 | `sources/gemini-cli/packages/core/src/prompts/promptProvider.ts:58` | PromptProvider 从 `SkillManager.getSkills()` 取 skill 列表 |
+| 渲染 | `sources/gemini-cli/packages/core/src/prompts/promptProvider.ts:111` | `renderAgentSkills()` 把可用 skill 名称/描述放入 system prompt |
+| 激活 | `sources/gemini-cli/packages/core/src/tools/activate-skill.ts:130` | `activate_skill` 调用 `skillManager.activateSkill()`，再返回 skill body |
 
-因此，skill 的“生效”不是发现时发生，而是模型调用 `activate_skill` 后才发生。`activate_skill` 自身是工具调用，所以仍要经过工具治理路径；非内建 skill 还会在执行阶段发 policy/确认更新（`gemini-cli/packages/core/src/tools/activate-skill.ts:105`）。
+因此，skill 的“生效”不是发现时发生，而是模型调用 `activate_skill` 后才发生。`activate_skill` 自身是工具调用，所以仍要经过工具治理路径；非内建 skill 还会在执行阶段发 policy/确认更新（`sources/gemini-cli/packages/core/src/tools/activate-skill.ts:105`）。
 
 ### 与 ToolRegistry / Scheduler 的关系
 

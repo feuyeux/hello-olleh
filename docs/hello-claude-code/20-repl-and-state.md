@@ -600,10 +600,10 @@ Claude Code 的 REPL/TUI 与 agent runtime 耦合更深，React state、hooks、
 
 | 状态类型 | 归属 | 是否写 transcript | 源码锚点 |
 | --- | --- | --- | --- |
-| 输入框、spinner、工具 JSX | React TUI / AppState | 通常不直接写入，除非形成 message/command output | `claude-code/src/utils/processUserInput/processSlashCommand.tsx:121` |
-| query turn state | `query()` 内部 `State` / `ToolUseContext` | 只有最终消息、tool result、特定 attachment 写入 | `claude-code/src/query.ts:187`, `claude-code/src/query.ts:1364` |
-| tombstone / orphan cleanup | query runtime -> UI/transcript 修正 | tombstone 用于移除 UI/transcript 中孤儿消息 | `claude-code/src/query.ts:713` |
-| hook continuation | query runtime | 作为 attachment 影响下一轮与可见历史 | `claude-code/src/query.ts:1393` |
-| transcript mode | settings | 决定 chat/transcript 展示模式 | `claude-code/src/utils/settings/types.ts:925` |
+| 输入框、spinner、工具 JSX | React TUI / AppState | 通常不直接写入，除非形成 message/command output | `sources/claude-code/src/utils/processUserInput/processSlashCommand.tsx:121` |
+| query turn state | `query()` 内部 `State` / `ToolUseContext` | 只有最终消息、tool result、特定 attachment 写入 | `sources/claude-code/src/query.ts:187`, `sources/claude-code/src/query.ts:1364` |
+| tombstone / orphan cleanup | query runtime -> UI/transcript 修正 | tombstone 用于移除 UI/transcript 中孤儿消息 | `sources/claude-code/src/query.ts:713` |
+| hook continuation | query runtime | 作为 attachment 影响下一轮与可见历史 | `sources/claude-code/src/query.ts:1393` |
+| transcript mode | settings | 决定 chat/transcript 展示模式 | `sources/claude-code/src/utils/settings/types.ts:925` |
 
 因此，Claude Code 的 UI 状态、query runtime 状态和 transcript 事实源不是同一个对象。调试“UI 看见了但 resume 没恢复”的问题时，要确认该状态是否曾经被序列化到 transcript，而不是只看 React state。

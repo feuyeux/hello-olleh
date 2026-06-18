@@ -478,11 +478,11 @@ if (part.state.status === "completed") {
 
 | 阶段 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| Prompt 入口 | `opencode/packages/opencode/src/session/prompt.ts:162` | `SessionPrompt.prompt()` |
-| Loop 入口 | `opencode/packages/opencode/src/session/prompt.ts:278` | `SessionPrompt.loop()` |
-| Processor | `opencode/packages/opencode/src/session/processor.ts:46`, `opencode/packages/opencode/src/session/processor.ts:54` | fullStream 处理和 `LLM.stream()` 调用 |
-| LLM 请求 | `opencode/packages/opencode/src/session/prompt.ts:2013` | prompt 侧直接调用 `LLM.stream()` 的路径 |
-| Server route | `opencode/packages/opencode/src/server/routes/session.ts:819`, `opencode/packages/opencode/src/server/routes/session.ts:544` | HTTP prompt 与 loop 触发点 |
+| Prompt 入口 | `sources/opencode/packages/opencode/src/session/prompt.ts:162` | `SessionPrompt.prompt()` |
+| Loop 入口 | `sources/opencode/packages/opencode/src/session/prompt.ts:278` | `SessionPrompt.loop()` |
+| Processor | `sources/opencode/packages/opencode/src/session/processor.ts:46`, `sources/opencode/packages/opencode/src/session/processor.ts:54` | fullStream 处理和 `LLM.stream()` 调用 |
+| LLM 请求 | `sources/opencode/packages/opencode/src/session/prompt.ts:2013` | prompt 侧直接调用 `LLM.stream()` 的路径 |
+| Server route | `sources/opencode/packages/opencode/src/server/routes/session.ts:819`, `sources/opencode/packages/opencode/src/server/routes/session.ts:544` | HTTP prompt 与 loop 触发点 |
 
 - **`loop()` 是单一大函数**：`prompt.ts:242-756` 超过 500 行，承载了 subtask / compaction / overflow / normal round 四条分支，测试和局部修改的代价较高。
 - **工具结果缺乏结构化错误分类**：工具执行失败后只有字符串错误信息，模型无法据此区分"工具崩溃"还是"工具返回无效结果"，影响 loop 的自愈路径。

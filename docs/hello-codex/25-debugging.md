@@ -179,9 +179,9 @@ Codex 调试路径要把 Rust tracing、thread/turn events、tool approval、san
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `codex/codex-rs/tui/src/lib.rs:913` | TUI tracing / `RUST_LOG` 配置 | 对应 Gemini `debugLogger` |
-| `codex/codex-rs/tui/src/lib.rs:952` | OpenTelemetry provider 初始化 | 对应可观测性章节 |
-| `codex/codex-rs/core/src/otel_init.rs:13` | OTEL provider 构造入口 | 说明 core 也有结构化遥测 |
-| `codex/codex-rs/cli/src/main.rs:201` | `debug` 子命令结构 | 调试入口不是只靠日志 |
-| `codex/codex-rs/cli/src/main.rs:1241` | `debug prompt-input` 执行入口 | 对应输入解析调试 |
-| `codex/codex-rs/app-server/src/app_server_tracing.rs:87` | app-server transport tracing 维度 | 对应 SDK/Transport 调试 |
+| `sources/codex/codex-rs/tui/src/lib.rs:913` | TUI tracing / `RUST_LOG` 配置 | 对应 Gemini `debugLogger` |
+| `sources/codex/codex-rs/tui/src/lib.rs:952` | OpenTelemetry provider 初始化 | 对应可观测性章节 |
+| `sources/codex/codex-rs/core/src/otel_init.rs:13` | OTEL provider 构造入口 | 说明 core 也有结构化遥测 |
+| `sources/codex/codex-rs/cli/src/main.rs:201` | `debug` 子命令结构 | 调试入口不是只靠日志 |
+| `sources/codex/codex-rs/cli/src/main.rs:1241` | `debug prompt-input` 执行入口 | 对应输入解析调试 |
+| `sources/codex/codex-rs/app-server/src/app_server_tracing.rs:87` | app-server transport tracing 维度 | 对应 SDK/Transport 调试 |

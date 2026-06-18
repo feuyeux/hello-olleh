@@ -8,10 +8,10 @@ title: "17 - Prompt 系统横向对比"
 
 对应项目章节：
 
-- `hello-claude-code/11-prompt-system.md`
-- `hello-codex/11-prompt-system.md`
-- `hello-gemini-cli/11-prompt-system.md`
-- `hello-opencode/11-prompt-system.md`
+- `docs/hello-claude-code/11-prompt-system.md`
+- `docs/hello-codex/11-prompt-system.md`
+- `docs/hello-gemini-cli/11-prompt-system.md`
+- `docs/hello-opencode/11-prompt-system.md`
 
 ## 1. 一句话结论
 
@@ -40,10 +40,10 @@ Claude Code 的文档最需要保留细节，因为它把 prompt 当成产品行
 
 | 项目 | Prompt 构造 / 注入点 | 项目指令 | 工具 / Skill 注入 |
 | --- | --- | --- | --- |
-| Claude Code | `claude-code/src/constants/prompts.ts`, `claude-code/src/query.ts:365` | `claude-code/src/context.ts` | `claude-code/src/tools/AgentTool/built-in/exploreAgent.ts`, `claude-code/src/skills/loadSkillsDir.ts` |
-| Codex | `codex/codex-rs/core/src/session/turn.rs`, `codex/codex-rs/core/src/client.rs` | `codex/codex-rs/core/src/agents_md.rs` | `codex/codex-rs/core/src/tools/spec.rs:32`, `codex/codex-rs/core/src/compact.rs` |
-| Gemini CLI | `gemini-cli/packages/core/src/core/prompts.ts`, `gemini-cli/packages/core/src/prompts/promptProvider.ts` | `gemini-cli/packages/core/src/prompts/snippets.ts` | `gemini-cli/packages/core/src/tools/activate-skill.ts`, `gemini-cli/packages/core/src/tools/tool-registry.ts:635` |
-| OpenCode | `opencode/packages/opencode/src/session/prompt.ts:162`, `opencode/packages/opencode/src/session/prompt.ts:2013` | `opencode/packages/opencode/src/session/prompt.ts:986` | `opencode/packages/opencode/src/session/prompt.ts:1304`, `opencode/packages/opencode/src/command/index.ts:117` |
+| Claude Code | `sources/claude-code/src/constants/prompts.ts`, `sources/claude-code/src/query.ts:365` | `sources/claude-code/src/context.ts` | `sources/claude-code/src/tools/AgentTool/built-in/exploreAgent.ts`, `sources/claude-code/src/skills/loadSkillsDir.ts` |
+| Codex | `sources/codex/codex-rs/core/src/session/turn.rs`, `sources/codex/codex-rs/core/src/client.rs` | `sources/codex/codex-rs/core/src/agents_md.rs` | `sources/codex/codex-rs/core/src/tools/spec.rs:32`, `sources/codex/codex-rs/core/src/compact.rs` |
+| Gemini CLI | `sources/gemini-cli/packages/core/src/core/prompts.ts`, `sources/gemini-cli/packages/core/src/prompts/promptProvider.ts` | `sources/gemini-cli/packages/core/src/prompts/snippets.ts` | `sources/gemini-cli/packages/core/src/tools/activate-skill.ts`, `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:635` |
+| OpenCode | `sources/opencode/packages/opencode/src/session/prompt.ts:162`, `sources/opencode/packages/opencode/src/session/prompt.ts:2013` | `sources/opencode/packages/opencode/src/session/prompt.ts:986` | `sources/opencode/packages/opencode/src/session/prompt.ts:1304`, `sources/opencode/packages/opencode/src/command/index.ts:117` |
 
 ## 5. 建议统一章节结构
 

@@ -619,13 +619,13 @@ A06 讲的是请求怎样被拼出来、怎样发出去；A07 才讲返回流怎
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `opencode/packages/opencode/src/session/prompt.ts:2013` | `LLM.stream()` 调用点 | 对应 Claude API request / Codex model client |
-| `opencode/packages/opencode/src/session/llm.ts:27` | `LLM` 命名空间 | 模型请求封装入口 |
-| `opencode/packages/opencode/src/session/llm.ts:113` | OpenAI OAuth `instructions` 兼容 | 说明 provider 兼容影响 prompt 形态 |
-| `opencode/packages/opencode/src/session/llm.ts:183` | `_noop` tool 兼容分支 | 对应 provider/tool capability workaround |
-| `opencode/packages/opencode/src/session/llm.ts:220` | `streamText()` 最终调用 | OpenCode 绑定 AI SDK 的核心点 |
-| `opencode/packages/opencode/src/session/llm.ts:272` | `wrapLanguageModel()` middleware | 对应请求拦截/修复层 |
-| `opencode/packages/opencode/src/provider/transform.ts:878` | provider options remap | 说明 OpenCode 的模型适配集中在 transform |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:2013` | `LLM.stream()` 调用点 | 对应 Claude API request / Codex model client |
+| `sources/opencode/packages/opencode/src/session/llm.ts:27` | `LLM` 命名空间 | 模型请求封装入口 |
+| `sources/opencode/packages/opencode/src/session/llm.ts:113` | OpenAI OAuth `instructions` 兼容 | 说明 provider 兼容影响 prompt 形态 |
+| `sources/opencode/packages/opencode/src/session/llm.ts:183` | `_noop` tool 兼容分支 | 对应 provider/tool capability workaround |
+| `sources/opencode/packages/opencode/src/session/llm.ts:220` | `streamText()` 最终调用 | OpenCode 绑定 AI SDK 的核心点 |
+| `sources/opencode/packages/opencode/src/session/llm.ts:272` | `wrapLanguageModel()` middleware | 对应请求拦截/修复层 |
+| `sources/opencode/packages/opencode/src/provider/transform.ts:878` | provider options remap | 说明 OpenCode 的模型适配集中在 transform |
 
 ---
 

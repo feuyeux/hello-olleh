@@ -72,7 +72,7 @@ sequenceDiagram
 
 ## 第一层：submission_loop（会话事件分发器）
 
-**位置**：`codex/codex-rs/core/src/codex.rs:4289`
+**位置**：`sources/codex/codex-rs/core/src/codex.rs:4289`
 
 submission_loop 是每个会话的单线程事件消费者。它通过 bounded channel（容量 512）接收 `Submission`：
 
@@ -86,13 +86,13 @@ pub struct Submission {
 
 主循环 `while let Ok(sub) = rx_sub.recv().await` 逐一处理操作，不做批处理。操作类型包括 `UserInput`、`Interrupt`、`ExecApproval`、`DynamicToolResponse`、`Shutdown` 等 20+ 种。
 
-要先澄清一个边界：**submission_loop 不是 WebSocket/HTTP server 的监听循环**。监听连接的是 app-server 传输层，在 `codex/codex-rs/app-server/src/lib.rs` 里按 `stdio` 或 `WebSocket` 启动连接接入；submission_loop 只负责消费已经进入 core 的 `Submission` 队列。
+要先澄清一个边界：**submission_loop 不是 WebSocket/HTTP server 的监听循环**。监听连接的是 app-server 传输层，在 `sources/codex/codex-rs/app-server/src/lib.rs` 里按 `stdio` 或 `WebSocket` 启动连接接入；submission_loop 只负责消费已经进入 core 的 `Submission` 队列。
 
 ### TUI 请求如何进入 submission_loop
 
 默认 TUI 把用户输入，先经过 app-server 抽象层，再由 app-server 把请求翻译成 `Op::UserInput` 送入 core。
 
-默认路径是 **Embedded/InProcess**，只有显式 `--remote` 时才会走 remote WebSocket app-server（`codex/codex-rs/tui/src/lib.rs:598-604`; `codex/codex-rs/tui/src/lib.rs:348-372`）。
+默认路径是 **Embedded/InProcess**，只有显式 `--remote` 时才会走 remote WebSocket app-server（`sources/codex/codex-rs/tui/src/lib.rs:598-604`; `sources/codex/codex-rs/tui/src/lib.rs:348-372`）。
 
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
@@ -117,18 +117,18 @@ sequenceDiagram
 
 | 层次 | 文件 | 关键方法 | 作用 |
 | --- | --- | --- | --- |
-| TUI 事件入口 | `codex/codex-rs/tui/src/app.rs` | `submit_thread_op()`（1812）、`try_submit_active_thread_op_via_app_server()`（2051） | 决定一个 `AppCommand` 是本地处理，还是经 app-server 提交 |
-| TUI RPC 包装 | `codex/codex-rs/tui/src/app_server_session.rs` | `turn_start()`（397） | 把用户输入包装成 `ClientRequest::TurnStart` 发给 app-server client |
-| TUI 模式选择 | `codex/codex-rs/tui/src/lib.rs` | `start_app_server()`（348）、`AppServerTarget::Embedded/Remote`（598） | 默认走 embedded in-process app-server；只有 `--remote` 才连远端 WebSocket |
-| app-server 请求处理 | `codex/codex-rs/app-server/src/codex_message_processor.rs` | `turn_start()`（6360）、`submit_core_op()`（2157） | 把 `turn/start` 映射成 `Op::UserInput`，并提交给目标线程 |
-| core 提交入口 | `codex/codex-rs/core/src/codex.rs` | `submit_with_trace()`（697）、`submit_with_id()`（714） | 生成 `Submission`，经 `tx_sub.send(...)` 放入线程队列 |
-| core 消费循环 | `codex/codex-rs/core/src/codex.rs` | `submission_loop()`（4289） | 从 `rx_sub.recv().await` 取出提交，按 `Op` 分发；`UserInput/UserTurn` 进入 `handlers::user_input_or_turn()`（4373） |
+| TUI 事件入口 | `sources/codex/codex-rs/tui/src/app.rs` | `submit_thread_op()`（1812）、`try_submit_active_thread_op_via_app_server()`（2051） | 决定一个 `AppCommand` 是本地处理，还是经 app-server 提交 |
+| TUI RPC 包装 | `sources/codex/codex-rs/tui/src/app_server_session.rs` | `turn_start()`（397） | 把用户输入包装成 `ClientRequest::TurnStart` 发给 app-server client |
+| TUI 模式选择 | `sources/codex/codex-rs/tui/src/lib.rs` | `start_app_server()`（348）、`AppServerTarget::Embedded/Remote`（598） | 默认走 embedded in-process app-server；只有 `--remote` 才连远端 WebSocket |
+| app-server 请求处理 | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs` | `turn_start()`（6360）、`submit_core_op()`（2157） | 把 `turn/start` 映射成 `Op::UserInput`，并提交给目标线程 |
+| core 提交入口 | `sources/codex/codex-rs/core/src/codex.rs` | `submit_with_trace()`（697）、`submit_with_id()`（714） | 生成 `Submission`，经 `tx_sub.send(...)` 放入线程队列 |
+| core 消费循环 | `sources/codex/codex-rs/core/src/codex.rs` | `submission_loop()`（4289） | 从 `rx_sub.recv().await` 取出提交，按 `Op` 分发；`UserInput/UserTurn` 进入 `handlers::user_input_or_turn()`（4373） |
 
 因此，`submission_loop` 更准确的定位是：**线程级 Op 队列消费者**。WebSocket/stdio 负责把外部请求送到 app-server，app-server 再把它变成 `Submission` 丢进这里；它本身不直接监听网络端口。
 
 ## 第二层：run_turn（回合执行控制器）
 
-**位置**：`codex/codex-rs/core/src/codex.rs:5584`
+**位置**：`sources/codex/codex-rs/core/src/codex.rs:5584`
 
 `run_turn` 是单轮执行的核心控制器，分为**预采样准备**和**回合循环**两个阶段。
 
@@ -528,7 +528,7 @@ pub(crate) fn for_prompt(mut self, input_modalities) -> Vec<ResponseItem> {
 
 ## 第三层：run_sampling_request（LLM 编排与重试）
 
-**位置**：`codex/codex-rs/core/src/codex.rs:6363`
+**位置**：`sources/codex/codex-rs/core/src/codex.rs:6363`
 
 ### 核心序列
 
@@ -610,7 +610,7 @@ loop {
 
 ## 第四层：try_run_sampling_request（流式响应循环）
 
-**位置**：`codex/codex-rs/core/src/codex.rs:7176`
+**位置**：`sources/codex/codex-rs/core/src/codex.rs:7176`
 
 ### 核心流程
 
@@ -919,9 +919,9 @@ if retries >= max_retries && client_session.try_switch_fallback_transport(...) {
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `codex/codex-rs/core/src/codex.rs:4289` | `submission_loop()` 消费 core submission 队列 | 对应 Claude `query()`、OpenCode `loop()` |
-| `codex/codex-rs/core/src/codex.rs:5584` | `run_turn()` 单轮控制器 | 对应 Gemini `processTurn()` |
-| `codex/codex-rs/core/src/codex.rs:6363` | `run_sampling_request()` 组装并发起模型请求 | 对应 OpenCode `LLM.stream()` 调用前 |
-| `codex/codex-rs/core/src/codex.rs:7176` | `try_run_sampling_request()` 消费 streaming 响应并调度工具 | 对应 Gemini `Turn.run()` |
-| `codex/codex-rs/tui/src/app.rs:1812` | TUI 把用户操作转成 thread op | 说明 UI 不是直接进入模型 |
-| `codex/codex-rs/app-server/src/codex_message_processor.rs:2157` | app-server 将请求提交到 core | 连接 SDK/transport 章节 |
+| `sources/codex/codex-rs/core/src/codex.rs:4289` | `submission_loop()` 消费 core submission 队列 | 对应 Claude `query()`、OpenCode `loop()` |
+| `sources/codex/codex-rs/core/src/codex.rs:5584` | `run_turn()` 单轮控制器 | 对应 Gemini `processTurn()` |
+| `sources/codex/codex-rs/core/src/codex.rs:6363` | `run_sampling_request()` 组装并发起模型请求 | 对应 OpenCode `LLM.stream()` 调用前 |
+| `sources/codex/codex-rs/core/src/codex.rs:7176` | `try_run_sampling_request()` 消费 streaming 响应并调度工具 | 对应 Gemini `Turn.run()` |
+| `sources/codex/codex-rs/tui/src/app.rs:1812` | TUI 把用户操作转成 thread op | 说明 UI 不是直接进入模型 |
+| `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:2157` | app-server 将请求提交到 core | 连接 SDK/transport 章节 |

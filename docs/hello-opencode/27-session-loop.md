@@ -525,12 +525,12 @@ loop 最后会重新扫描 durable history：
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `opencode/packages/opencode/src/session/prompt.ts:278` | session loop 入口附近 | 对应 Claude `query()`、Codex turn loop |
-| `opencode/packages/opencode/src/session/prompt.ts:299` | `SessionStatus` 切为 busy | 说明 OpenCode 有显式运行态 |
-| `opencode/packages/opencode/src/session/prompt.ts:302` | 从 `MessageV2.filterCompacted(MessageV2.stream())` 重建历史 | 对比 Claude transcript / Gemini conversation |
-| `opencode/packages/opencode/src/session/prompt.ts:591` | 创建 `SessionProcessor` | loop 与 processor 分层边界 |
-| `opencode/packages/opencode/src/session/prompt.ts:695` | 投影为模型消息 | 对应四项目 prompt assembly |
-| `opencode/packages/opencode/src/session/prompt.ts:747` | 最终再次遍历 durable history | 说明结果以数据库历史为准 |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:278` | session loop 入口附近 | 对应 Claude `query()`、Codex turn loop |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:299` | `SessionStatus` 切为 busy | 说明 OpenCode 有显式运行态 |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:302` | 从 `MessageV2.filterCompacted(MessageV2.stream())` 重建历史 | 对比 Claude transcript / Gemini conversation |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:591` | 创建 `SessionProcessor` | loop 与 processor 分层边界 |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:695` | 投影为模型消息 | 对应四项目 prompt assembly |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:747` | 最终再次遍历 durable history | 说明结果以数据库历史为准 |
 
 ---
 

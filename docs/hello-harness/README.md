@@ -1,6 +1,6 @@
 # Hello Harness
 
-`hello-harness/` 是跨 AI Coding CLI 的综合分析层。它不绑定某一个上游工程，而是把 Claude Code、Codex、Gemini CLI、OpenCode 等实现抽象成 Harness Engineering 的控制系统：控制平面、前馈控制、反馈控制、工具治理、上下文与记忆、可驾驭性、熵管理、多代理验证、人类导向和扩展性。
+`docs/hello-harness/` 是跨 AI Coding CLI 的综合分析层。它不绑定某一个上游工程，而是把 Claude Code、Codex、Gemini CLI、OpenCode 等实现抽象成 Harness Engineering 的控制系统：控制平面、前馈控制、反馈控制、工具治理、上下文与记忆、可驾驭性、熵管理、多代理验证、人类导向和扩展性。
 
 ## 阅读入口
 

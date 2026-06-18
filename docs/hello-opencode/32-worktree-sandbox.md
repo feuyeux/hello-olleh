@@ -453,13 +453,13 @@ path.relative(Instance.worktree, target)
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `opencode/packages/opencode/src/project/project.ts:165` | `Project.fromDirectory()` 发现入口 | 对应其他项目的 cwd/project root 推导 |
-| `opencode/packages/opencode/src/project/project.ts:172` | 向上查找 `.git` | sandbox 识别第一步 |
-| `opencode/packages/opencode/src/project/project.ts:244` | 输出 `sandbox/worktree` 二元结果 | 说明两者不是同一概念 |
-| `opencode/packages/opencode/src/project/project.ts:411` | `Project.addSandbox()` | 新 worktree 登记到 project |
-| `opencode/packages/opencode/src/project/instance.ts:43` | `Instance` bootstrap 使用 sandbox 作为 worktree | 解释运行时为什么围绕当前执行根 |
-| `opencode/packages/opencode/src/worktree/index.ts:351` | `git worktree add` | 真正创建 Git worktree |
-| `opencode/packages/opencode/src/worktree/index.ts:381` | 新目录二次 bootstrap | 对应“新 sandbox 进入运行时” |
+| `sources/opencode/packages/opencode/src/project/project.ts:165` | `Project.fromDirectory()` 发现入口 | 对应其他项目的 cwd/project root 推导 |
+| `sources/opencode/packages/opencode/src/project/project.ts:172` | 向上查找 `.git` | sandbox 识别第一步 |
+| `sources/opencode/packages/opencode/src/project/project.ts:244` | 输出 `sandbox/worktree` 二元结果 | 说明两者不是同一概念 |
+| `sources/opencode/packages/opencode/src/project/project.ts:411` | `Project.addSandbox()` | 新 worktree 登记到 project |
+| `sources/opencode/packages/opencode/src/project/instance.ts:43` | `Instance` bootstrap 使用 sandbox 作为 worktree | 解释运行时为什么围绕当前执行根 |
+| `sources/opencode/packages/opencode/src/worktree/index.ts:351` | `git worktree add` | 真正创建 Git worktree |
+| `sources/opencode/packages/opencode/src/worktree/index.ts:381` | 新目录二次 bootstrap | 对应“新 sandbox 进入运行时” |
 
 ---
 

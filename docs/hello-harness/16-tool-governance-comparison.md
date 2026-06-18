@@ -8,10 +8,10 @@ title: "16 - 工具治理横向对比"
 
 对应项目章节：
 
-- `hello-claude-code/05-tool-system.md`
-- `hello-codex/05-tool-system.md`
-- `hello-gemini-cli/05-tool-system.md`
-- `hello-opencode/05-tool-system.md`
+- `docs/hello-claude-code/05-tool-system.md`
+- `docs/hello-codex/05-tool-system.md`
+- `docs/hello-gemini-cli/05-tool-system.md`
+- `docs/hello-opencode/05-tool-system.md`
 
 ## 1. 一句话结论
 
@@ -52,10 +52,10 @@ flowchart LR
 
 | 项目 | Registry / Schema | Permission / Policy | Execution / Result |
 | --- | --- | --- | --- |
-| Claude Code | `claude-code/src/Tool.ts:123`, `claude-code/src/tools.ts` | `claude-code/src/hooks/useCanUseTool.tsx`, `claude-code/src/services/tools/toolOrchestration.ts` | `claude-code/src/services/tools/toolExecution.ts`, `claude-code/src/services/tools/StreamingToolExecutor.ts` |
-| Codex | `codex/codex-rs/core/src/tools/spec.rs:32` | `codex/codex-rs/core/src/tools/orchestrator.rs:111`, `codex/codex-rs/core/src/exec_policy.rs:234` | `codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` |
-| Gemini CLI | `gemini-cli/packages/core/src/tools/tool-registry.ts:352` | `gemini-cli/packages/core/src/policy/policy-engine.ts` | `gemini-cli/packages/core/src/scheduler/scheduler.ts:191`, `gemini-cli/packages/core/src/scheduler/tool-executor.ts:60` |
-| OpenCode | `opencode/packages/opencode/src/tool/registry.ts:36` | `opencode/packages/opencode/src/permission/evaluate.ts:9`, `opencode/packages/opencode/src/permission/index.ts:166` | `opencode/packages/opencode/src/session/index.ts:423` |
+| Claude Code | `sources/claude-code/src/Tool.ts:123`, `sources/claude-code/src/tools.ts` | `sources/claude-code/src/hooks/useCanUseTool.tsx`, `sources/claude-code/src/services/tools/toolOrchestration.ts` | `sources/claude-code/src/services/tools/toolExecution.ts`, `sources/claude-code/src/services/tools/StreamingToolExecutor.ts` |
+| Codex | `sources/codex/codex-rs/core/src/tools/spec.rs:32` | `sources/codex/codex-rs/core/src/tools/orchestrator.rs:111`, `sources/codex/codex-rs/core/src/exec_policy.rs:234` | `sources/codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` |
+| Gemini CLI | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:352` | `sources/gemini-cli/packages/core/src/policy/policy-engine.ts` | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts:191`, `sources/gemini-cli/packages/core/src/scheduler/tool-executor.ts:60` |
+| OpenCode | `sources/opencode/packages/opencode/src/tool/registry.ts:36` | `sources/opencode/packages/opencode/src/permission/evaluate.ts:9`, `sources/opencode/packages/opencode/src/permission/index.ts:166` | `sources/opencode/packages/opencode/src/session/index.ts:423` |
 
 ## 4. 文档完善要求
 

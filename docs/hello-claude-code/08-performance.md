@@ -272,8 +272,8 @@ transcript 不是“顺便记一下”，而是会直接影响：
 
 相关数字与表述更准确地归属于上下文治理专题：
 
-- `200K` 对应 [`src/utils/context.ts`](../claude-code/src/utils/context.ts) 里的 `MODEL_CONTEXT_WINDOW_DEFAULT = 200_000`，也就是默认上下文窗口上限。
-- `20K` 对应 [`src/services/compact/autoCompact.ts`](../claude-code/src/services/compact/autoCompact.ts) 里的 `MAX_OUTPUT_TOKENS_FOR_SUMMARY = 20_000`，这是 compaction summary 的预留输出预算，不是通用 memory 配额。
+- `200K` 对应 [`src/utils/context.ts`](../../sources/claude-code/src/utils/context.ts) 里的 `MODEL_CONTEXT_WINDOW_DEFAULT = 200_000`，也就是默认上下文窗口上限。
+- `20K` 对应 [`src/services/compact/autoCompact.ts`](../../sources/claude-code/src/services/compact/autoCompact.ts) 里的 `MAX_OUTPUT_TOKENS_FOR_SUMMARY = 20_000`，这是 compaction summary 的预留输出预算，不是通用 memory 配额。
 - “字节级一致”不是一句抽象口号，而是多处显式工程约束的合称：
   - system prompt 边界前后分块
   - sticky-on headers
@@ -371,4 +371,4 @@ Claude Code 的性能分析要围绕 prompt cache 稳定性、context compaction
 | Compact 频率 | context 接近阈值到 summary 替换 | before/after token、summary token、触发原因 | 四项目长会话共同指标 |
 | Prompt cache 稳定性 | cache boundary 与请求 metadata | cache key 变化、命中率、失效原因 | Claude 侧性能特色 |
 
-源码定位上，context/token 统计和 cache 边界可从 `claude-code/src/utils/messages.ts:2976`、`claude-code/src/utils/messages.ts:3025`、`claude-code/src/utils/messages.ts:4468`、`claude-code/src/utils/messages.ts:4538` 跟起；模型流请求与重试在 `claude-code/src/services/api/claude.ts:1869` 到 `claude-code/src/services/api/claude.ts:1875`、`claude-code/src/services/api/claude.ts:1945`、`claude-code/src/services/api/claude.ts:1955`；session tracing 可从 `claude-code/src/utils/telemetry/sessionTracing.ts:371`、`claude-code/src/utils/telemetry/sessionTracing.ts:727` 补充横向埋点。
+源码定位上，context/token 统计和 cache 边界可从 `sources/claude-code/src/utils/messages.ts:2976`、`sources/claude-code/src/utils/messages.ts:3025`、`sources/claude-code/src/utils/messages.ts:4468`、`sources/claude-code/src/utils/messages.ts:4538` 跟起；模型流请求与重试在 `sources/claude-code/src/services/api/claude.ts:1869` 到 `sources/claude-code/src/services/api/claude.ts:1875`、`sources/claude-code/src/services/api/claude.ts:1945`、`sources/claude-code/src/services/api/claude.ts:1955`；session tracing 可从 `sources/claude-code/src/utils/telemetry/sessionTracing.ts:371`、`sources/claude-code/src/utils/telemetry/sessionTracing.ts:727` 补充横向埋点。

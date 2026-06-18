@@ -211,11 +211,11 @@ Claude Code 的韧性来自 provider retry、streaming fallback、context overfl
 
 | 错误/中断类型 | 自动恢复能力 | 需要用户动作 | 源码锚点 |
 | --- | --- | --- | --- |
-| prompt too long / context overflow | 可走 reactive compact；失败时提前返回，避免 stop hook 死循环 | compact 仍失败时需要用户缩短上下文或重提任务 | `claude-code/src/query.ts:1172` |
-| max output tokens | 可注入 continuation meta message，最多有限次数继续 | 多次到达上限后需要用户拆分任务 | `claude-code/src/query.ts:1194` |
-| stop hook 阻止 | 可把 hook continuation 注入下一轮 | hook 持续阻止时需要用户修正 hook 或请求 | `claude-code/src/query.ts:1281`, `claude-code/src/query.ts:1305` |
-| API auth/rate/error | 不进入 stop hook 评估，避免错误- hook -重试循环 | 需要用户修复认证、网络或 provider 配额 | `claude-code/src/query.ts:1262` |
-| tool execution 中断 | query 可清理/回收工具上下文，但本地副作用不一定可回滚 | 需要用户确认文件状态或重新执行 | `claude-code/src/query.ts:1489` |
+| prompt too long / context overflow | 可走 reactive compact；失败时提前返回，避免 stop hook 死循环 | compact 仍失败时需要用户缩短上下文或重提任务 | `sources/claude-code/src/query.ts:1172` |
+| max output tokens | 可注入 continuation meta message，最多有限次数继续 | 多次到达上限后需要用户拆分任务 | `sources/claude-code/src/query.ts:1194` |
+| stop hook 阻止 | 可把 hook continuation 注入下一轮 | hook 持续阻止时需要用户修正 hook 或请求 | `sources/claude-code/src/query.ts:1281`, `sources/claude-code/src/query.ts:1305` |
+| API auth/rate/error | 不进入 stop hook 评估，避免错误- hook -重试循环 | 需要用户修复认证、网络或 provider 配额 | `sources/claude-code/src/query.ts:1262` |
+| tool execution 中断 | query 可清理/回收工具上下文，但本地副作用不一定可回滚 | 需要用户确认文件状态或重新执行 | `sources/claude-code/src/query.ts:1489` |
 
 因此，本章的结论应区分“模型请求可继续”和“本地动作可回滚”。Claude Code 韧性强在请求/上下文恢复，不等于所有工具副作用都有事务回滚。
 
@@ -223,11 +223,11 @@ Claude Code 的韧性来自 provider retry、streaming fallback、context overfl
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `claude-code/src/services/api/claude.ts:844` | API 客户端错误和重试相关路径 | 对应 Codex/Gemini provider client |
-| `claude-code/src/services/api/claude.ts:1779` | provider 请求异常处理 | 用于判断哪些错误可自动恢复 |
-| `claude-code/src/services/api/claude.ts:2604` | 长请求链路中的 fallback/错误分支 | 对应 OpenCode `LLM.stream()` 兼容层 |
-| `claude-code/src/query.ts:1123` | query 层恢复和控制流分支 | 说明韧性不只在 API 层 |
-| `claude-code/src/query.ts:1220` | context / stream 异常处理点 | 对应四项目 compaction / overflow |
-| `claude-code/src/query.ts:1249` | query 继续或退出的边界 | 便于标注“需用户重新提交”的场景 |
-| `claude-code/src/services/tools/StreamingToolExecutor.ts:294` | streaming tool 执行错误处理 | 对应 OpenCode processor 的 tool part 收敛 |
-| `claude-code/src/services/tools/StreamingToolExecutor.ts:362` | 工具流收尾和异常兜底 | 说明工具失败隔离属于韧性面 |
+| `sources/claude-code/src/services/api/claude.ts:844` | API 客户端错误和重试相关路径 | 对应 Codex/Gemini provider client |
+| `sources/claude-code/src/services/api/claude.ts:1779` | provider 请求异常处理 | 用于判断哪些错误可自动恢复 |
+| `sources/claude-code/src/services/api/claude.ts:2604` | 长请求链路中的 fallback/错误分支 | 对应 OpenCode `LLM.stream()` 兼容层 |
+| `sources/claude-code/src/query.ts:1123` | query 层恢复和控制流分支 | 说明韧性不只在 API 层 |
+| `sources/claude-code/src/query.ts:1220` | context / stream 异常处理点 | 对应四项目 compaction / overflow |
+| `sources/claude-code/src/query.ts:1249` | query 继续或退出的边界 | 便于标注“需用户重新提交”的场景 |
+| `sources/claude-code/src/services/tools/StreamingToolExecutor.ts:294` | streaming tool 执行错误处理 | 对应 OpenCode processor 的 tool part 收敛 |
+| `sources/claude-code/src/services/tools/StreamingToolExecutor.ts:362` | 工具流收尾和异常兜底 | 说明工具失败隔离属于韧性面 |

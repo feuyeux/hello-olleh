@@ -11,7 +11,7 @@ title: "Hello Harness: 源码分析质量横向评估"
 
 ## 项目概述
 
-Hello Harness 是 `hello-claude-code/`、`hello-codex/`、`hello-gemini-cli/`、`hello-opencode/` 的横向综合层。它不替代单项目源码细读，而是回答三个问题：这些 `hello-*` 文档是否真正回链源码、四个项目在相同主题上如何比较、后续应该如何补强和合并文档。
+Hello Harness 是 `docs/hello-claude-code/`、`docs/hello-codex/`、`docs/hello-gemini-cli/`、`docs/hello-opencode/` 的横向综合层。它不替代单项目源码细读，而是回答三个问题：这些 `hello-*` 文档是否真正回链源码、四个项目在相同主题上如何比较、后续应该如何补强和合并文档。
 
 ### 核心价值
 

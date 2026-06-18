@@ -34,7 +34,7 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 ## 2. HookSystem 是显式的生命周期扩展点
 
-核心实现位于 `gemini-cli/packages/core/src/hooks/hookSystem.ts`。
+核心实现位于 `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts`。
 
 它不是单文件硬编码逻辑，而是由几部分协作：
 
@@ -62,7 +62,7 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 ## 3. `coreEvents` 负责全局可观察性
 
-`gemini-cli/packages/core/src/utils/events.ts` 里的 `coreEvents` 更像全局事件汇聚点，主要服务于 UI、日志和宿主反馈。
+`sources/gemini-cli/packages/core/src/utils/events.ts` 里的 `coreEvents` 更像全局事件汇聚点，主要服务于 UI、日志和宿主反馈。
 
 当前 `CoreEvent` 至少包括：
 
@@ -84,7 +84,7 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 ## 4. `MessageBus` 负责确认与策略闭环
 
-工具确认和策略检查走的是另一条线：`gemini-cli/packages/core/src/confirmation-bus/message-bus.ts`。
+工具确认和策略检查走的是另一条线：`sources/gemini-cli/packages/core/src/confirmation-bus/message-bus.ts`。
 
 `MessageBus` 的特点是：
 
@@ -100,8 +100,8 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 旧文里把 `ToolExecutor` 写在 `tools` 目录下已经不对。当前真实位置是：
 
-- `gemini-cli/packages/core/src/scheduler/tool-executor.ts`
-- `gemini-cli/packages/core/src/scheduler/scheduler.ts`
+- `sources/gemini-cli/packages/core/src/scheduler/tool-executor.ts`
+- `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts`
 
 调度器负责：
 
@@ -116,12 +116,12 @@ title: "Hooks 与生命周期：Gemini CLI 的事件回调与扩展点"
 
 | 主题 | 代码锚点 | 说明 |
 | --- | --- | --- |
-| Hook 总入口 | `gemini-cli/packages/core/src/hooks/hookSystem.ts` | 统一暴露生命周期 hook |
-| Hook 事件处理 | `gemini-cli/packages/core/src/hooks/hookEventHandler.ts` | 各类 hook 的具体分发 |
-| 全局事件总线 | `gemini-cli/packages/core/src/utils/events.ts` | UI / 宿主侧状态广播 |
-| 工具确认总线 | `gemini-cli/packages/core/src/confirmation-bus/message-bus.ts` | 策略检查、确认请求、子代理作用域 |
-| 调度器 | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | 工具执行主编排 |
-| 工具执行器 | `gemini-cli/packages/core/src/scheduler/tool-executor.ts` | 单次工具调用执行 |
+| Hook 总入口 | `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts` | 统一暴露生命周期 hook |
+| Hook 事件处理 | `sources/gemini-cli/packages/core/src/hooks/hookEventHandler.ts` | 各类 hook 的具体分发 |
+| 全局事件总线 | `sources/gemini-cli/packages/core/src/utils/events.ts` | UI / 宿主侧状态广播 |
+| 工具确认总线 | `sources/gemini-cli/packages/core/src/confirmation-bus/message-bus.ts` | 策略检查、确认请求、子代理作用域 |
+| 调度器 | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts` | 工具执行主编排 |
+| 工具执行器 | `sources/gemini-cli/packages/core/src/scheduler/tool-executor.ts` | 单次工具调用执行 |
 
 ---
 
@@ -158,20 +158,20 @@ Gemini CLI 的生命周期事件至少分成三层，不能混写：
 
 | 层级 | 源码锚点 | 稳定性判断 | 用途 |
 | --- | --- | --- | --- |
-| HookSystem | `gemini-cli/packages/core/src/hooks/hookSystem.ts:151` | 最接近稳定扩展 API | session、agent、model、tool 前后事件 |
-| MessageBus | `gemini-cli/packages/core/src/confirmation-bus/message-bus.ts:79` | 运行时内部治理面 | tool confirmation、PolicyEngine 决策、request/response |
-| coreEvents | `gemini-cli/packages/core/src/utils/events.ts:249` | 宿主可观察事件面 | UI、日志、状态广播 |
-| ExtensionLoader | `gemini-cli/packages/core/src/utils/extensionLoader.ts:129` | 装配/重载控制面 | extension 变更后刷新 hooks |
+| HookSystem | `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:151` | 最接近稳定扩展 API | session、agent、model、tool 前后事件 |
+| MessageBus | `sources/gemini-cli/packages/core/src/confirmation-bus/message-bus.ts:79` | 运行时内部治理面 | tool confirmation、PolicyEngine 决策、request/response |
+| coreEvents | `sources/gemini-cli/packages/core/src/utils/events.ts:249` | 宿主可观察事件面 | UI、日志、状态广播 |
+| ExtensionLoader | `sources/gemini-cli/packages/core/src/utils/extensionLoader.ts:129` | 装配/重载控制面 | extension 变更后刷新 hooks |
 
 ### HookSystem 的关键生命周期
 
 | Hook | 源码锚点 | 说明 |
 | --- | --- | --- |
-| Session start/end | `gemini-cli/packages/core/src/hooks/hookSystem.ts:222`, `gemini-cli/packages/core/src/hooks/hookSystem.ts:229` | 进程/会话边界 |
-| Before/after agent | `gemini-cli/packages/core/src/hooks/hookSystem.ts:241`, `gemini-cli/packages/core/src/hooks/hookSystem.ts:248` | agent turn 边界 |
-| Before/after model | `gemini-cli/packages/core/src/hooks/hookSystem.ts:261`, `gemini-cli/packages/core/src/hooks/hookSystem.ts:310` | 模型请求边界 |
-| Before/after tool | `gemini-cli/packages/core/src/hooks/hookSystem.ts:382`, `gemini-cli/packages/core/src/hooks/hookSystem.ts:402` | 工具执行边界 |
+| Session start/end | `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:222`, `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:229` | 进程/会话边界 |
+| Before/after agent | `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:241`, `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:248` | agent turn 边界 |
+| Before/after model | `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:261`, `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:310` | 模型请求边界 |
+| Before/after tool | `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:382`, `sources/gemini-cli/packages/core/src/hooks/hookSystem.ts:402` | 工具执行边界 |
 
 ### MessageBus 不是普通事件总线
 
-`MessageBus` 在 `gemini-cli/packages/core/src/confirmation-bus/message-bus.ts:101-121` 直接处理 `ALLOW`、`DENY`、`ASK_USER` 三类 policy decision；`derive()`（`message-bus.ts:51`）还能为 subagent 派生作用域化 bus。因此它的核心职责是确认和策略闭环，不是 UI 通知。
+`MessageBus` 在 `sources/gemini-cli/packages/core/src/confirmation-bus/message-bus.ts:101-121` 直接处理 `ALLOW`、`DENY`、`ASK_USER` 三类 policy decision；`derive()`（`message-bus.ts:51`）还能为 subagent 派生作用域化 bus。因此它的核心职责是确认和策略闭环，不是 UI 通知。

@@ -55,7 +55,7 @@ codex-rs/core/src/tools/
 
 ### 入口：build_specs_with_discoverable_tools()
 
-**位置**：`codex/codex-rs/core/src/tools/spec.rs:32-236`
+**位置**：`sources/codex/codex-rs/core/src/tools/spec.rs:32-236`
 
 注册过程：
 
@@ -463,15 +463,15 @@ Codex 工具系统的横向价值在于把 built-in、MCP、dynamic tools、netw
 | Network / fetch | 可作为工具调用的一类被调度 | network ask 独立于本地 exec | 网络策略独立于文件沙箱 | 响应体需要裁剪后进入上下文 |
 | Multi-agent tools | spawn/wait/send/close 走 handler | 操作类型决定是否需要确认 | 子 agent 继承或覆盖 sandbox/approval | 子 agent 消息压成 tool result |
 
-源码锚点上，`codex/codex-rs/core/src/tools/orchestrator.rs:111` 接收 approval 与 sandbox policy，`codex/codex-rs/core/src/tools/orchestrator.rs:122` 在执行前处理 approval，`codex/codex-rs/core/src/exec_policy.rs:234` 判断命令审批需求，`codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` 连接 shell 执行与 sandbox。这个矩阵是横向比较的最小口径：声明、审批、隔离、输出四步必须同时看。
+源码锚点上，`sources/codex/codex-rs/core/src/tools/orchestrator.rs:111` 接收 approval 与 sandbox policy，`sources/codex/codex-rs/core/src/tools/orchestrator.rs:122` 在执行前处理 approval，`sources/codex/codex-rs/core/src/exec_policy.rs:234` 判断命令审批需求，`sources/codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` 连接 shell 执行与 sandbox。这个矩阵是横向比较的最小口径：声明、审批、隔离、输出四步必须同时看。
 
 ## 源码锚点补强：工具治理要同时看 Router、Orchestrator、Approval
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `codex/codex-rs/core/src/tools/spec.rs:32` | tool spec 类型定义入口 | 对应其他项目的工具 schema |
-| `codex/codex-rs/core/src/tools/context.rs:41` | `ToolInvocation` 统一调用上下文 | 对应 Claude `ToolUseContext` |
-| `codex/codex-rs/core/src/tools/orchestrator.rs:111` | orchestrator 接收审批策略和沙箱策略 | Codex 工具治理核心 |
-| `codex/codex-rs/core/src/tools/orchestrator.rs:122` | 工具执行前先走 approval | 对应 Gemini PolicyEngine / OpenCode Permission |
-| `codex/codex-rs/core/src/exec_policy.rs:234` | `create_exec_approval_requirement_for_command()` | 判断命令是否需要审批 |
-| `codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` | unified exec handler 执行入口 | 连接 sandbox 与 shell 执行 |
+| `sources/codex/codex-rs/core/src/tools/spec.rs:32` | tool spec 类型定义入口 | 对应其他项目的工具 schema |
+| `sources/codex/codex-rs/core/src/tools/context.rs:41` | `ToolInvocation` 统一调用上下文 | 对应 Claude `ToolUseContext` |
+| `sources/codex/codex-rs/core/src/tools/orchestrator.rs:111` | orchestrator 接收审批策略和沙箱策略 | Codex 工具治理核心 |
+| `sources/codex/codex-rs/core/src/tools/orchestrator.rs:122` | 工具执行前先走 approval | 对应 Gemini PolicyEngine / OpenCode Permission |
+| `sources/codex/codex-rs/core/src/exec_policy.rs:234` | `create_exec_approval_requirement_for_command()` | 判断命令是否需要审批 |
+| `sources/codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` | unified exec handler 执行入口 | 连接 sandbox 与 shell 执行 |

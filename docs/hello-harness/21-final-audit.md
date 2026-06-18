@@ -25,11 +25,11 @@ title: "21 - 最终验收与维护索引"
 
 | 目录 | 完成度 | 证据等级 | 当前判断 |
 | --- | --- | --- | --- |
-| `hello-claude-code/` | 高 | 源码确认 + 反编译风险 | `03/05/10-13/15-25` 主干已具备横向对比基础；维护重点是继续标注反编译快照的不确定性 |
-| `hello-codex/` | 高 | 源码确认 | Codex 低证据页已补强 Skill、Config、LSP、Observability；`13` 已从“无 Skill 系统”修正为 `core-skills` 真实链路 |
-| `hello-gemini-cli/` | 高 | 源码确认 | Gemini 的 resilience、LSP、REPL、Bridge 低锚点页已补源码行号；LSP 明确写成能力缺口和 MCP/工具化补偿 |
-| `hello-opencode/` | 高 | 源码确认 | durable state、session loop、processor、MCP、LSP 深挖充分；维护重点是控制 `03` 与 `27-29` 重复 |
-| `hello-harness/` | 高 | 横向归纳 + 源码回链 | `14-21` 已形成质量标准、主题矩阵、工具/Prompt/MCP/入口对比、合并计划和最终验收入口 |
+| `docs/hello-claude-code/` | 高 | 源码确认 + 反编译风险 | `03/05/10-13/15-25` 主干已具备横向对比基础；维护重点是继续标注反编译快照的不确定性 |
+| `docs/hello-codex/` | 高 | 源码确认 | Codex 低证据页已补强 Skill、Config、LSP、Observability；`13` 已从“无 Skill 系统”修正为 `core-skills` 真实链路 |
+| `docs/hello-gemini-cli/` | 高 | 源码确认 | Gemini 的 resilience、LSP、REPL、Bridge 低锚点页已补源码行号；LSP 明确写成能力缺口和 MCP/工具化补偿 |
+| `docs/hello-opencode/` | 高 | 源码确认 | durable state、session loop、processor、MCP、LSP 深挖充分；维护重点是控制 `03` 与 `27-29` 重复 |
+| `docs/hello-harness/` | 高 | 横向归纳 + 源码回链 | `14-21` 已形成质量标准、主题矩阵、工具/Prompt/MCP/入口对比、合并计划和最终验收入口 |
 
 ## 3. 关键主题验收矩阵
 
@@ -57,11 +57,11 @@ title: "21 - 最终验收与维护索引"
 
 | 目录 | 锚点数 | 判断 |
 | --- | ---: | --- |
-| `hello-claude-code/` | 549 | 高，注意反编译风险标注 |
-| `hello-codex/` | 314 | 已从低位补到可维护水平，后续重点是 line anchor 漂移 |
-| `hello-gemini-cli/` | 324 | 主干达标，边界章已补关键行号 |
-| `hello-opencode/` | 694 | 最高，注意避免深挖章互相重复 |
-| `hello-harness/` | 325 | 横向归纳足够，但新增判断仍需回链单项目章或源码 |
+| `docs/hello-claude-code/` | 549 | 高，注意反编译风险标注 |
+| `docs/hello-codex/` | 314 | 已从低位补到可维护水平，后续重点是 line anchor 漂移 |
+| `docs/hello-gemini-cli/` | 324 | 主干达标，边界章已补关键行号 |
+| `docs/hello-opencode/` | 694 | 最高，注意避免深挖章互相重复 |
+| `docs/hello-harness/` | 325 | 横向归纳足够，但新增判断仍需回链单项目章或源码 |
 
 这组数字只用于维护优先级，不作为机械加引用指标。真正的标准是关键判断是否能回到入口、状态机、工具治理、Prompt 注入和恢复边界。
 

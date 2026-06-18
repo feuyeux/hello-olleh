@@ -23,13 +23,10 @@ vendor/bundle/
 sources/codex/
 sources/gemini-cli/
 sources/opencode/
-# sources/claude-code/ is committed (decompiled snapshot); do not ignore
+sources/hermes-agent/
+sources/nanobot/
 
-# Legacy aliases (pre-sources reorg; kept temporarily for any in-flight tooling)
-# Remove after a release cycle.
-claw-code/
-openclaw/
-zeroclaw/
+# sources/claude-code/ is committed (decompiled snapshot); do not ignore
 
 # Build output
 dist/
@@ -54,5 +51,3 @@ node_modules/
 # Claude/Kiro
 .claude/
 .kiro/
-
-hermes-agent/

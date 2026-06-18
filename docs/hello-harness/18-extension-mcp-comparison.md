@@ -8,10 +8,10 @@ title: "18 - 扩展与 MCP 横向对比"
 
 对应项目章节：
 
-- `hello-claude-code/06-extension-mcp.md`, `13-skill-system.md`, `14-plugin-system.md`, `24-mcp-system.md`
-- `hello-codex/06-extension-mcp.md`, `13-skill-system.md`, `14-plugin-system.md`, `24-mcp-system.md`
-- `hello-gemini-cli/06-extension-mcp.md`, `13-skill-system.md`, `14-plugin-system.md`, `24-mcp-system.md`
-- `hello-opencode/06-extension-mcp.md`, `13-skill-system.md`, `14-plugin-system.md`, `24-mcp-system.md`, `33-mcp-details.md`
+- `docs/hello-claude-code/06-extension-mcp.md`, `13-skill-system.md`, `14-plugin-system.md`, `24-mcp-system.md`
+- `docs/hello-codex/06-extension-mcp.md`, `13-skill-system.md`, `14-plugin-system.md`, `24-mcp-system.md`
+- `docs/hello-gemini-cli/06-extension-mcp.md`, `13-skill-system.md`, `14-plugin-system.md`, `24-mcp-system.md`
+- `docs/hello-opencode/06-extension-mcp.md`, `13-skill-system.md`, `14-plugin-system.md`, `24-mcp-system.md`, `33-mcp-details.md`
 
 ## 1. 扩展面分层
 
@@ -36,10 +36,10 @@ title: "18 - 扩展与 MCP 横向对比"
 
 | 项目 | 配置 / 入口 | 连接 / 发现 | Tool / Resource 调用 |
 | --- | --- | --- | --- |
-| Claude Code | `claude-code/src/services/mcp/config.ts`, `claude-code/src/services/mcp/client.ts` | `claude-code/src/services/mcp/mcpHub.ts`, `claude-code/src/services/mcp/auth.ts:847` | `claude-code/src/services/mcp/mcpHub.ts` |
-| Codex | `codex/codex-rs/config/src/mcp_types.rs:118` | `codex/codex-rs/core/src/mcp_connection_manager.rs:183`, `codex/codex-rs/core/src/mcp_connection_manager.rs:579` | `codex/codex-rs/core/src/mcp_tool_call.rs`, `codex/codex-rs/core/src/tools/handlers/mcp.rs` |
-| Gemini CLI | `gemini-cli/packages/core/src/tools/mcp-client-manager.ts`, `gemini-cli/packages/core/src/tools/mcp-client.ts` | `gemini-cli/packages/core/src/mcp/auth-provider.ts`, `gemini-cli/packages/core/src/mcp/oauth-provider.ts` | `gemini-cli/packages/core/src/tools/mcp-client.ts`, `gemini-cli/packages/core/src/tools/tool-registry.ts` |
-| OpenCode | `opencode/packages/opencode/src/mcp/index.ts:28`, `opencode/packages/opencode/src/config/config.ts:565` | `opencode/packages/opencode/src/cli/cmd/mcp.ts:55`, `opencode/packages/opencode/src/cli/cmd/mcp.ts:140` | `opencode/packages/opencode/src/tool/registry.ts:155`, `opencode/packages/opencode/src/command/index.ts:117` |
+| Claude Code | `sources/claude-code/src/services/mcp/config.ts`, `sources/claude-code/src/services/mcp/client.ts` | `sources/claude-code/src/services/mcp/mcpHub.ts`, `sources/claude-code/src/services/mcp/auth.ts:847` | `sources/claude-code/src/services/mcp/mcpHub.ts` |
+| Codex | `sources/codex/codex-rs/config/src/mcp_types.rs:118` | `sources/codex/codex-rs/core/src/mcp_connection_manager.rs:183`, `sources/codex/codex-rs/core/src/mcp_connection_manager.rs:579` | `sources/codex/codex-rs/core/src/mcp_tool_call.rs`, `sources/codex/codex-rs/core/src/tools/handlers/mcp.rs` |
+| Gemini CLI | `sources/gemini-cli/packages/core/src/tools/mcp-client-manager.ts`, `sources/gemini-cli/packages/core/src/tools/mcp-client.ts` | `sources/gemini-cli/packages/core/src/mcp/auth-provider.ts`, `sources/gemini-cli/packages/core/src/mcp/oauth-provider.ts` | `sources/gemini-cli/packages/core/src/tools/mcp-client.ts`, `sources/gemini-cli/packages/core/src/tools/tool-registry.ts` |
+| OpenCode | `sources/opencode/packages/opencode/src/mcp/index.ts:28`, `sources/opencode/packages/opencode/src/config/config.ts:565` | `sources/opencode/packages/opencode/src/cli/cmd/mcp.ts:55`, `sources/opencode/packages/opencode/src/cli/cmd/mcp.ts:140` | `sources/opencode/packages/opencode/src/tool/registry.ts:155`, `sources/opencode/packages/opencode/src/command/index.ts:117` |
 
 ## 4. 合并策略
 

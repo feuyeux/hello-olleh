@@ -12,11 +12,11 @@ title: "20 - 文档合并执行计划"
 
 | 内容类型 | 保留位置 | 合并动作 |
 | --- | --- | --- |
-| 项目源码细读 | `hello-claude-code/`、`hello-codex/`、`hello-gemini-cli/`、`hello-opencode/` | 保留，不搬运到 Harness |
-| 横向判断 | `hello-harness/` | 从项目章抽取差异结论，合并成主题对比章 |
+| 项目源码细读 | `docs/hello-claude-code/`、`docs/hello-codex/`、`docs/hello-gemini-cli/`、`docs/hello-opencode/` | 保留，不搬运到 Harness |
+| 横向判断 | `docs/hello-harness/` | 从项目章抽取差异结论，合并成主题对比章 |
 | 项目特有深挖 | 各项目 `26+` 或 `24b/25b` | 作为附录保留，并在 README 标注原因 |
 | 重复总览 | 优先压缩到 Harness | 项目章只保留与源码路径直接相关的部分 |
-| 维护规则 | `hello-harness/14`、`15`、`20` | 作为后续新增/重写文档的门禁 |
+| 维护规则 | `docs/hello-harness/14`、`15`、`20` | 作为后续新增/重写文档的门禁 |
 
 ## 2. 逐主题合并表
 
@@ -55,4 +55,4 @@ title: "20 - 文档合并执行计划"
 
 ## 5. 合并后的阅读契约
 
-读者横向比较时，先读 `hello-harness/14-20` 确认质量标准、主题对齐和合并计划；再按编号进入四个 `hello-*` 目录读取源码细节。项目章节只回答“这个项目源码怎么实现”，Harness 章节回答“横向比较下来说明什么、应该怎么合并和维护”。
+读者横向比较时，先读 `docs/hello-harness/14-20` 确认质量标准、主题对齐和合并计划；再按编号进入四个 `hello-*` 目录读取源码细节。项目章节只回答“这个项目源码怎么实现”，Harness 章节回答“横向比较下来说明什么、应该怎么合并和维护”。

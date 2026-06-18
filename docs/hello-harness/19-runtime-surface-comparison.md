@@ -30,10 +30,10 @@ title: "19 - 入口、传输与 UI 状态横向对比"
 
 | 项目 | 输入 / 队列 | Runtime 请求 | Event / 状态投影 |
 | --- | --- | --- | --- |
-| Claude Code | `claude-code/src/query.ts:241`, `claude-code/src/hooks` | `claude-code/src/query.ts:323`, `claude-code/src/services/tools/toolOrchestration.ts` | `claude-code/src/query.ts:337`, `claude-code/src/services/tools/StreamingToolExecutor.ts` |
-| Codex | `codex/codex-rs/tui/src/app.rs`, `codex/codex-rs/app-server/src/codex_message_processor.rs:6360` | `codex/codex-rs/core/src/codex.rs:697`, `codex/codex-rs/core/src/codex.rs:4289` | `codex/codex-rs/tui/src/app_server_session.rs:397`, `codex/codex-rs/core/src/codex.rs:5584` |
-| Gemini CLI | `gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15`, `gemini-cli/packages/core/src/core/client.ts:868` | `gemini-cli/packages/core/src/core/client.ts:585`, `gemini-cli/packages/core/src/core/turn.ts:253` | `gemini-cli/packages/core/src/core/client.ts:925`, `gemini-cli/packages/core/src/core/turn.ts:404` |
-| OpenCode | `opencode/packages/opencode/src/server/routes/session.ts:819`, `opencode/packages/opencode/src/session/prompt.ts:162` | `opencode/packages/opencode/src/session/prompt.ts:278`, `opencode/packages/opencode/src/session/prompt.ts:2013` | `opencode/packages/opencode/src/session/processor.ts:46`, `opencode/packages/opencode/src/server/routes/session.ts` |
+| Claude Code | `sources/claude-code/src/query.ts:241`, `sources/claude-code/src/hooks` | `sources/claude-code/src/query.ts:323`, `sources/claude-code/src/services/tools/toolOrchestration.ts` | `sources/claude-code/src/query.ts:337`, `sources/claude-code/src/services/tools/StreamingToolExecutor.ts` |
+| Codex | `sources/codex/codex-rs/tui/src/app.rs`, `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:6360` | `sources/codex/codex-rs/core/src/codex.rs:697`, `sources/codex/codex-rs/core/src/codex.rs:4289` | `sources/codex/codex-rs/tui/src/app_server_session.rs:397`, `sources/codex/codex-rs/core/src/codex.rs:5584` |
+| Gemini CLI | `sources/gemini-cli/packages/cli/src/ui/hooks/useMcpStatus.ts:15`, `sources/gemini-cli/packages/core/src/core/client.ts:868` | `sources/gemini-cli/packages/core/src/core/client.ts:585`, `sources/gemini-cli/packages/core/src/core/turn.ts:253` | `sources/gemini-cli/packages/core/src/core/client.ts:925`, `sources/gemini-cli/packages/core/src/core/turn.ts:404` |
+| OpenCode | `sources/opencode/packages/opencode/src/server/routes/session.ts:819`, `sources/opencode/packages/opencode/src/session/prompt.ts:162` | `sources/opencode/packages/opencode/src/session/prompt.ts:278`, `sources/opencode/packages/opencode/src/session/prompt.ts:2013` | `sources/opencode/packages/opencode/src/session/processor.ts:46`, `sources/opencode/packages/opencode/src/server/routes/session.ts` |
 
 ## 4. 生命周期合并图
 

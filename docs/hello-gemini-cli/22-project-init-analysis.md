@@ -78,11 +78,11 @@ gemini-cli/packages/cli/src/gemini.tsx
 
 | 角色 | 代码锚点 | 作用 |
 | --- | --- | --- |
-| 组合根 | `gemini-cli/packages/core/src/config/config.ts` | 初始化工具、策略、skills、agents、MCP、客户端 |
-| 客户端编排 | `gemini-cli/packages/core/src/core/client.ts` | 驱动 turn、压缩、loop recovery、resume |
-| 聊天状态 | `gemini-cli/packages/core/src/core/geminiChat.ts` | 持有 history，处理流式请求与中途重试 |
-| 单轮执行 | `gemini-cli/packages/core/src/core/turn.ts` | 把模型输出翻译成事件流 |
-| 工具调度 | `gemini-cli/packages/core/src/scheduler/scheduler.ts`、`gemini-cli/packages/core/src/scheduler/tool-executor.ts` | 审批、执行工具、回传结果 |
+| 组合根 | `sources/gemini-cli/packages/core/src/config/config.ts` | 初始化工具、策略、skills、agents、MCP、客户端 |
+| 客户端编排 | `sources/gemini-cli/packages/core/src/core/client.ts` | 驱动 turn、压缩、loop recovery、resume |
+| 聊天状态 | `sources/gemini-cli/packages/core/src/core/geminiChat.ts` | 持有 history，处理流式请求与中途重试 |
+| 单轮执行 | `sources/gemini-cli/packages/core/src/core/turn.ts` | 把模型输出翻译成事件流 |
+| 工具调度 | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts`、`sources/gemini-cli/packages/core/src/scheduler/tool-executor.ts` | 审批、执行工具、回传结果 |
 
 理解这五层，比围绕一个已经不存在的旧文件名建立心智模型更有用。
 
@@ -92,10 +92,10 @@ gemini-cli/packages/cli/src/gemini.tsx
 
 当前仓库里已经有完整的 agents 子系统：
 
-- `gemini-cli/packages/core/src/agents/registry.ts`
-- `gemini-cli/packages/core/src/agents/subagent-tool.ts`
-- `gemini-cli/packages/core/src/agents/local-executor.ts`
-- `gemini-cli/packages/core/src/agents/remote-invocation.ts`
+- `sources/gemini-cli/packages/core/src/agents/registry.ts`
+- `sources/gemini-cli/packages/core/src/agents/subagent-tool.ts`
+- `sources/gemini-cli/packages/core/src/agents/local-executor.ts`
+- `sources/gemini-cli/packages/core/src/agents/remote-invocation.ts`
 
 这意味着 Gemini CLI 不再适合被概括成“单 Agent 架构”。更准确的说法是：
 
@@ -169,12 +169,12 @@ gemini-cli/packages/cli/src/gemini.tsx
 
 | 函数/类型 | 文件 | 职责 |
 | :----------| :------| :------|
-| `main()` | `gemini-cli/packages/cli/src/index.ts` | CLI 最顶层入口，解析 argv 并分发给 `gemini.tsx` |
-| `Config.initialize()` | `gemini-cli/packages/core/src/config/config.ts:1289` | 所有服务的固定装配入口：ToolRegistry、MCP、GeminiClient |
-| `startInteractiveUI()` | `gemini-cli/packages/cli/src/gemini.tsx` | 交互路径启动：初始化 Ink TUI + AppContainer |
-| `nonInteractiveMode()` | `gemini-cli/packages/cli/src/gemini.tsx` | 非交互路径启动：处理 stdin/--message，headless 执行 |
-| `GeminiClient.sendMessageStream()` | `gemini-cli/packages/core/src/core/client.ts:868` | 外部可调用的流式请求入口，SDK 复用点 |
-| `AgentRegistry` | `gemini-cli/packages/core/src/agents/registry.ts` | 多代理注册表：内建+用户+项目+extension agent 统一管理 |
+| `main()` | `sources/gemini-cli/packages/cli/src/index.ts` | CLI 最顶层入口，解析 argv 并分发给 `gemini.tsx` |
+| `Config.initialize()` | `sources/gemini-cli/packages/core/src/config/config.ts:1289` | 所有服务的固定装配入口：ToolRegistry、MCP、GeminiClient |
+| `startInteractiveUI()` | `sources/gemini-cli/packages/cli/src/gemini.tsx` | 交互路径启动：初始化 Ink TUI + AppContainer |
+| `nonInteractiveMode()` | `sources/gemini-cli/packages/cli/src/gemini.tsx` | 非交互路径启动：处理 stdin/--message，headless 执行 |
+| `GeminiClient.sendMessageStream()` | `sources/gemini-cli/packages/core/src/core/client.ts:868` | 外部可调用的流式请求入口，SDK 复用点 |
+| `AgentRegistry` | `sources/gemini-cli/packages/core/src/agents/registry.ts` | 多代理注册表：内建+用户+项目+extension agent 统一管理 |
 
 ---
 

@@ -367,13 +367,13 @@ OpenCode 做分页、流式回放、hydrate 时，不是只读 `MessageTable`，
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `opencode/packages/opencode/src/session/message-v2.ts:20` | `MessageV2` 命名空间 | 对比 Claude transcript message |
-| `opencode/packages/opencode/src/session/message-v2.ts:838` | `MessageV2.stream()` | durable history 的读取入口 |
-| `opencode/packages/opencode/src/session/message-v2.ts:882` | `filterCompacted()` | 对应四项目 compaction 投影 |
-| `opencode/packages/opencode/src/session/index.ts:36` | session 模块入口 | 长生命周期对象边界 |
-| `opencode/packages/opencode/src/session/status.ts:9` | `SessionStatus` 命名空间 | 运行态和持久态分离 |
-| `opencode/packages/opencode/src/session/prompt.ts:1024` | user message / part 组装 | 输入对象模型入口 |
-| `opencode/packages/opencode/src/session/prompt.ts:1029` | part compilation | 说明用户输入也拆成 part |
+| `sources/opencode/packages/opencode/src/session/message-v2.ts:20` | `MessageV2` 命名空间 | 对比 Claude transcript message |
+| `sources/opencode/packages/opencode/src/session/message-v2.ts:838` | `MessageV2.stream()` | durable history 的读取入口 |
+| `sources/opencode/packages/opencode/src/session/message-v2.ts:882` | `filterCompacted()` | 对应四项目 compaction 投影 |
+| `sources/opencode/packages/opencode/src/session/index.ts:36` | session 模块入口 | 长生命周期对象边界 |
+| `sources/opencode/packages/opencode/src/session/status.ts:9` | `SessionStatus` 命名空间 | 运行态和持久态分离 |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:1024` | user message / part 组装 | 输入对象模型入口 |
+| `sources/opencode/packages/opencode/src/session/prompt.ts:1029` | part compilation | 说明用户输入也拆成 part |
 
 ---
 

@@ -269,20 +269,20 @@ OpenCode 的工具状态不是临时 UI state，而是 durable part 的状态字
 
 | 状态 | 写入位置 | 含义 | UI / resume 影响 |
 | --- | --- | --- | --- |
-| `pending` | `opencode/packages/opencode/src/session/processor.ts:121` | 模型已经发出 tool-call，但执行尚未真正开始 | UI 可先展示待执行工具；resume 时能看到未完成调用 |
-| `running` | `opencode/packages/opencode/src/session/processor.ts:142` | 工具进入执行阶段，输入已经固定 | CLI/TUI 可显示运行中；崩溃恢复时可把未完成工具标记为错误 |
-| `completed` | `opencode/packages/opencode/src/session/processor.ts:187` | 工具输出已返回并写入 part | 下一轮 `toModelMessages()` 能把结果投影回模型 |
-| `error` | `opencode/packages/opencode/src/session/processor.ts:211` | 工具失败或被拒绝 | 错误 part 进入 durable history，下一轮可见失败事实 |
-| 兜底错误 | `opencode/packages/opencode/src/session/processor.ts:405` | processor 收尾时发现非终态工具 | 避免 resume 时留下永久 running/pending part |
+| `pending` | `sources/opencode/packages/opencode/src/session/processor.ts:121` | 模型已经发出 tool-call，但执行尚未真正开始 | UI 可先展示待执行工具；resume 时能看到未完成调用 |
+| `running` | `sources/opencode/packages/opencode/src/session/processor.ts:142` | 工具进入执行阶段，输入已经固定 | CLI/TUI 可显示运行中；崩溃恢复时可把未完成工具标记为错误 |
+| `completed` | `sources/opencode/packages/opencode/src/session/processor.ts:187` | 工具输出已返回并写入 part | 下一轮 `toModelMessages()` 能把结果投影回模型 |
+| `error` | `sources/opencode/packages/opencode/src/session/processor.ts:211` | 工具失败或被拒绝 | 错误 part 进入 durable history，下一轮可见失败事实 |
+| 兜底错误 | `sources/opencode/packages/opencode/src/session/processor.ts:405` | processor 收尾时发现非终态工具 | 避免 resume 时留下永久 running/pending part |
 
-状态变化通过 `Session.updatePart()` 写库，再由 `opencode/packages/opencode/src/session/index.ts:770` 发布 `message.part.updated`。CLI run 模式在 `opencode/packages/opencode/src/cli/cmd/run.ts:460` 消费该事件，并在 `run.ts:464-480` 根据 `completed/error/running` 渲染不同输出。因此 OpenCode 的工具系统应按“durable part 状态机”阅读，而不是按一次函数调用阅读。
+状态变化通过 `Session.updatePart()` 写库，再由 `sources/opencode/packages/opencode/src/session/index.ts:770` 发布 `message.part.updated`。CLI run 模式在 `sources/opencode/packages/opencode/src/cli/cmd/run.ts:460` 消费该事件，并在 `run.ts:464-480` 根据 `completed/error/running` 渲染不同输出。因此 OpenCode 的工具系统应按“durable part 状态机”阅读，而不是按一次函数调用阅读。
 
 ## 源码锚点补强
 
 | 主题 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| ToolRegistry | `opencode/packages/opencode/src/tool/registry.ts:36`, `opencode/packages/opencode/src/tool/registry.ts:155` | 工具注册命名空间与工具集合导出 |
-| Permission evaluate | `opencode/packages/opencode/src/permission/evaluate.ts:9`, `opencode/packages/opencode/src/permission/index.ts:133` | rule 匹配入口 |
-| Permission ask/reply | `opencode/packages/opencode/src/permission/index.ts:166`, `opencode/packages/opencode/src/permission/index.ts:203` | 交互式审批 |
-| Session permission | `opencode/packages/opencode/src/session/index.ts:423` | session 级 permission 写回 |
-| Tool in prompt loop | `opencode/packages/opencode/src/session/prompt.ts:813` | loop 中收集可用工具 |
+| ToolRegistry | `sources/opencode/packages/opencode/src/tool/registry.ts:36`, `sources/opencode/packages/opencode/src/tool/registry.ts:155` | 工具注册命名空间与工具集合导出 |
+| Permission evaluate | `sources/opencode/packages/opencode/src/permission/evaluate.ts:9`, `sources/opencode/packages/opencode/src/permission/index.ts:133` | rule 匹配入口 |
+| Permission ask/reply | `sources/opencode/packages/opencode/src/permission/index.ts:166`, `sources/opencode/packages/opencode/src/permission/index.ts:203` | 交互式审批 |
+| Session permission | `sources/opencode/packages/opencode/src/session/index.ts:423` | session 级 permission 写回 |
+| Tool in prompt loop | `sources/opencode/packages/opencode/src/session/prompt.ts:813` | loop 中收集可用工具 |

@@ -26,13 +26,13 @@ Gemini CLI 的输入处理涉及以下核心模块：
 
 | 模块 | 路径 | 职责 |
 | :------| :------| :------|
-| 交互式 CLI | `gemini-cli/packages/cli/src/interactiveCli.tsx` | 输入总入口 |
-| 命令服务 | `gemini-cli/packages/cli/src/services/CommandService.ts` | 命令加载与匹配 |
-| Slash 命令处理器 | `gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
-| Shell 命令处理器 | `gemini-cli/packages/cli/src/ui/hooks/shellCommandProcessor.ts` | bash/本地命令 |
-| 消息队列 | `gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 忙碌时输入排队 |
-| Shell 状态机 | `gemini-cli/packages/cli/src/ui/hooks/shellReducer.ts` | UI 状态管理 |
-| 命令类型定义 | `gemini-cli/packages/cli/src/ui/commands/types.ts` | 数据结构 |
+| 交互式 CLI | `sources/gemini-cli/packages/cli/src/interactiveCli.tsx` | 输入总入口 |
+| 命令服务 | `sources/gemini-cli/packages/cli/src/services/CommandService.ts` | 命令加载与匹配 |
+| Slash 命令处理器 | `sources/gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
+| Shell 命令处理器 | `sources/gemini-cli/packages/cli/src/ui/hooks/shellCommandProcessor.ts` | bash/本地命令 |
+| 消息队列 | `sources/gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 忙碌时输入排队 |
+| Shell 状态机 | `sources/gemini-cli/packages/cli/src/ui/hooks/shellReducer.ts` | UI 状态管理 |
+| 命令类型定义 | `sources/gemini-cli/packages/cli/src/ui/commands/types.ts` | 数据结构 |
 
 ## 2. 输入流程图
 
@@ -270,12 +270,12 @@ function shellReducer(state: ShellState, action: ShellAction): ShellState {
 
 | 主题 | 代码锚点 | 说明 |
 | :------| :----------| :------|
-| CLI 入口 | `gemini-cli/packages/cli/src/interactiveCli.tsx` | 交互式 CLI 入口 |
-| 命令服务 | `gemini-cli/packages/cli/src/services/CommandService.ts:45-90` | 命令加载与匹配 |
-| 命令类型 | `gemini-cli/packages/cli/src/ui/commands/types.ts` | 数据结构定义 |
-| Slash 处理器 | `gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
-| Shell 状态 | `gemini-cli/packages/cli/src/ui/hooks/shellReducer.ts` | 状态机管理 |
-| 消息队列 | `gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 队列管理 |
+| CLI 入口 | `sources/gemini-cli/packages/cli/src/interactiveCli.tsx` | 交互式 CLI 入口 |
+| 命令服务 | `sources/gemini-cli/packages/cli/src/services/CommandService.ts:45-90` | 命令加载与匹配 |
+| 命令类型 | `sources/gemini-cli/packages/cli/src/ui/commands/types.ts` | 数据结构定义 |
+| Slash 处理器 | `sources/gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash 命令执行 |
+| Shell 状态 | `sources/gemini-cli/packages/cli/src/ui/hooks/shellReducer.ts` | 状态机管理 |
+| 消息队列 | `sources/gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 队列管理 |
 
 ## 8. 与 Claude Code 的差异
 
@@ -372,10 +372,10 @@ sequenceDiagram
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `gemini-cli/packages/cli/src/interactiveCli.tsx:154` | 交互式 CLI 入口 | 对应 Codex TUI |
-| `gemini-cli/packages/cli/src/services/CommandService.ts:23` | `CommandService` 命令加载服务 | 对应 Claude slash command registry |
-| `gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 忙碌时消息队列 | 对应 Claude queued command |
-| `gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash command 执行路径 | 对应 OpenCode command |
-| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:908` | `prepareQueryForGemini()` 处理用户输入 | 输入进入模型前的编译点 |
-| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1551` | `submitQuery()` 发起模型流 | 连接 agent loop |
-| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1822` | 工具完成后 continuation 回注 | 说明队列不只来自键盘 |
+| `sources/gemini-cli/packages/cli/src/interactiveCli.tsx:154` | 交互式 CLI 入口 | 对应 Codex TUI |
+| `sources/gemini-cli/packages/cli/src/services/CommandService.ts:23` | `CommandService` 命令加载服务 | 对应 Claude slash command registry |
+| `sources/gemini-cli/packages/cli/src/ui/hooks/useMessageQueue.ts` | 忙碌时消息队列 | 对应 Claude queued command |
+| `sources/gemini-cli/packages/cli/src/ui/hooks/slashCommandProcessor.ts` | slash command 执行路径 | 对应 OpenCode command |
+| `sources/gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:908` | `prepareQueryForGemini()` 处理用户输入 | 输入进入模型前的编译点 |
+| `sources/gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1551` | `submitQuery()` 发起模型流 | 连接 agent loop |
+| `sources/gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1822` | 工具完成后 continuation 回注 | 说明队列不只来自键盘 |

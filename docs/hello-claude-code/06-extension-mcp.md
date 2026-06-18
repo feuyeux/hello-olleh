@@ -432,8 +432,8 @@ Claude Code 的扩展面同时包含 Skill、Plugin、MCP、Hooks、slash comman
 
 | 主题 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| headless plugin/MCP 刷新 | `claude-code/src/cli/print.ts:1707`, `claude-code/src/cli/print.ts:1795` | headless 模式安装 plugin 并同步 MCP diff |
-| plugin 热刷新 | `claude-code/src/cli/print.ts:1763`, `claude-code/src/cli/print.ts:1917` | refresh 与 hook hot reload |
-| MCP OAuth | `claude-code/src/services/mcp/auth.ts:847` | `performMCPOAuthFlow()` |
-| MCP XAA | `claude-code/src/services/mcp/auth.ts:664` | cross-app access 认证 |
-| settings 中 MCP/Plugin schema | `claude-code/src/utils/settings/types.ts:112`, `claude-code/src/utils/settings/types.ts:559` | MCP policy 与 enabled plugin 配置 |
+| headless plugin/MCP 刷新 | `sources/claude-code/src/cli/print.ts:1707`, `sources/claude-code/src/cli/print.ts:1795` | headless 模式安装 plugin 并同步 MCP diff |
+| plugin 热刷新 | `sources/claude-code/src/cli/print.ts:1763`, `sources/claude-code/src/cli/print.ts:1917` | refresh 与 hook hot reload |
+| MCP OAuth | `sources/claude-code/src/services/mcp/auth.ts:847` | `performMCPOAuthFlow()` |
+| MCP XAA | `sources/claude-code/src/services/mcp/auth.ts:664` | cross-app access 认证 |
+| settings 中 MCP/Plugin schema | `sources/claude-code/src/utils/settings/types.ts:112`, `sources/claude-code/src/utils/settings/types.ts:559` | MCP policy 与 enabled plugin 配置 |

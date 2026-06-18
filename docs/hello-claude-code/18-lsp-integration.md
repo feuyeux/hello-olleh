@@ -236,15 +236,15 @@ Claude Code 的 LSP 能力应理解为工具和上下文增强侧通道，而不
 | Workspace root | LSP server 初始化参数 | monorepo 下影响诊断/补全范围 | 四项目共同风险 |
 | Server lifecycle | LSPServerInstance 管理连接、请求、退出 | 崩溃后能力降级，agent loop 仍可继续 | 与 resilience 章节联读 |
 
-因此 Claude 的 LSP 结果不是 durable conversation 的主数据源，而是通过诊断跟踪、工具反馈和 UI 状态给模型/用户提供侧通道信号。`claude-code/src/services/diagnosticTracking.ts:188` 和 `claude-code/src/services/diagnosticTracking.ts:352` 体现诊断聚合，`claude-code/src/services/lsp/manager.ts:143`、`claude-code/src/services/lsp/LSPServerInstance.ts:343`、`claude-code/src/services/lsp/LSPServerInstance.ts:393` 体现 LSP 请求生命周期。
+因此 Claude 的 LSP 结果不是 durable conversation 的主数据源，而是通过诊断跟踪、工具反馈和 UI 状态给模型/用户提供侧通道信号。`sources/claude-code/src/services/diagnosticTracking.ts:188` 和 `sources/claude-code/src/services/diagnosticTracking.ts:352` 体现诊断聚合，`sources/claude-code/src/services/lsp/manager.ts:143`、`sources/claude-code/src/services/lsp/LSPServerInstance.ts:343`、`sources/claude-code/src/services/lsp/LSPServerInstance.ts:393` 体现 LSP 请求生命周期。
 
 ## 源码锚点补强：Claude 的代码理解要从诊断和 LSP 管理器看
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `claude-code/src/services/diagnosticTracking.ts:30` | 诊断跟踪命名空间 | 对应 IDE/LSP 诊断输入面 |
-| `claude-code/src/services/diagnosticTracking.ts:188` | diagnostic 状态变更处理 | 说明 Claude 也消费代码问题信号 |
-| `claude-code/src/services/diagnosticTracking.ts:352` | 诊断输出/聚合路径 | 可和 OpenCode LSP 章节对照 |
-| `claude-code/src/services/lsp/manager.ts:143` | LSP manager 连接管理 | 说明 Claude 不是纯文本工具链 |
-| `claude-code/src/services/lsp/LSPServerInstance.ts:343` | LSP server instance 生命周期 | 对应 OpenCode 的 language server runtime |
-| `claude-code/src/services/lsp/LSPServerInstance.ts:393` | LSP 请求/响应边界 | 用于补足“源码级能力边界” |
+| `sources/claude-code/src/services/diagnosticTracking.ts:30` | 诊断跟踪命名空间 | 对应 IDE/LSP 诊断输入面 |
+| `sources/claude-code/src/services/diagnosticTracking.ts:188` | diagnostic 状态变更处理 | 说明 Claude 也消费代码问题信号 |
+| `sources/claude-code/src/services/diagnosticTracking.ts:352` | 诊断输出/聚合路径 | 可和 OpenCode LSP 章节对照 |
+| `sources/claude-code/src/services/lsp/manager.ts:143` | LSP manager 连接管理 | 说明 Claude 不是纯文本工具链 |
+| `sources/claude-code/src/services/lsp/LSPServerInstance.ts:343` | LSP server instance 生命周期 | 对应 OpenCode 的 language server runtime |
+| `sources/claude-code/src/services/lsp/LSPServerInstance.ts:393` | LSP 请求/响应边界 | 用于补足“源码级能力边界” |

@@ -7,7 +7,7 @@
 
 | 工程 | 版本 | 语言/框架 | 架构特点 |
 |:-----|:-----|:----------|:---------|
-| [claude-code](claude-code) | v2.1.87（反编译） | TypeScript / React | src/ 目录，React TUI，REPL 交互，Hooks 生命周期 |
+| [claude-code](sources/claude-code) | v2.1.87（反编译） | TypeScript / React | src/ 目录，React TUI，REPL 交互，Hooks 生命周期 |
 | [codex](https://github.com/openai/codex.git) | rust-v0.118.0 | **Rust**（86 crate）+ TypeScript SDK | Rust workspace 为运行时中心，TS 只做分发/封装 |
 | [gemini-cli](https://github.com/google-gemini/gemini-cli.git) | v0.36.0 | TypeScript monorepo | packages/core 内核 + packages/cli（TUI/Ink）+ SDK + A2A server |
 | [opencode](https://github.com/anomalyco/opencode.git) | v1.3.2 | **Bun** + Effect-ts | Hono Server + SQLite Durable State，A/B/C 三层文档结构 |
@@ -18,9 +18,11 @@
 
 | 路径 | 用途 |
 |:-----|:-----|
-| `claude-code/`, `codex/`, `gemini-cli/`, `opencode/` | 上游源码目录，分析输入 |
-| `hello-claude-code/`, `hello-codex/`, `hello-gemini-cli/`, `hello-opencode/` | 分析输出目录，按主题拆分为 Markdown 文档 |
-| `hello-harness/` | Harness Engineering 框架分析 |
+| `sources/` | 上游源码快照目录 |
+| `sources/claude-code/`, `sources/codex/`, `sources/gemini-cli/`, `sources/opencode/` | 各项目源码，分析输入 |
+| `docs/` | 分析输出目录 |
+| `docs/hello-claude-code/`, `docs/hello-codex/`, `docs/hello-gemini-cli/`, `docs/hello-opencode/` | 按主题拆分的 Markdown 分析文档 |
+| `docs/hello-harness/` | Harness Engineering 框架分析 |
 | `scripts/check_doc_refs.ps1` | 校验 Markdown 中的 `path:line` 源码锚点是否能解析到本地快照 |
 
 ## 附录

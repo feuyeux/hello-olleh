@@ -16,7 +16,7 @@ Context 分层是指：把不同来源、不同时效、不同权威性的信息
 
 ### Claude Code
 
-`claude-code/src/context.ts:116-189` 把 context 分为 System Context 和 User Context 两层：
+`sources/claude-code/src/context.ts:116-189` 把 context 分为 System Context 和 User Context 两层：
 
 ```typescript
 export const getSystemContext = memoize(async (): Promise<{ [k: string]: string }> => {
@@ -48,7 +48,7 @@ Codex 的 Context 分层更复杂，因为它是跨 session 的。`stage_one_sys
 
 ### Gemini CLI
 
-`gemini-cli/packages/core/src/config/memory.ts` 的 `HierarchicalMemory` 接口定义了三层：
+`sources/gemini-cli/packages/core/src/config/memory.ts` 的 `HierarchicalMemory` 接口定义了三层：
 
 ```typescript
 export interface HierarchicalMemory {
@@ -64,7 +64,7 @@ Gemini CLI 采用 **JIT context 分层注入**策略，而非全量预注入：`
 
 ### OpenCode
 
-`opencode/packages/opencode/src/skill/index.ts:143-157` 通过 `Config.directories()` 扫描目录来发现 Skill 文件。Context 分层不是显式定义的，而是通过目录结构隐式表达的：越靠近项目的目录里的 Skill，优先级越高。这是声明式的分层，但对不熟悉约定的工程师来说，需要先理解目录扫描逻辑才能推断优先级。
+`sources/opencode/packages/opencode/src/skill/index.ts:143-157` 通过 `Config.directories()` 扫描目录来发现 Skill 文件。Context 分层不是显式定义的，而是通过目录结构隐式表达的：越靠近项目的目录里的 Skill，优先级越高。这是声明式的分层，但对不熟悉约定的工程师来说，需要先理解目录扫描逻辑才能推断优先级。
 
 OpenCode 的上下文来自六个来源：用户原始输入、文件/MCP/agent 附件展开、provider/agent 基础提示、环境/技能/指令文件、运行时提醒、durable history 投影。这六个来源经过三层编译：**输入编译**（`createUserMessage()` 把文件展开成 synthetic text、把 `@agent` 改写成上下文提示）→ **system 编译**（`system.ts` 四层叠加：agent.prompt + 运行时片段 + user.system）→ **历史投影**（`toModelMessages()` 把 durable history 转成 AI SDK `ModelMessage[]`）。OpenCode 的上下文不是"message string + system string"，而是一份 runtime 编译产物。
 
@@ -117,7 +117,7 @@ OpenCode 的 compaction 触发链路为：**CompactionTask → summary agent →
 
 ### Claude Code
 
-`claude-code/src/utils/claudemd.ts:790-1074` 的 `getMemoryFiles()` 发现并加载四层 CLAUDE.md 文件：
+`sources/claude-code/src/utils/claudemd.ts:790-1074` 的 `getMemoryFiles()` 发现并加载四层 CLAUDE.md 文件：
 
 ```
 Managed (/etc/claude-code/CLAUDE.md) — 系统管理员管理
@@ -134,19 +134,19 @@ Claude Code 还引入了 **KAIROS daily log 模式**：启用后，`loadMemoryPr
 
 ### Codex
 
-`codex/codex-rs/core/templates/memories/consolidation.md` 的 Phase 2 产物包括 `raw_memories.md`（原始记忆合并）和 `rollout_summaries/`（每次 rollout 的摘要）。这些产物存储在 DB 里，有时间戳和 usage_count，支持基于使用频率的知识衰减（`max_unused_days` 窗口）。Codex 的知识版本化最完整：不只是"文件在 Git 里"，而是"知识有时间戳、有使用统计、有主动遗忘机制"。
+`sources/codex/codex-rs/core/templates/memories/consolidation.md` 的 Phase 2 产物包括 `raw_memories.md`（原始记忆合并）和 `rollout_summaries/`（每次 rollout 的摘要）。这些产物存储在 DB 里，有时间戳和 usage_count，支持基于使用频率的知识衰减（`max_unused_days` 窗口）。Codex 的知识版本化最完整：不只是"文件在 Git 里"，而是"知识有时间戳、有使用统计、有主动遗忘机制"。
 
 memories pipeline 采用**两阶段 consolidation**：phase1（`memories/phase1.rs`）选择 rollout、提取 stage-1 raw memories；phase2（`memories/phase2.rs`）选择可用 raw memories、做去重评分筛选。这套 pipeline 的中心不是当前 turn，而是已经落盘的 rollout，因此 memory 更偏离线整理，而不是每轮都做复杂注入。
 
 ### Gemini CLI
 
-`gemini-cli/packages/core/src/tools/memoryTool.ts` 实现了 Memory Tool，Agent 可以通过工具调用来读写记忆（`getAllGeminiMdFilenames()` 发现所有 GEMINI.md 文件）。记忆存储在文件系统里，通过 Git 版本化。Agent 可访问记忆工具，意味着它可以主动写入记忆，而不只是被动读取规则——这是 Gemini CLI 记忆系统的独特能力。
+`sources/gemini-cli/packages/core/src/tools/memoryTool.ts` 实现了 Memory Tool，Agent 可以通过工具调用来读写记忆（`getAllGeminiMdFilenames()` 发现所有 GEMINI.md 文件）。记忆存储在文件系统里，通过 Git 版本化。Agent 可访问记忆工具，意味着它可以主动写入记忆，而不只是被动读取规则——这是 Gemini CLI 记忆系统的独特能力。
 
 **save_memory 工具实现**（`packages/core/src/tools/memoryTool.ts`）很直接：读取当前全局 memory 文件 → 在 `## Gemini Added Memories` 段落下追加条目（写入内容做简单清洗，把换行压成单行，避免把任意 markdown 结构直接注进去）→ 展示 diff 并请求确认 → 写回磁盘。所以 `save_memory` 是一个**显式的文件修改工具**，存储目标默认是全局 `GEMINI.md` 类文件，而不是独立的 `memory.json` 键值数据库。
 
 ### OpenCode
 
-`opencode/packages/opencode/src/skill/index.ts:71-102` 的 Skill 解析通过 Zod Schema 验证 frontmatter 结构：
+`sources/opencode/packages/opencode/src/skill/index.ts:71-102` 的 Skill 解析通过 Zod Schema 验证 frontmatter 结构：
 
 ```typescript
 const parsed = Info.pick({ name: true, description: true }).safeParse(md.data)

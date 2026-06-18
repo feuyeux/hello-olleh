@@ -530,9 +530,9 @@ sequenceDiagram
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `codex/codex-rs/config/src/mcp_types.rs:118` | `McpServerConfig` 配置结构 | 对应 Claude/Gemini MCP server config |
-| `codex/codex-rs/core/src/mcp_connection_manager.rs:183` | MCP server 启动/连接管理 | 连接扩展与运行时 |
-| `codex/codex-rs/core/src/mcp_connection_manager.rs:579` | MCP 工具/资源状态聚合 | 对应 OpenCode MCP status |
-| `codex/codex-rs/core/src/mcp_tool_call.rs` | MCP tool call 执行路径 | 对应 Gemini `mcp-client.ts` |
-| `codex/codex-rs/core/src/tools/handlers/mcp.rs` | MCP tool handler 入口 | 说明 MCP 最终进入工具治理 |
-| `codex/codex-rs/protocol/src/mcp.rs` | MCP 协议类型 | 对应 app-server / protocol 暴露面 |
+| `sources/codex/codex-rs/config/src/mcp_types.rs:118` | `McpServerConfig` 配置结构 | 对应 Claude/Gemini MCP server config |
+| `sources/codex/codex-rs/core/src/mcp_connection_manager.rs:183` | MCP server 启动/连接管理 | 连接扩展与运行时 |
+| `sources/codex/codex-rs/core/src/mcp_connection_manager.rs:579` | MCP 工具/资源状态聚合 | 对应 OpenCode MCP status |
+| `sources/codex/codex-rs/core/src/mcp_tool_call.rs` | MCP tool call 执行路径 | 对应 Gemini `mcp-client.ts` |
+| `sources/codex/codex-rs/core/src/tools/handlers/mcp.rs` | MCP tool handler 入口 | 说明 MCP 最终进入工具治理 |
+| `sources/codex/codex-rs/protocol/src/mcp.rs` | MCP 协议类型 | 对应 app-server / protocol 暴露面 |

@@ -361,22 +361,22 @@ OpenCode 的 SDK/transport 章节应围绕 Hono server、SSE、ACP、TUI/Web/Des
 
 | 主题 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| Server basic auth | `opencode/packages/opencode/src/server/server.ts:81` | 设置 `OPENCODE_SERVER_PASSWORD` 后 server 使用 basic auth |
-| TUI attach password | `opencode/packages/opencode/src/cli/cmd/tui/attach.ts:64` | attach 默认从参数或环境变量读取 password |
-| TUI Authorization | `opencode/packages/opencode/src/cli/cmd/tui/attach.ts:66` | attach 生成 `Authorization: Basic ...` header |
-| run attach | `opencode/packages/opencode/src/cli/cmd/run.ts:655` | `run --attach` 同样构造远端 SDK client |
-| SDK event stream | `opencode/packages/opencode/src/cli/cmd/run.ts:441` | attach 后通过 SDK 订阅事件 |
-| ACP protocol | `opencode/packages/opencode/src/acp/agent.ts:521` | ACP 初始化记录 client protocol version |
-| ACP auth | `opencode/packages/opencode/src/acp/agent.ts:598` | 未认证时多处返回 `authRequired()` |
+| Server basic auth | `sources/opencode/packages/opencode/src/server/server.ts:81` | 设置 `OPENCODE_SERVER_PASSWORD` 后 server 使用 basic auth |
+| TUI attach password | `sources/opencode/packages/opencode/src/cli/cmd/tui/attach.ts:64` | attach 默认从参数或环境变量读取 password |
+| TUI Authorization | `sources/opencode/packages/opencode/src/cli/cmd/tui/attach.ts:66` | attach 生成 `Authorization: Basic ...` header |
+| run attach | `sources/opencode/packages/opencode/src/cli/cmd/run.ts:655` | `run --attach` 同样构造远端 SDK client |
+| SDK event stream | `sources/opencode/packages/opencode/src/cli/cmd/run.ts:441` | attach 后通过 SDK 订阅事件 |
+| ACP protocol | `sources/opencode/packages/opencode/src/acp/agent.ts:521` | ACP 初始化记录 client protocol version |
+| ACP auth | `sources/opencode/packages/opencode/src/acp/agent.ts:598` | 未认证时多处返回 `authRequired()` |
 
-安全边界上，attach 模式不能相信本地 Instance state；`opencode/packages/opencode/src/cli/cmd/run.ts:564` 已明确在 attach 时要向远端 server 验证。文档中应把本地 CLI 直连、远端 attach、ACP 三类宿主分开，否则会混淆“本地工作区权限”和“远端 server 权限”。
+安全边界上，attach 模式不能相信本地 Instance state；`sources/opencode/packages/opencode/src/cli/cmd/run.ts:564` 已明确在 attach 时要向远端 server 验证。文档中应把本地 CLI 直连、远端 attach、ACP 三类宿主分开，否则会混淆“本地工作区权限”和“远端 server 权限”。
 
 ## 源码锚点补强
 
 | 表面 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| Session routes | `opencode/packages/opencode/src/server/routes/session.ts:28` | session API Hono route |
-| Prompt route | `opencode/packages/opencode/src/server/routes/session.ts:812`, `opencode/packages/opencode/src/server/routes/session.ts:819` | blocking prompt route |
-| Async prompt route | `opencode/packages/opencode/src/server/routes/session.ts:844`, `opencode/packages/opencode/src/server/routes/session.ts:851` | async prompt route |
-| Permission route | `opencode/packages/opencode/src/server/routes/session.ts:1021`, `opencode/packages/opencode/src/server/routes/session.ts:1024` | permission response |
-| SSE event routes | `opencode/packages/opencode/src/server/routes/event.ts:35`, `opencode/packages/opencode/src/server/routes/global.ts:73` | session/global event streaming |
+| Session routes | `sources/opencode/packages/opencode/src/server/routes/session.ts:28` | session API Hono route |
+| Prompt route | `sources/opencode/packages/opencode/src/server/routes/session.ts:812`, `sources/opencode/packages/opencode/src/server/routes/session.ts:819` | blocking prompt route |
+| Async prompt route | `sources/opencode/packages/opencode/src/server/routes/session.ts:844`, `sources/opencode/packages/opencode/src/server/routes/session.ts:851` | async prompt route |
+| Permission route | `sources/opencode/packages/opencode/src/server/routes/session.ts:1021`, `sources/opencode/packages/opencode/src/server/routes/session.ts:1024` | permission response |
+| SSE event routes | `sources/opencode/packages/opencode/src/server/routes/event.ts:35`, `sources/opencode/packages/opencode/src/server/routes/global.ts:73` | session/global event streaming |

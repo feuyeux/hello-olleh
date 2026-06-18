@@ -18,15 +18,15 @@ title: "09 - 多 Agent 验证"
 
 ### Claude Code
 
-`claude-code/src/tools/AgentTool/` 实现了子 Agent 委派，在 `tools.ts:195` 注册为 `AgentTool`。但 `claude-code/src/constants/tools.ts:40-41` 指出 AgentTool 对非 Anthropic 内部（non-ant）用户禁用。这意味着：多代理委派能力在源码层面存在，但对外部用户不可用，状态隔离机制也没有显式设计。委派存在，但是私有、无隔离的。
+`sources/claude-code/src/tools/AgentTool/` 实现了子 Agent 委派，在 `tools.ts:195` 注册为 `AgentTool`。但 `sources/claude-code/src/constants/tools.ts:40-41` 指出 AgentTool 对非 Anthropic 内部（non-ant）用户禁用。这意味着：多代理委派能力在源码层面存在，但对外部用户不可用，状态隔离机制也没有显式设计。委派存在，但是私有、无隔离的。
 
 ### Codex
 
-`codex/codex-rs/core/templates/agents/orchestrator.md` 的 Orchestrator 模板定义了协调者角色：Orchestrator 负责把任务分配给 workers，状态通过 DB 共享（Phase 1 提取结果 → Phase 2 整合）。这是一个完整的多代理架构：有角色分工、有共享状态机制、有任务分配协议。
+`sources/codex/codex-rs/core/templates/agents/orchestrator.md` 的 Orchestrator 模板定义了协调者角色：Orchestrator 负责把任务分配给 workers，状态通过 DB 共享（Phase 1 提取结果 → Phase 2 整合）。这是一个完整的多代理架构：有角色分工、有共享状态机制、有任务分配协议。
 
 ### Gemini CLI
 
-当前 Gemini CLI 已经不是“无多代理能力”的状态。`gemini-cli/packages/core/src/agents/registry.ts` 负责加载和注册 agent 定义，`subagent-tool.ts` 把 agent 暴露成可调用工具，`local-executor.ts` 负责本地子代理执行，`remote-invocation.ts` 负责远程 A2A 代理调用。也就是说，多代理能力已经进入主运行时，不再只是概念性测试夹具。
+当前 Gemini CLI 已经不是“无多代理能力”的状态。`sources/gemini-cli/packages/core/src/agents/registry.ts` 负责加载和注册 agent 定义，`subagent-tool.ts` 把 agent 暴露成可调用工具，`local-executor.ts` 负责本地子代理执行，`remote-invocation.ts` 负责远程 A2A 代理调用。也就是说，多代理能力已经进入主运行时，不再只是概念性测试夹具。
 
 ### OpenCode
 
@@ -40,7 +40,7 @@ title: "09 - 多 Agent 验证"
 
 ### Claude Code
 
-`claude-code/src/tools/VerifyPlanExecutionTool/` 的存在表明有验证的设计意图：
+`sources/claude-code/src/tools/VerifyPlanExecutionTool/` 的存在表明有验证的设计意图：
 
 ```typescript
 // claude-code/src/tools.ts:91-95

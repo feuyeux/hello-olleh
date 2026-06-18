@@ -858,13 +858,13 @@ flowchart TD
     MCP --> ExternalTools[外部工具服务]
 ```
 
-分层阅读时，provider stream 只负责模型事件；Agent SDK/headless 负责把外部请求转换成 Claude Code 会话；bridge/remote session 负责长连接宿主和认证；MCP transport 负责工具发现与调用。源码锚点上，模型请求层看 `claude-code/src/services/api/claude.ts:753`、`claude-code/src/services/api/claude.ts:1018`、`claude-code/src/services/api/claude.ts:1869` 到 `claude-code/src/services/api/claude.ts:1875`；headless/SDK 控制面看 `claude-code/src/cli/print.ts:1251`、`claude-code/src/cli/print.ts:1535`、`claude-code/src/cli/print.ts:2868`；远程会话看 `claude-code/src/remote/SessionsWebSocket.ts:50`、`claude-code/src/remote/SessionsWebSocket.ts:214`、`claude-code/src/remote/SessionsWebSocket.ts:326`、`claude-code/src/remote/SessionsWebSocket.ts:341`。
+分层阅读时，provider stream 只负责模型事件；Agent SDK/headless 负责把外部请求转换成 Claude Code 会话；bridge/remote session 负责长连接宿主和认证；MCP transport 负责工具发现与调用。源码锚点上，模型请求层看 `sources/claude-code/src/services/api/claude.ts:753`、`sources/claude-code/src/services/api/claude.ts:1018`、`sources/claude-code/src/services/api/claude.ts:1869` 到 `sources/claude-code/src/services/api/claude.ts:1875`；headless/SDK 控制面看 `sources/claude-code/src/cli/print.ts:1251`、`sources/claude-code/src/cli/print.ts:1535`、`sources/claude-code/src/cli/print.ts:2868`；远程会话看 `sources/claude-code/src/remote/SessionsWebSocket.ts:50`、`sources/claude-code/src/remote/SessionsWebSocket.ts:214`、`sources/claude-code/src/remote/SessionsWebSocket.ts:326`、`sources/claude-code/src/remote/SessionsWebSocket.ts:341`。
 
 ## 源码锚点补强
 
 | 传输面 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| 模型流调用 | `claude-code/src/query.ts:659` | `deps.callModel()` 消费模型流 |
-| SDK/headless 初始化 | `claude-code/src/cli/print.ts:563`, `claude-code/src/cli/print.ts:1251` | GrowthBook 初始化与 SDK MCP client cache |
-| MCP control message | `claude-code/src/cli/print.ts:1535`, `claude-code/src/cli/print.ts:2868` | 动态 MCP server 变更和 SDK server placeholder |
-| Bridge gate | `claude-code/src/bridge/bridgeEnabled.ts:120`, `claude-code/src/bridge/initReplBridge.ts:397` | bridge feature flag 与 REPL bridge 初始化 |
+| 模型流调用 | `sources/claude-code/src/query.ts:659` | `deps.callModel()` 消费模型流 |
+| SDK/headless 初始化 | `sources/claude-code/src/cli/print.ts:563`, `sources/claude-code/src/cli/print.ts:1251` | GrowthBook 初始化与 SDK MCP client cache |
+| MCP control message | `sources/claude-code/src/cli/print.ts:1535`, `sources/claude-code/src/cli/print.ts:2868` | 动态 MCP server 变更和 SDK server placeholder |
+| Bridge gate | `sources/claude-code/src/bridge/bridgeEnabled.ts:120`, `sources/claude-code/src/bridge/initReplBridge.ts:397` | bridge feature flag 与 REPL bridge 初始化 |

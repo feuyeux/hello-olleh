@@ -22,12 +22,12 @@ title: "工具调用机制：Tool 注册、权限策略与执行闭环"
 
 | 角色 | 代码路径 | 关键方法 | 行号 | 职责 |
 | :---| :---| :---| :---| :---|
-| **ToolRegistry** | `gemini-cli/packages/core/src/tools/tool-registry.ts` | `discoverAllTools()` | 352 | 工具发现与注册 |
-| **ToolRegistry** | `gemini-cli/packages/core/src/tools/tool-registry.ts` | `getFunctionDeclarations()` | 635 | 导出 JSON Schema 给模型 |
-| **PolicyEngine** | `gemini-cli/packages/core/src/policy/policy-engine.ts` | `check()` / `checkShellCommand()` | 492 / 336 | 风险评估与 Shell 命令规则决策 |
-| **Scheduler** | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | `schedule()` / `_execute()` | 191 / 699 | 工具调用编排入口与单工具执行状态推进 |
-| **ToolExecutor** | `gemini-cli/packages/core/src/scheduler/tool-executor.ts` | `execute()` | 60 | 实际执行、错误归一化、输出后处理 |
-| **DiscoveredToolInvocation** | `gemini-cli/packages/core/src/tools/tool-registry.ts` | `execute()` | 59 | 命令工具的子进程执行 |
+| **ToolRegistry** | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts` | `discoverAllTools()` | 352 | 工具发现与注册 |
+| **ToolRegistry** | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts` | `getFunctionDeclarations()` | 635 | 导出 JSON Schema 给模型 |
+| **PolicyEngine** | `sources/gemini-cli/packages/core/src/policy/policy-engine.ts` | `check()` / `checkShellCommand()` | 492 / 336 | 风险评估与 Shell 命令规则决策 |
+| **Scheduler** | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts` | `schedule()` / `_execute()` | 191 / 699 | 工具调用编排入口与单工具执行状态推进 |
+| **ToolExecutor** | `sources/gemini-cli/packages/core/src/scheduler/tool-executor.ts` | `execute()` | 60 | 实际执行、错误归一化、输出后处理 |
+| **DiscoveredToolInvocation** | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts` | `execute()` | 59 | 命令工具的子进程执行 |
 
 ## 2. 工具注册与发现 (Discovery)
 
@@ -37,7 +37,7 @@ title: "工具调用机制：Tool 注册、权限策略与执行闭环"
 - **命令工具 (Command Tools)**：基于特定脚本发现的工具。
 - **MCP 工具**：从配置的 MCP Server（通过 `McpClientManager`）动态加载的工具。
 
-模型在 `getFunctionDeclarations()`（`gemini-cli/packages/core/src/tools/tool-registry.ts:635`）阶段看到这些工具的 JSON Schema 定义。注册阶段不是单纯扫描目录：`ToolRegistry.registerTool()`（`gemini-cli/packages/core/src/tools/tool-registry.ts:269`）把内建工具、命令工具和 MCP 工具放入同一张注册表，后续 Scheduler 不需要关心工具来源。
+模型在 `getFunctionDeclarations()`（`sources/gemini-cli/packages/core/src/tools/tool-registry.ts:635`）阶段看到这些工具的 JSON Schema 定义。注册阶段不是单纯扫描目录：`ToolRegistry.registerTool()`（`sources/gemini-cli/packages/core/src/tools/tool-registry.ts:269`）把内建工具、命令工具和 MCP 工具放入同一张注册表，后续 Scheduler 不需要关心工具来源。
 
 ## 3. 工具执行流水线 (Pipeline)
 
@@ -81,15 +81,15 @@ flowchart LR
 
 | 函数/类 | 源码锚点 | 作用 |
 | :---| :---| :---|
-| `ToolRegistry.registerTool()` | `gemini-cli/packages/core/src/tools/tool-registry.ts:269` | 将工具实例写入注册表，是内建工具、发现工具、MCP 工具的共同入口 |
-| `ToolRegistry.discoverAllTools()` | `gemini-cli/packages/core/src/tools/tool-registry.ts:352` | 执行命令工具、MCP 工具等动态发现 |
-| `ToolRegistry.getFunctionDeclarations()` | `gemini-cli/packages/core/src/tools/tool-registry.ts:635` | 生成模型可见的函数声明 |
-| `Scheduler.schedule()` | `gemini-cli/packages/core/src/scheduler/scheduler.ts:191` | 接收模型产生的工具调用请求并进入调度队列 |
-| `Scheduler._execute()` | `gemini-cli/packages/core/src/scheduler/scheduler.ts:699` | 单个工具调用的审批、执行、结果状态推进 |
-| `ToolExecutor.execute()` | `gemini-cli/packages/core/src/scheduler/tool-executor.ts:60` | 调用工具实现并把异常、输出、metadata 归一成 completed call |
-| `PolicyEngine.check()` | `gemini-cli/packages/core/src/policy/policy-engine.ts:492` | 对工具名、参数、approval mode 和 policy 规则做统一决策 |
-| `ToolOutputDistillationService` | `gemini-cli/packages/core/src/context/toolDistillationService.ts:39` | 对超长工具输出做截断/摘要并记录遥测 |
-| `ToolOutputMaskingService` | `gemini-cli/packages/core/src/context/toolOutputMaskingService.ts:69` | 在上下文管线中遮罩旧工具输出，控制历史 token 增长 |
+| `ToolRegistry.registerTool()` | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:269` | 将工具实例写入注册表，是内建工具、发现工具、MCP 工具的共同入口 |
+| `ToolRegistry.discoverAllTools()` | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:352` | 执行命令工具、MCP 工具等动态发现 |
+| `ToolRegistry.getFunctionDeclarations()` | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:635` | 生成模型可见的函数声明 |
+| `Scheduler.schedule()` | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts:191` | 接收模型产生的工具调用请求并进入调度队列 |
+| `Scheduler._execute()` | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts:699` | 单个工具调用的审批、执行、结果状态推进 |
+| `ToolExecutor.execute()` | `sources/gemini-cli/packages/core/src/scheduler/tool-executor.ts:60` | 调用工具实现并把异常、输出、metadata 归一成 completed call |
+| `PolicyEngine.check()` | `sources/gemini-cli/packages/core/src/policy/policy-engine.ts:492` | 对工具名、参数、approval mode 和 policy 规则做统一决策 |
+| `ToolOutputDistillationService` | `sources/gemini-cli/packages/core/src/context/toolDistillationService.ts:39` | 对超长工具输出做截断/摘要并记录遥测 |
+| `ToolOutputMaskingService` | `sources/gemini-cli/packages/core/src/context/toolOutputMaskingService.ts:69` | 在上下文管线中遮罩旧工具输出，控制历史 token 增长 |
 
 ## 7. 代码质量评估 (Code Quality Assessment)
 
@@ -100,7 +100,7 @@ flowchart LR
 
 ### 7.2 改进点
 
-- **`DiscoveredToolInvocation.execute()` 使用子进程 `spawn`**：`gemini-cli/packages/core/src/tools/tool-registry.ts:59` 通过子进程执行命令工具，存在参数边界风险，尽管 PolicyEngine 会预检，但建议对参数做二次结构化校验。
+- **`DiscoveredToolInvocation.execute()` 使用子进程 `spawn`**：`sources/gemini-cli/packages/core/src/tools/tool-registry.ts:59` 通过子进程执行命令工具，存在参数边界风险，尽管 PolicyEngine 会预检，但建议对参数做二次结构化校验。
 
 ## 8. 横向对齐补强：Gemini 的工具闭环是“流后调度”
 
@@ -108,11 +108,11 @@ flowchart LR
 
 | 阶段 | 源码入口 | 作用 |
 | --- | --- | --- |
-| 工具注册 | `gemini-cli/packages/core/src/tools/tool-registry.ts` | 注册内建、发现型和 MCP 工具 |
-| 策略判断 | `gemini-cli/packages/core/src/policy/policy-engine.ts` | 对 shell/tool 调用做 allow/deny/confirm |
-| 调度执行 | `gemini-cli/packages/core/src/scheduler/scheduler.ts` | 管理确认、执行、结果状态 |
-| 策略适配 | `gemini-cli/packages/core/src/scheduler/policy.ts` | 将 scheduler 请求转给 PolicyEngine |
-| 回注模型 | `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts` | 完成工具后触发 continuation |
+| 工具注册 | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts` | 注册内建、发现型和 MCP 工具 |
+| 策略判断 | `sources/gemini-cli/packages/core/src/policy/policy-engine.ts` | 对 shell/tool 调用做 allow/deny/confirm |
+| 调度执行 | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts` | 管理确认、执行、结果状态 |
+| 策略适配 | `sources/gemini-cli/packages/core/src/scheduler/policy.ts` | 将 scheduler 请求转给 PolicyEngine |
+| 回注模型 | `sources/gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts` | 完成工具后触发 continuation |
 
 横向读本章时，应优先关注 Scheduler 三阶段，而不是只看 ToolRegistry。ToolRegistry 解决“有哪些工具”，Scheduler 才解决“什么时候、以什么权限、如何执行并回注”。
 
@@ -123,12 +123,12 @@ flowchart LR
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `gemini-cli/packages/core/src/tools/tool-registry.ts:229` | `ToolRegistry` 主类 | 对应 Claude/OpenCode registry |
-| `gemini-cli/packages/core/src/tools/tool-registry.ts:269` | `registerTool()` 统一注册入口 | 内建、发现型、MCP 工具汇聚点 |
-| `gemini-cli/packages/core/src/tools/tool-registry.ts:635` | `getFunctionDeclarations()` 暴露给模型 | 对应 Prompt/模型请求工具声明 |
-| `gemini-cli/packages/core/src/scheduler/scheduler.ts:191` | `Scheduler.schedule()` 工具请求入口 | 对应 Codex orchestrator |
-| `gemini-cli/packages/core/src/scheduler/scheduler.ts:699` | `_execute()` 执行、审批和结果推进 | 对应 OpenCode tool part 状态机 |
-| `gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1822` | 完成工具后回注 continuation | Gemini 工具闭环的 UI 侧关键点 |
+| `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:229` | `ToolRegistry` 主类 | 对应 Claude/OpenCode registry |
+| `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:269` | `registerTool()` 统一注册入口 | 内建、发现型、MCP 工具汇聚点 |
+| `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:635` | `getFunctionDeclarations()` 暴露给模型 | 对应 Prompt/模型请求工具声明 |
+| `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts:191` | `Scheduler.schedule()` 工具请求入口 | 对应 Codex orchestrator |
+| `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts:699` | `_execute()` 执行、审批和结果推进 | 对应 OpenCode tool part 状态机 |
+| `sources/gemini-cli/packages/cli/src/ui/hooks/useGeminiStream.ts:1822` | 完成工具后回注 continuation | Gemini 工具闭环的 UI 侧关键点 |
 
 ---
 

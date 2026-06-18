@@ -41,7 +41,7 @@ title: "执行主线索引：OpenCode 运行主线深度解析"
 
 ## 2. 默认执行链的 10 步
 
-1. `opencode/package.json:8-18`
+1. `sources/opencode/package.json:8-18`
    `dev` 把开发态启动送进 `packages/opencode/src/index.ts`。
 2. `packages/opencode/src/index.ts:67-147`
    初始化日志、环境变量、SQLite 迁移，并注册所有命令。
