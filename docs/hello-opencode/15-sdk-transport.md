@@ -4,7 +4,7 @@ title: "OpenCode A01：多端入口与传输适配"
 ---
 # OpenCode A01：多端入口与传输适配
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
 OpenCode 的入口层覆盖默认 TUI、一次性 `run`、`attach`、`serve`、`web`、`acp`、桌面 sidecar 等多种形态。阅读这一层时，重点在于 transport 与宿主怎样收束到同一个 HTTP/session 协议上。
 
@@ -244,7 +244,7 @@ TUI 主线程执行 `render()` 时，还要经历两层启动：先装配 Provid
 
 浏览器访问的是本地 server 暴露的 API 与被代理的远端 app shell；`packages/web` 负责官网与文档站点。
 
-### 6.3 在 `v1.3.2` 中，未知路径会代理到 `https://app.opencode.ai`
+### 6.3 在 `v1.4.14` 中，未知路径会代理到 `https://app.opencode.ai`
 
 `packages/opencode/src/server/server.ts:499-514` 的兜底路由会把任意未命中的路径代理到 `app.opencode.ai`，并重写 CSP。
 
@@ -375,8 +375,8 @@ OpenCode 的 SDK/transport 章节应围绕 Hono server、SSE、ACP、TUI/Web/Des
 
 | 表面 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| Session routes | `sources/opencode/packages/opencode/src/server/routes/session.ts:28` | session API Hono route |
-| Prompt route | `sources/opencode/packages/opencode/src/server/routes/session.ts:812`, `sources/opencode/packages/opencode/src/server/routes/session.ts:819` | blocking prompt route |
-| Async prompt route | `sources/opencode/packages/opencode/src/server/routes/session.ts:844`, `sources/opencode/packages/opencode/src/server/routes/session.ts:851` | async prompt route |
-| Permission route | `sources/opencode/packages/opencode/src/server/routes/session.ts:1021`, `sources/opencode/packages/opencode/src/server/routes/session.ts:1024` | permission response |
-| SSE event routes | `sources/opencode/packages/opencode/src/server/routes/event.ts:35`, `sources/opencode/packages/opencode/src/server/routes/global.ts:73` | session/global event streaming |
+| Session routes | `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:28` | session API Hono route |
+| Prompt route | `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:812`, `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:819` | blocking prompt route |
+| Async prompt route | `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:844`, `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:851` | async prompt route |
+| Permission route | `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:1021`, `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:1024` | permission response |
+| SSE event routes | `sources/opencode/packages/opencode/src/server/routes/instance/event.ts:35`, `sources/opencode/packages/opencode/src/server/routes/global.ts:73` | session/global event streaming |

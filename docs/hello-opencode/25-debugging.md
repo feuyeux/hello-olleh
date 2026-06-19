@@ -4,7 +4,7 @@ title: "OpenCode 深度专题 C01：断点调试指南"
 ---
 # OpenCode 深度专题 C01：断点调试指南
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
 B 系列前面讲的都是代码架构和执行逻辑，这篇换一个工程视角：如何在 VS Code 和 JetBrains 里对 `packages/opencode` 源码设置断点、调试具体命令、以及一边断点一边看日志。这对想深入主链路或排查运行时问题的人来说是实用工具。
 
@@ -258,10 +258,10 @@ OpenCode 的调试优势是状态可查：message、part、session、Bus/SSE 都
 
 | 症状 | 优先检查 | 操作路径 |
 | --- | --- | --- |
-| UI 没有更新 | Bus/SSE 是否有事件 | 订阅 `/event`，对应 server route 是 `sources/opencode/packages/opencode/src/server/routes/event.ts:19` |
+| UI 没有更新 | Bus/SSE 是否有事件 | 订阅 `/event`，对应 server route 是 `sources/opencode/packages/opencode/src/server/routes/instance/event.ts:19` |
 | 工具卡住 | durable part 是否停在 pending/running | 查 `PartTable`，再对照 `sources/opencode/packages/opencode/src/session/processor.ts:121` 和 `processor.ts:142` |
-| 工具结果丢失 | 是否发布 `message.part.updated` | 看 `sources/opencode/packages/opencode/src/session/index.ts:770` 和 CLI 消费点 `sources/opencode/packages/opencode/src/cli/cmd/run.ts:460` |
-| MCP 不能用 | status 是否 `needs_auth` / `failed` | 查 `sources/opencode/packages/opencode/src/server/routes/mcp.ts:16` 的 status 接口 |
+| 工具结果丢失 | 是否发布 `message.part.updated` | 看 `sources/opencode/packages/opencode/src/session/session.ts:481` 和 CLI 消费点 `sources/opencode/packages/opencode/src/cli/cmd/run.ts:460` |
+| MCP 不能用 | status 是否 `needs_auth` / `failed` | 查 `sources/opencode/packages/opencode/src/server/routes/instance/mcp.ts:16` 的 status 接口 |
 | MCP OAuth 卡住 | pending transport 是否存在 | 看 `sources/opencode/packages/opencode/src/mcp/index.ts:153` 和 `mcp/index.ts:896` |
 | 远端 attach 失败 | basic auth header 是否存在 | 看 `sources/opencode/packages/opencode/src/cli/cmd/run.ts:655` 和 `server.ts:81` |
 | provider 请求中断 | provider/model stream 配置 | 先查 config，再看 session error 是否经 `Bus.publish(Session.Event.Error)` 发出 |
@@ -275,5 +275,5 @@ OpenCode 的调试优势是状态可查：message、part、session、Bus/SSE 都
 | prompt 编译 | `sources/opencode/packages/opencode/src/session/prompt.ts:162`, `sources/opencode/packages/opencode/src/session/prompt.ts:986` | 输入是否写成 message/part |
 | loop/stream | `sources/opencode/packages/opencode/src/session/prompt.ts:278`, `sources/opencode/packages/opencode/src/session/processor.ts:46` | loop 和 processor |
 | tool/permission | `sources/opencode/packages/opencode/src/tool/registry.ts:155`, `sources/opencode/packages/opencode/src/permission/index.ts:166` | 工具可用性和审批 |
-| SSE/UI | `sources/opencode/packages/opencode/src/server/routes/event.ts:35`, `sources/opencode/packages/opencode/src/server/routes/global.ts:73` | UI 是否收到事件 |
-| server prompt route | `sources/opencode/packages/opencode/src/server/routes/session.ts:819`, `sources/opencode/packages/opencode/src/server/routes/session.ts:851` | blocking/async prompt 路由 |
+| SSE/UI | `sources/opencode/packages/opencode/src/server/routes/instance/event.ts:35`, `sources/opencode/packages/opencode/src/server/routes/global.ts:73` | UI 是否收到事件 |
+| server prompt route | `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:819`, `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:851` | blocking/async prompt 路由 |

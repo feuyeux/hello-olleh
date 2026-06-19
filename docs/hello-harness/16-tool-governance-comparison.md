@@ -53,9 +53,9 @@ flowchart LR
 | 项目 | Registry / Schema | Permission / Policy | Execution / Result |
 | --- | --- | --- | --- |
 | Claude Code | `sources/claude-code/src/Tool.ts:123`, `sources/claude-code/src/tools.ts` | `sources/claude-code/src/hooks/useCanUseTool.tsx`, `sources/claude-code/src/services/tools/toolOrchestration.ts` | `sources/claude-code/src/services/tools/toolExecution.ts`, `sources/claude-code/src/services/tools/StreamingToolExecutor.ts` |
-| Codex | `sources/codex/codex-rs/core/src/tools/spec.rs:32` | `sources/codex/codex-rs/core/src/tools/orchestrator.rs:111`, `sources/codex/codex-rs/core/src/exec_policy.rs:234` | `sources/codex/codex-rs/core/src/tools/handlers/unified_exec.rs:170` |
+| Codex | `sources/codex/codex-rs/tools/src/tool_spec.rs:17` | `sources/codex/codex-rs/core/src/tools/orchestrator.rs:111`, `sources/codex/codex-rs/core/src/exec_policy.rs:234` | `sources/codex/codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:184` |
 | Gemini CLI | `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:352` | `sources/gemini-cli/packages/core/src/policy/policy-engine.ts` | `sources/gemini-cli/packages/core/src/scheduler/scheduler.ts:191`, `sources/gemini-cli/packages/core/src/scheduler/tool-executor.ts:60` |
-| OpenCode | `sources/opencode/packages/opencode/src/tool/registry.ts:36` | `sources/opencode/packages/opencode/src/permission/evaluate.ts:9`, `sources/opencode/packages/opencode/src/permission/index.ts:166` | `sources/opencode/packages/opencode/src/session/index.ts:423` |
+| OpenCode | `sources/opencode/packages/opencode/src/tool/registry.ts:36` | `sources/opencode/packages/opencode/src/permission/evaluate.ts:9`, `sources/opencode/packages/opencode/src/permission/index.ts:166` | `sources/opencode/packages/opencode/src/session/session.ts:587` |
 
 ## 4. 文档完善要求
 

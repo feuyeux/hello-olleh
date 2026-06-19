@@ -7,7 +7,7 @@
 > - Codex rust-v0.141.0
 > - Gemini CLI v0.47.0
 > - OpenCode v1.4.14
-> - Hermes Agent v2026.6.5
+> - Hermes Agent v0.16.0
 > - Nanobot v0.2.1
 
 ---

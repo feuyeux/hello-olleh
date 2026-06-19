@@ -160,10 +160,10 @@ Codex 的 bridge 不应理解为“额外的远程功能”，而应理解为 ru
 
 | 入口 | 源码锚点 | 作用 |
 | --- | --- | --- |
-| turn/start | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:6853` | 外部宿主提交用户 turn 的主入口 |
-| core op 桥接 | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:2548` | 将 app-server request 转成 core `Op` |
-| fork thread | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:5122` | 支持从既有 thread 派生新 thread |
-| thread spawn 元数据 | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:9812` | 用 source metadata 标记 spawned agent 来源 |
+| turn/start | `sources/codex/codex-rs/app-server/src/request_processors/turn_processor.rs:403` | 外部宿主提交用户 turn 的主入口 |
+| core op 桥接 | `sources/codex/codex-rs/app-server/src/request_processors/turn_processor.rs:372` | 将 app-server request 转成 core `Op` |
+| fork thread | `sources/codex/codex-rs/app-server/src/request_processors/thread_processor.rs:1003` | 支持从既有 thread 派生新 thread |
+| thread spawn 元数据 | `sources/codex/codex-rs/app-server/src/request_processors/thread_processor.rs:1003` | 用 source metadata 标记 spawned agent 来源 |
 | hook notification | `sources/codex/codex-rs/app-server/src/bespoke_event_handling.rs:1590` | runtime hook 事件转换成宿主可见通知 |
 
 ### 协议边界

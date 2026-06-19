@@ -4,7 +4,7 @@ title: "OpenCode 深度专题 B11：Worktree 与 Sandbox 机制"
 ---
 # OpenCode 深度专题 B11：Worktree 与 Sandbox 机制
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
 `B08` 已经讲了项目级 runtime 的启动装配，但有一个关键概念在那篇里没有单独展开：`sandbox` 在 OpenCode 里的真实含义。与其望文生义，不如先把代码语义钉住：它不是 Docker/VM/firejail 这类系统级隔离，而是"当前目录所属的那个 Git worktree 边界"。B11 就专门把这个机制拆清楚。
 

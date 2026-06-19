@@ -58,7 +58,7 @@ title: "14 - 源码分析质量横向评估"
 | 项目 | 代表章节 | 代表源码锚点 | 说明 |
 | --- | --- | --- | --- |
 | Claude Code | `docs/hello-claude-code/03-agent-loop.md`, `05-tool-system.md`, `11-prompt-system.md` | `sources/claude-code/src/query.ts:241`, `sources/claude-code/src/Tool.ts:123`, `sources/claude-code/src/constants/prompts.ts` | 覆盖 query 主链、工具上下文和 prompt 资产 |
-| Codex | `docs/hello-codex/03-agent-loop.md`, `05-tool-system.md`, `24-mcp-system.md` | `sources/codex/codex-rs/core/src/codex.rs:4289`, `sources/codex/codex-rs/core/src/tools/orchestrator.rs:111`, `sources/codex/codex-rs/core/src/mcp_connection_manager.rs:183` | 覆盖 submission loop、工具治理和 MCP 连接 |
+| Codex | `docs/hello-codex/03-agent-loop.md`, `05-tool-system.md`, `24-mcp-system.md` | `sources/codex/codex-rs/core/src/session/handlers.rs:698`, `sources/codex/codex-rs/core/src/tools/orchestrator.rs:111`, `sources/codex/codex-rs/codex-mcp/src/connection_manager.rs:107` | 覆盖 submission loop、工具治理和 MCP 连接 |
 | Gemini CLI | `docs/hello-gemini-cli/03-agent-loop.md`, `05-tool-system.md`, `11-prompt-system.md` | `sources/gemini-cli/packages/core/src/core/client.ts:868`, `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:352`, `sources/gemini-cli/packages/core/src/prompts/promptProvider.ts` | 覆盖 core turn、工具注册和 PromptProvider |
 | OpenCode | `docs/hello-opencode/03-agent-loop.md`, `11-prompt-system.md`, `27-session-loop.md` | `sources/opencode/packages/opencode/src/session/prompt.ts:162`, `sources/opencode/packages/opencode/src/session/prompt.ts:278`, `sources/opencode/packages/opencode/src/session/processor.ts:46` | 覆盖 durable prompt、loop 和 stream processor |
 

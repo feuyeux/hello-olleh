@@ -4,7 +4,7 @@ title: "OpenCode 性能与代码质量：流式传输、SSE、Bun Runtime 优势
 ---
 # OpenCode 性能与代码质量：流式传输、SSE、Bun Runtime 优势、优缺点分析
 
-> 基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
 ---
 

@@ -4,7 +4,7 @@ title: "OpenCode 深度专题 B10：SKILL，技能是怎样被发现、授权、
 ---
 # OpenCode 深度专题 B10：SKILL，技能是怎样被发现、授权、加载并重新注入主链路的
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
 在前面的章节里，Skill 经常被顺手提到：B02 里它会进上下文，B09 里它又是扩展入口之一。但如果只停在这两层，很容易把 Skill 误解成“仓库里几份 markdown 指南”。OpenCode 当前实现其实更强一些：Skill 是一套可以被发现、缓存、授权、投影成 system prompt、tool 和 command 的技能包系统。B10 就专门把这条链路拆开。
 

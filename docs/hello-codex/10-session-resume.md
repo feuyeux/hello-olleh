@@ -118,9 +118,9 @@ Codex 的安全模型不是单一的 `sandbox=true/false`。
 
 ## 6. 对应阅读
 
-- Claude Code: [19-settings-config.md](../hello-claude-code/19-settings-config.md), [10-session-resume.md](../hello-claude-code/10-session-resume.md)
-- Gemini CLI: [19-settings-config.md](../hello-gemini-cli/19-settings-config.md), [10-session-resume.md](../hello-gemini-cli/10-session-resume.md)
-- OpenCode: [19-settings-config.md](../hello-opencode/19-settings-config.md), [34-worktree-sandbox.md](../hello-opencode/34-worktree-sandbox.md), [10-session-resume.md](../hello-opencode/10-session-resume.md)
+- Claude Code: [17-settings-config.md](../hello-claude-code/17-settings-config.md), [10-session-resume.md](../hello-claude-code/10-session-resume.md)
+- Gemini CLI: [17-settings-config.md](../hello-gemini-cli/17-settings-config.md), [10-session-resume.md](../hello-gemini-cli/10-session-resume.md)
+- OpenCode: [17-settings-config.md](../hello-opencode/17-settings-config.md), [32-worktree-sandbox.md](../hello-opencode/32-worktree-sandbox.md), [10-session-resume.md](../hello-opencode/10-session-resume.md)
 
 ---
 

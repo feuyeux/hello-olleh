@@ -30,7 +30,7 @@ if (overrideSystemPrompt) {
 
 ### Codex
 
-Codex 的 System Prompt 完全由 Markdown 模板文件承载，这是一个根本性的设计差异。`sources/codex/codex-rs/protocol/src/prompts/base_instructions/default.md:1-276` 是主规范，276 行全部是可读的结构化文本。协作模式通过独立目录（`collaboration_mode/pair_programming.md`、`plan.md`、`execute.md`）分类管理，压缩 prompt 也有独立文件（`compact/prompt.md`）。
+Codex 的 System Prompt 完全由 Markdown 模板文件承载，这是一个根本性的设计差异。`sources/codex/codex-rs/protocol/src/prompts/base_instructions/default.md:1-275` 是主规范，275 行全部是可读的结构化文本。协作模式通过独立目录（`collaboration_mode/pair_programming.md`、`plan.md`、`execute.md`）分类管理，压缩 prompt 也有独立文件（`compact/prompt.md`）。
 
 这个架构的含义是：行为规则是可版本化的代码仓库文件，任何 diff 都能被代码审查过程捕捉。工程师不需要懂 TypeScript 就能修改 Agent 行为，也不需要重新编译就能看到变更效果。代价是：没有类型检查来保证 prompt 格式的合法性。
 

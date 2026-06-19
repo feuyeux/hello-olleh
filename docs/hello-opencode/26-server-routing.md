@@ -4,7 +4,7 @@ title: "OpenCode A02：Server 与路由边界"
 ---
 # OpenCode A02：Server 与路由边界
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
 入口层之后，所有请求都会遇到同一个问题：怎样从一个 CLI/TUI/桌面/Web 入口，进入到当前工作目录、当前 workspace、当前 project 对应的 session runtime。这个边界就落在 `packages/opencode/src/server/server.ts` 和 `server/routes/*` 上。
 
@@ -200,7 +200,7 @@ HTTP 请求
 
 这两个接口会把 `Bus` / `GlobalBus` 里的事件转成 SSE，CLI/TUI/桌面都是订阅这条流来刷新 UI 的。
 
-### 3.4 `v1.3.2` 的事件作用域有两层
+### 3.4 `v1.4.14` 的事件作用域有两层
 
 #### 3.4.1 `GET /event`
 

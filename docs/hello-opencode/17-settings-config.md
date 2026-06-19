@@ -4,7 +4,7 @@ title: "OpenCode 深度专题 B08：启动与配置加载，从全局目录到 .
 ---
 # OpenCode 深度专题 B08：启动与配置加载，从全局目录到 `.opencode` 覆写
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
 前面的 A/B 章节大多从”请求已经进入 runtime”开始讲。但在 OpenCode 当前实现里，很多关键行为其实发生在第一条 prompt 之前：全局目录准备、日志与数据库迁移、配置叠加、`.opencode` 目录装载、依赖安装，以及 `InstanceBootstrap()` 固定服务图初始化。B08 的任务，就是把这条”启动前半场”讲清楚。
 
@@ -400,8 +400,8 @@ flowchart TD
 | 阶段 | 源码锚点 | 失败边界 |
 | --- | --- | --- |
 | CLI bootstrap | `sources/opencode/packages/opencode/src/cli/bootstrap.ts:7` | 入口只声明 init，具体失败多在下游 service 暴露 |
-| Config schema / MCP config | `sources/opencode/packages/opencode/src/config/config.ts:565`, `sources/opencode/packages/opencode/src/config/config.ts:1124` | 配置错误应在编译/读取阶段暴露，避免进入 session 后才失败 |
-| Instance dispose | `sources/opencode/packages/opencode/src/config/config.ts:1353`, `sources/opencode/packages/opencode/src/config/config.ts:1444` | 配置变化会触发 instance dispose / disposeAll |
+| Config schema / MCP config | `sources/opencode/packages/opencode/src/config/config.ts:565`, `sources/opencode/packages/opencode/src/config/mcp.ts:57` | 配置错误应在编译/读取阶段暴露，避免进入 session 后才失败 |
+| Instance dispose | `sources/opencode/packages/opencode/src/config/config.ts:723`, `sources/opencode/packages/opencode/src/config/config.ts:728` | 配置变化会触发 instance dispose / disposeAll |
 | File watcher | `sources/opencode/packages/opencode/src/file/watcher.ts:155` | watcher 初始化失败会影响配置/文件变更感知 |
 | MCP 工具变更 | `sources/opencode/packages/opencode/src/mcp/index.ts:116` | MCP server 状态变化通过 Bus 通知工具刷新 |
 

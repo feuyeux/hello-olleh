@@ -4,7 +4,7 @@ title: "OpenCode 深度专题 B13：MCP，Model Context Protocol 扩展系统的
 ---
 # OpenCode 深度专题 B13：MCP，Model Context Protocol 扩展系统的全部实现细节
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
 B09 里把 MCP 定位为"扩展面之一"，但那篇只讲了它产出 tool/prompt/resource，没有展开内部实现。B13 的任务是把 MCP 的全部实现细节拆清楚：状态机、认证、远程/本地两类传输、tool 投影，以及 OAuth 完整流程。
 

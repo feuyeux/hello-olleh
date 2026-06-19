@@ -4,7 +4,7 @@ title: "OpenCode A03：SessionPrompt.prompt()"
 ---
 # OpenCode A03：`SessionPrompt.prompt()`
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 > 核心代码：`sources/opencode/packages/opencode/src/session/prompt.ts`
 
 A03 说明 `POST /session/:id/message` 如何进入 session runtime，并在 `prompt()` 层被编译成 durable user message。阅读这一层时，重点在于 user message 头、part 编译路径，以及 durable 写盘顺序。
@@ -436,4 +436,4 @@ OpenCode 的 `SessionPrompt.prompt()` 和其他项目最不同的地方，是它
 | prompt 主入口 | `sources/opencode/packages/opencode/src/session/prompt.ts:162` | 编译并写入 user message |
 | prompt parts | `sources/opencode/packages/opencode/src/session/prompt.ts:191`, `sources/opencode/packages/opencode/src/session/prompt.ts:986` | 模板引用解析与 user message 构造 |
 | task permission | `sources/opencode/packages/opencode/src/session/prompt.ts:1304` | agent/task part 权限检查 |
-| LLM stream | `sources/opencode/packages/opencode/src/session/prompt.ts:2013` | 编译后进入模型请求 |
+| LLM stream | `sources/opencode/packages/opencode/src/session/processor.ts:548` | 编译后进入 processor 模型请求 |

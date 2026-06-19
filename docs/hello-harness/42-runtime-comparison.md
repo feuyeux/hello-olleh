@@ -13,7 +13,7 @@ title: "OpenCode vs Hermes Agent: 运行时对比分析"
 
 ## 1. 核心架构对比
 
-| 维度 | OpenCode v1.3.2 | Hermes Agent v0.6.0 |
+| 维度 | OpenCode v1.4.14 | Hermes Agent v0.16.0 |
 | :------| :-----------------| :---------------------|
 | **语言** | TypeScript | Python 3.11+ |
 | **运行时** | Bun (原生 HTTP/SQLite) | CPython (标准库) |

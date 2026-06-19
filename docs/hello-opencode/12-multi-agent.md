@@ -4,9 +4,9 @@ title: "OpenCode 深度专题 B03：高级编排，Subagent、Command、Compacti
 ---
 # OpenCode 深度专题 B03：高级编排，Subagent、Command、Compaction 怎样落回同一条主线
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
-在 `v1.3.2` 中，OpenCode 并没有引入独立的 workflow engine，但它也绝不只是“模型自己决定下一步用哪个工具”。高级编排主要靠三套机制完成：`task` 子任务、`command` 模板、`compaction` 压缩恢复。它们的共同点是都回写到同一条 session/message/part 历史里。
+在 `v1.4.14` 中，OpenCode 并没有引入独立的 workflow engine，但它也绝不只是“模型自己决定下一步用哪个工具”。高级编排主要靠三套机制完成：`task` 子任务、`command` 模板、`compaction` 压缩恢复。它们的共同点是都回写到同一条 session/message/part 历史里。
 
 ---
 
@@ -250,4 +250,4 @@ OpenCode 的多代理不应理解为独立调度器，而是 `task` 工具创建
 | 权限状态 | 父 loop 只等待 task tool 完成 | 子 loop 内部继续走 Permission.ask / updatePart | 权限链路同构，但决策发生在子 session 内 |
 | 完成通知 | 通过 Bus 观察 child session 状态 | 子 session 发布 `SessionStatus` 变化 | 事件共享，执行状态不共享 |
 
-源码上，`sources/opencode/packages/opencode/src/tool/task.ts:74` 创建带 `parentID` 的 session，`sources/opencode/packages/opencode/src/tool/task.ts:132`、`sources/opencode/packages/opencode/src/tool/task.ts:137`、`sources/opencode/packages/opencode/src/tool/task.ts:141` 把 prompt、agent 与权限传入子任务；父子关系和 child 查询在 `sources/opencode/packages/opencode/src/session/index.ts:222`、`sources/opencode/packages/opencode/src/session/index.ts:230`、`sources/opencode/packages/opencode/src/session/index.ts:652`、`sources/opencode/packages/opencode/src/session/index.ts:668`。因此 OpenCode 的多代理状态边界比“共享工作线程”更清晰：共享的是 session graph 和事件，总结/权限/消息历史都留在各自 session。
+源码上，`sources/opencode/packages/opencode/src/tool/task.ts:74` 创建带 `parentID` 的 session，`sources/opencode/packages/opencode/src/tool/task.ts:132`、`sources/opencode/packages/opencode/src/tool/task.ts:137`、`sources/opencode/packages/opencode/src/tool/task.ts:141` 把 prompt、agent 与权限传入子任务；父子关系和 child 查询在 `sources/opencode/packages/opencode/src/session/session.ts:395`、`sources/opencode/packages/opencode/src/session/session.ts:438`、`sources/opencode/packages/opencode/src/session/session.ts:517`、`sources/opencode/packages/opencode/src/session/session.ts:550`。因此 OpenCode 的多代理状态边界比“共享工作线程”更清晰：共享的是 session graph 和事件，总结/权限/消息历史都留在各自 session。

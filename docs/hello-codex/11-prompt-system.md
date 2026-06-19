@@ -71,7 +71,7 @@ sequenceDiagram
 | 节点 | 源码锚点 | 进入 Prompt 的形态 | 本轮作用 |
 | --- | --- | --- | --- |
 | Base instructions | `sources/codex/codex-rs/protocol/src/models.rs:602`, `sources/codex/codex-rs/core/src/session/mod.rs:1115` | `Prompt.base_instructions` | 决定 provider request 的 `instructions` 字段；这是基础行为协议，不等同于项目文档 |
-| 权限/沙箱说明 | `sources/codex/codex-rs/core/src/session/mod.rs:2496`, `sources/codex/codex-rs/core/src/context/permissions_instructions.rs:128` | developer message | 告诉模型当前 approval、sandbox、cwd 与执行边界；但真正执行仍由工具 runtime 校验 |
+| 权限/沙箱说明 | `sources/codex/codex-rs/core/src/session/mod.rs:2496`, `sources/codex/codex-rs/prompts/src/permissions_instructions.rs:1` | developer message | 告诉模型当前 approval、sandbox、cwd 与执行边界；但真正执行仍由工具 runtime 校验 |
 | AGENTS.md / 用户指令 | `sources/codex/codex-rs/core/src/agents_md.rs:115`, `sources/codex/codex-rs/core/src/session/mod.rs:2620`, `sources/codex/codex-rs/core/src/context/user_instructions.rs:9` | contextual user message | 把项目/用户约束放入模型上下文，影响代码风格、命令偏好、协作规则 |
 | 可用 Skill 列表 | `sources/codex/codex-rs/core/src/session/mod.rs:2576`, `sources/codex/codex-rs/core/src/session/mod.rs:2590` | developer message | 让模型知道有哪些可被显式触发或隐式调用的 skill；这是目录曝光，不是完整 skill 内容 |
 | 显式 Skill 内容 | `sources/codex/codex-rs/core/src/session/turn.rs:220`, `sources/codex/codex-rs/core/src/session/turn.rs:254`, `sources/codex/codex-rs/core/src/session/turn.rs:268` | contextual user message | 用户提到 `$skill` 后，`SKILL.md` 内容被转成模型可见指令，影响本轮执行流程 |

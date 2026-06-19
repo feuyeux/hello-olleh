@@ -23,7 +23,7 @@ title: "10 - 人类引导"
 
 ### Codex
 
-`sources/codex/codex-rs/protocol/src/prompts/permissions/approval_policy/` 的四种 policy 文件是人类可读的 Markdown 文档。团队可以直接读取这些文件，理解当前的审批策略是什么，以及为什么这样设计。
+`sources/codex/codex-rs/prompts/templates/permissions/approval_policy/` 的四种 policy 文件是人类可读的 Markdown 文档。团队可以直接读取这些文件，理解当前的审批策略是什么，以及为什么这样设计。
 
 - `never.md` — 从不请求人工审批（完全信任 Agent）
 - `on_failure.md` — 仅在操作失败时请求审批

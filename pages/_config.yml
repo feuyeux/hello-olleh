@@ -30,6 +30,8 @@ exclude:
   - sources/codex
   - sources/gemini-cli
   - sources/opencode
+  - sources/hermes-agent
+  - sources/nanobot
   - claw-code
   - hello-olleh-memory
   - prompts

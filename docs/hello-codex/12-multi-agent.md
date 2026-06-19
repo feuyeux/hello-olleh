@@ -169,7 +169,7 @@ Codex 的多代理不是 UI 旁路功能，而是工具 handler 驱动的新 thr
 | 运行时覆盖 | `sources/codex/codex-rs/core/src/tools/handlers/multi_agents_common.rs:256` | 将当前 turn 的 cwd、approval、sandbox、模型等运行时字段应用到子 agent |
 | spawn 执行 | `sources/codex/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:114` | 通过 `agent_control.spawn_agent_with_metadata()` 创建子线程 |
 | fork 约束 | `sources/codex/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:236` | v2 明确拒绝 `fork_context` 参数，改用 `fork_turns` 语义 |
-| 结果回传 | `sources/codex/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:298` | spawn 结果以 tool output response item 回到父 turn |
+| 结果回传 | `sources/codex/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:30` | spawn 结果以 tool output response item 回到父 turn |
 
 ### 状态继承边界
 

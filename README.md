@@ -8,10 +8,10 @@
 | 工程 | 版本 | 语言/框架 | 架构特点 |
 |:-----|:-----|:----------|:---------|
 | [claude-code](sources/claude-code) | v2.1.87（反编译） | TypeScript / React | src/ 目录，React TUI，REPL 交互，Hooks 生命周期 |
-| [codex](https://github.com/openai/codex.git) | rust-v0.141.0 | **Rust**（86 crate）+ TypeScript SDK | Rust workspace 为运行时中心，TS 只做分发/封装 |
+| [codex](https://github.com/openai/codex.git) | rust-v0.141.0 | **Rust**（121 crate）+ TypeScript SDK | Rust workspace 为运行时中心，TS 只做分发/封装 |
 | [gemini-cli](https://github.com/google-gemini/gemini-cli.git) | v0.47.0 | TypeScript monorepo | packages/core 内核 + packages/cli（TUI/Ink）+ SDK + A2A server |
 | [opencode](https://github.com/anomalyco/opencode.git) | v1.4.14 | **Bun** + Effect-ts | Hono Server + SQLite Durable State，A/B/C 三层文档结构 |
-| [hermes-agent](https://github.com/nousresearch/hermes-agent.git) | v2026.6.5 | Python / FastAPI | Nous Research 的多模态 Agent 框架 |
+| [hermes-agent](https://github.com/nousresearch/hermes-agent.git) | v0.16.0 | Python / FastAPI | Nous Research 的多模态 Agent 框架 |
 | [nanobot](https://github.com/HKUDS/nanobot.git) | v0.2.1 | Python / LangChain | HKUDS 轻量级 Agent 框架 |
 
 ![](pages/hello-harness.png)
@@ -21,11 +21,13 @@
 | 路径 | 用途 |
 |:-----|:-----|
 | `sources/` | 上游源码快照目录 |
-| `sources/claude-code/`, `sources/codex/`, `sources/gemini-cli/`, `sources/opencode/` | 各项目源码，分析输入 |
+| `sources/claude-code/`, `sources/codex/`, `sources/gemini-cli/`, `sources/opencode/`, `sources/hermes-agent/`, `sources/nanobot/` | 各项目源码，分析输入 |
 | `docs/` | 分析输出目录 |
 | `docs/hello-claude-code/`, `docs/hello-codex/`, `docs/hello-gemini-cli/`, `docs/hello-opencode/` | 按主题拆分的 Markdown 分析文档 |
 | `docs/hello-harness/` | Harness Engineering 框架分析 |
+| `docs/streaming-agent-resilience-analysis.md` | 六个源码快照的流式 Agent 韧性横向分析 |
 | `scripts/check_doc_refs.ps1` | 校验 Markdown 中的 `path:line` 源码锚点是否能解析到本地快照 |
+| `scripts/check_markdown_links.ps1` | 校验 README、docs、pages 中的本地 Markdown 链接是否存在 |
 
 ## 附录
 

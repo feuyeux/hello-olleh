@@ -41,9 +41,9 @@ Claude Code 的文档最需要保留细节，因为它把 prompt 当成产品行
 | 项目 | Prompt 构造 / 注入点 | 项目指令 | 工具 / Skill 注入 |
 | --- | --- | --- | --- |
 | Claude Code | `sources/claude-code/src/constants/prompts.ts`, `sources/claude-code/src/query.ts:365` | `sources/claude-code/src/context.ts` | `sources/claude-code/src/tools/AgentTool/built-in/exploreAgent.ts`, `sources/claude-code/src/skills/loadSkillsDir.ts` |
-| Codex | `sources/codex/codex-rs/core/src/session/turn.rs`, `sources/codex/codex-rs/core/src/client.rs` | `sources/codex/codex-rs/core/src/agents_md.rs` | `sources/codex/codex-rs/core/src/tools/spec.rs:32`, `sources/codex/codex-rs/core/src/compact.rs` |
+| Codex | `sources/codex/codex-rs/core/src/session/turn.rs`, `sources/codex/codex-rs/core/src/client.rs` | `sources/codex/codex-rs/core/src/agents_md.rs` | `sources/codex/codex-rs/tools/src/tool_spec.rs:17`, `sources/codex/codex-rs/core/src/compact.rs` |
 | Gemini CLI | `sources/gemini-cli/packages/core/src/core/prompts.ts`, `sources/gemini-cli/packages/core/src/prompts/promptProvider.ts` | `sources/gemini-cli/packages/core/src/prompts/snippets.ts` | `sources/gemini-cli/packages/core/src/tools/activate-skill.ts`, `sources/gemini-cli/packages/core/src/tools/tool-registry.ts:635` |
-| OpenCode | `sources/opencode/packages/opencode/src/session/prompt.ts:162`, `sources/opencode/packages/opencode/src/session/prompt.ts:2013` | `sources/opencode/packages/opencode/src/session/prompt.ts:986` | `sources/opencode/packages/opencode/src/session/prompt.ts:1304`, `sources/opencode/packages/opencode/src/command/index.ts:117` |
+| OpenCode | `sources/opencode/packages/opencode/src/session/prompt.ts:162`, `sources/opencode/packages/opencode/src/session/processor.ts:548` | `sources/opencode/packages/opencode/src/session/prompt.ts:986` | `sources/opencode/packages/opencode/src/session/prompt.ts:1304`, `sources/opencode/packages/opencode/src/command/index.ts:117` |
 
 ## 5. 建议统一章节结构
 

@@ -24,7 +24,7 @@ title: "项目初始化分析报告：首次进入 Gemini CLI 仓库时该先看
 | 项 | 值 |
 | --- | --- |
 | 项目名 | Gemini CLI |
-| 当前版本 | `0.36.0` |
+| 当前版本 | `0.47.0` |
 | 语言 | TypeScript Monorepo |
 | 运行时 | Node.js `>=20` |
 | 工作区 | `packages/*` |

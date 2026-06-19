@@ -192,10 +192,10 @@ sequenceDiagram
 
 | 状态面 | 源码锚点 | 说明 |
 | --- | --- | --- |
-| app-server request 规范化 | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:776` | `normalize_turn_start_collaboration_mode()` 处理 turn/start 的协作模式 |
-| core op 提交 | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:2548` | `submit_core_op()` 是 app-server 到 core thread 的关键桥 |
-| turn/start 入口 | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:6853` | 外部请求在这里变成 turn operation |
-| user turn 提交 | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:7005` | turn op 最终进入 core op 队列 |
-| interrupt 提交 | `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:7729` | interrupt 不是普通 prompt，而是独立 `Op::Interrupt` |
+| app-server request 规范化 | `sources/codex/codex-rs/app-server/src/request_processors/turn_processor.rs:276` | `normalize_collaboration_mode()` 处理 turn/start 的协作模式 |
+| core op 提交 | `sources/codex/codex-rs/app-server/src/request_processors/turn_processor.rs:372` | `submit_core_op()` 是 app-server 到 core thread 的关键桥 |
+| turn/start 入口 | `sources/codex/codex-rs/app-server/src/request_processors/turn_processor.rs:403` | 外部请求在这里变成 turn operation |
+| user turn 提交 | `sources/codex/codex-rs/app-server/src/request_processors/turn_processor.rs:741` | turn op 最终进入 core op 队列 |
+| interrupt 提交 | `sources/codex/codex-rs/app-server/src/request_processors/turn_processor.rs:1331` | interrupt 不是普通 prompt，而是独立 `Op::Interrupt` |
 
 这个结构说明：TUI 的“状态”只是 thread event 的投影；真正的执行权在 core thread 的 `submission_loop()`。因此调试 UI 卡住时，要先分清是 TUI 渲染没有消费 event，还是 app-server 没有提交 op，还是 core turn 阻塞在工具/审批。

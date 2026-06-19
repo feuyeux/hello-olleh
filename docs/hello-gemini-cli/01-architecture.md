@@ -4,7 +4,7 @@ title: "架构全景：多宿主外壳、Core 组合根与 Agent 执行闭环"
 ---
 # 架构全景：多宿主外壳、Core 组合根与 Agent 执行闭环
 
-> 基于 `gemini-cli` `v0.36.0` 源码校对。本文重点核对 `packages/cli`、`packages/core`、`packages/sdk`、`packages/a2a-server` 与 `packages/vscode-ide-companion` 的真实调用关系，而不是沿用其它文档里的抽象名称。
+> 基于 `gemini-cli` `v0.47.0` 源码校对。本文重点核对 `packages/cli`、`packages/core`、`packages/sdk`、`packages/a2a-server` 与 `packages/vscode-ide-companion` 的真实调用关系，而不是沿用其它文档里的抽象名称。
 
 **目录**
 

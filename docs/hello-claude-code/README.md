@@ -11,8 +11,7 @@ title: "Claude Code 源码分析 README"
 
 - 网页索引：[index.md](./index.md)
 - 总览版报告：[22-project-init-analysis.md](./22-project-init-analysis.md)
-- 根项目说明：[../README.md](../README.md)
-- 基线分析提示词：[../prompts/hello.txt](../prompts/hello.txt)
+- 根项目说明与当前源码快照版本：[../../README.md](../../README.md)
 
 ## 推荐阅读顺序
 

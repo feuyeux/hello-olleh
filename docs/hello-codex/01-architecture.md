@@ -30,7 +30,7 @@ JS/TS 层则由 pnpm monorepo 管理，包含 3 个 package：
 | `@openai/codex-sdk` | `sdk/typescript/` | TypeScript SDK（消费 exec JSON 协议）|
 | `responses-api-proxy/npm` | `codex-rs/responses-api-proxy/npm/` | Responses API 代理 npm 包装 |
 
-核心结论：**Rust workspace 是运行时与协议中心，JS/TS 只做分发、封装和生态接入**（`sources/codex/codex-cli/bin/codex.js:15-220`; `sources/codex/sdk/typescript/src/codex.ts:11-37`）。
+核心结论：**Rust workspace 是运行时与协议中心，JS/TS 只做分发、封装和生态接入**（`sources/codex/codex-cli/bin/codex.js:15-204`; `sources/codex/sdk/typescript/src/codex.ts:11-37`）。
 
 ## Crate 拓扑与依赖图
 

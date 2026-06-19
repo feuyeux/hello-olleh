@@ -15,7 +15,7 @@ permalink: /
       组织成一份可翻阅的工程档案报，适合按主题、按仓库、按执行链路反复对照阅读。
     </p>
     <div class="front-meta">
-      <span>4 个上游工程</span>
+      <span>6 个上游工程</span>
       <span>5 个专题入口</span>
       <span>源码快照 + 分析长文 + PDF ebook</span>
     </div>
@@ -30,7 +30,7 @@ permalink: /
         从启动入口、Agent 决策链、Prompt 组装，到工具执行闭环、状态持久化、MCP 扩展与安全边界。
       </p>
       <p>
-        你可以先从 Harness Engineering 读一遍总论，再去四个仓库的专题区横向比较；
+        你可以先从 Harness Engineering 读一遍总论，再去四个主仓库的专题区横向比较；
         也可以直接跳进某个工程，像翻技术周刊一样连续浏览章节卡片。
       </p>
       <div class="lead-actions">
@@ -43,7 +43,7 @@ permalink: /
       <article class="brief-card">
         <p class="brief-label">Edition</p>
         <h2>分析对象</h2>
-        <p>Claude Code、Codex、Gemini CLI、OpenCode，加上一份 Harness Engineering 综合框架。</p>
+        <p>Claude Code、Codex、Gemini CLI、OpenCode、Hermes Agent、Nanobot，加上一份 Harness Engineering 综合框架。</p>
       </article>
       <article class="brief-card">
         <p class="brief-label">Method</p>
@@ -60,7 +60,7 @@ permalink: /
 
   <figure class="editorial-figure">
     <img src="{{ 'pages/hello-harness.png' | relative_url }}" alt="Harness Engineering Framework" />
-    <figcaption>Harness Engineering Framework 作为总框架，用来统一解读四类 AI Coding 工程中的控制面、反馈面与扩展面。</figcaption>
+    <figcaption>Harness Engineering Framework 作为总框架，用来统一解读 AI Coding 工程中的控制面、反馈面与扩展面。</figcaption>
   </figure>
 
   <section class="ticker-row">
@@ -89,15 +89,23 @@ permalink: /
       </span>
       <a class="source-link" href="https://github.com/openai/codex.git" target="_blank" rel="noreferrer">
         <span class="source-label">OpenAI Codex</span>
-        <span class="source-meta">Rust + TypeScript · rust-v0.118.0</span>
+        <span class="source-meta">Rust + TypeScript · rust-v0.141.0</span>
       </a>
       <a class="source-link" href="https://github.com/google-gemini/gemini-cli.git" target="_blank" rel="noreferrer">
         <span class="source-label">Gemini CLI</span>
-        <span class="source-meta">TypeScript monorepo · v0.36.0</span>
+        <span class="source-meta">TypeScript monorepo · v0.47.0</span>
       </a>
       <a class="source-link" href="https://github.com/anomalyco/opencode.git" target="_blank" rel="noreferrer">
         <span class="source-label">OpenCode</span>
-        <span class="source-meta">Bun + Effect-ts · v1.3.2</span>
+        <span class="source-meta">Bun + Effect-ts · v1.4.14</span>
+      </a>
+      <a class="source-link" href="https://github.com/nousresearch/hermes-agent.git" target="_blank" rel="noreferrer">
+        <span class="source-label">Hermes Agent</span>
+        <span class="source-meta">Python / FastAPI · v0.16.0</span>
+      </a>
+      <a class="source-link" href="https://github.com/HKUDS/nanobot.git" target="_blank" rel="noreferrer">
+        <span class="source-label">Nanobot</span>
+        <span class="source-meta">Python / LangChain · v0.2.1</span>
       </a>
     </div>
   </section>
@@ -143,7 +151,7 @@ permalink: /
         <span class="chapter-number">05</span>
         <div>
           <div class="cli-name">Harness Engineering</div>
-          <div class="cli-version">综合分析4个 AI Coding 工程</div>
+          <div class="cli-version">综合分析 AI Coding 工程</div>
         </div>
       </a>
     </div>

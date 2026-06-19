@@ -167,10 +167,10 @@ OpenCode 的 TUI/REPL 不应被理解成 agent runtime 本体。真正的状态�
 
 | 操作类型 | server route / 事件 | durable 影响 |
 | --- | --- | --- |
-| 追加 prompt | `sources/opencode/packages/opencode/src/server/routes/tui.ts:100` 发布 `TuiEvent.PromptAppend` | 后续进入 `session.prompt()` 后先写 user message |
-| 执行命令 | `sources/opencode/packages/opencode/src/server/routes/tui.ts:122` 等发布 `TuiEvent.CommandExecute` | command 若编译成 prompt，会进入 message/part history |
-| 选择 session | `sources/opencode/packages/opencode/src/server/routes/tui.ts:374` 发布 `TuiEvent.SessionSelect` | 只改变 UI 所选 session，不直接写 message |
-| 查询状态 | `sources/opencode/packages/opencode/src/server/routes/session.ts:77` 暴露 `session.status` | 返回 `SessionStatus` 运行态，不是 durable message |
+| 追加 prompt | `sources/opencode/packages/opencode/src/server/routes/instance/tui.ts:100` 发布 `TuiEvent.PromptAppend` | 后续进入 `session.prompt()` 后先写 user message |
+| 执行命令 | `sources/opencode/packages/opencode/src/server/routes/instance/tui.ts:122` 等发布 `TuiEvent.CommandExecute` | command 若编译成 prompt，会进入 message/part history |
+| 选择 session | `sources/opencode/packages/opencode/src/server/routes/instance/tui.ts:374` 发布 `TuiEvent.SessionSelect` | 只改变 UI 所选 session，不直接写 message |
+| 查询状态 | `sources/opencode/packages/opencode/src/server/routes/instance/session.ts:77` 暴露 `session.status` | 返回 `SessionStatus` 运行态，不是 durable message |
 | prompt 执行 | `sources/opencode/packages/opencode/src/session/prompt.ts:299` 设置 busy | 进入 loop 后通过 `MessageV2.stream()` 读 durable history |
 | assistant 写回 | `sources/opencode/packages/opencode/src/session/prompt.ts:359` 创建 assistant message | 后续 processor 持续写 part |
 

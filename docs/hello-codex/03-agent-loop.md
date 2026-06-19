@@ -72,7 +72,7 @@ sequenceDiagram
 
 ## 第一层：submission_loop（会话事件分发器）
 
-**位置**：`sources/codex/codex-rs/core/src/codex.rs:4289`
+**位置**：`sources/codex/codex-rs/core/src/session/handlers.rs:698`
 
 submission_loop 是每个会话的单线程事件消费者。它通过 bounded channel（容量 512）接收 `Submission`：
 
@@ -128,7 +128,7 @@ sequenceDiagram
 
 ## 第二层：run_turn（回合执行控制器）
 
-**位置**：`sources/codex/codex-rs/core/src/codex.rs:5584`
+**位置**：`sources/codex/codex-rs/core/src/session/turn.rs:137`
 
 `run_turn` 是单轮执行的核心控制器，分为**预采样准备**和**回合循环**两个阶段。
 
@@ -528,7 +528,7 @@ pub(crate) fn for_prompt(mut self, input_modalities) -> Vec<ResponseItem> {
 
 ## 第三层：run_sampling_request（LLM 编排与重试）
 
-**位置**：`sources/codex/codex-rs/core/src/codex.rs:6363`
+**位置**：`sources/codex/codex-rs/core/src/session/turn.rs:1036`
 
 ### 核心序列
 
@@ -610,7 +610,7 @@ loop {
 
 ## 第四层：try_run_sampling_request（流式响应循环）
 
-**位置**：`sources/codex/codex-rs/core/src/codex.rs:7176`
+**位置**：`sources/codex/codex-rs/core/src/session/turn.rs:1815`
 
 ### 核心流程
 
@@ -919,9 +919,9 @@ if retries >= max_retries && client_session.try_switch_fallback_transport(...) {
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `sources/codex/codex-rs/core/src/codex.rs:4289` | `submission_loop()` 消费 core submission 队列 | 对应 Claude `query()`、OpenCode `loop()` |
-| `sources/codex/codex-rs/core/src/codex.rs:5584` | `run_turn()` 单轮控制器 | 对应 Gemini `processTurn()` |
-| `sources/codex/codex-rs/core/src/codex.rs:6363` | `run_sampling_request()` 组装并发起模型请求 | 对应 OpenCode `LLM.stream()` 调用前 |
-| `sources/codex/codex-rs/core/src/codex.rs:7176` | `try_run_sampling_request()` 消费 streaming 响应并调度工具 | 对应 Gemini `Turn.run()` |
-| `sources/codex/codex-rs/tui/src/app.rs:1812` | TUI 把用户操作转成 thread op | 说明 UI 不是直接进入模型 |
-| `sources/codex/codex-rs/app-server/src/codex_message_processor.rs:2157` | app-server 将请求提交到 core | 连接 SDK/transport 章节 |
+| `sources/codex/codex-rs/core/src/session/handlers.rs:698` | `submission_loop()` 消费 core submission 队列 | 对应 Claude `query()`、OpenCode `loop()` |
+| `sources/codex/codex-rs/core/src/session/turn.rs:137` | `run_turn()` 单轮控制器 | 对应 Gemini `processTurn()` |
+| `sources/codex/codex-rs/core/src/session/turn.rs:1036` | `run_sampling_request()` 组装并发起模型请求 | 对应 OpenCode `LLM.stream()` 调用前 |
+| `sources/codex/codex-rs/core/src/session/turn.rs:1815` | `try_run_sampling_request()` 消费 streaming 响应并调度工具 | 对应 Gemini `Turn.run()` |
+| `sources/codex/codex-rs/tui/src/app/thread_routing.rs:422` | TUI 把用户操作转成 thread op | 说明 UI 不是直接进入模型 |
+| `sources/codex/codex-rs/app-server/src/request_processors/turn_processor.rs:372` | app-server 将请求提交到 core | 连接 SDK/transport 章节 |

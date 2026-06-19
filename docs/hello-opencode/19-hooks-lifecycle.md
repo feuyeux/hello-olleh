@@ -171,8 +171,8 @@ flowchart TD
 | Runtime layer | `sources/opencode/packages/opencode/src/effect/run-service.ts:4` | 全局 memo map 让 service layer 可复用 |
 | Instance scoped cache | `sources/opencode/packages/opencode/src/effect/instance-state.ts:17` | workspace/directory 维度缓存 service state |
 | Disposer registry | `sources/opencode/packages/opencode/src/effect/instance-registry.ts:3`, `sources/opencode/packages/opencode/src/effect/instance-registry.ts:10` | 注册并批量释放 instance 相关资源 |
-| Config dispose | `sources/opencode/packages/opencode/src/config/config.ts:1353`, `sources/opencode/packages/opencode/src/config/config.ts:1444` | 配置变化或退出时触发 instance 清理 |
-| LSP shutdown | `sources/opencode/packages/opencode/src/lsp/index.ts:143`, `sources/opencode/packages/opencode/src/lsp/client.ts:239` | language server 是显式 shutdown 的外部资源 |
+| Config dispose | `sources/opencode/packages/opencode/src/config/config.ts:723`, `sources/opencode/packages/opencode/src/config/config.ts:728` | 配置变化或退出时触发 instance 清理 |
+| LSP shutdown | `sources/opencode/packages/opencode/src/lsp/lsp.ts:219`, `sources/opencode/packages/opencode/src/lsp/client.ts:239` | language server 是显式 shutdown 的外部资源 |
 | Plugin trigger | `sources/opencode/packages/opencode/src/plugin/index.ts:164` | 运行时 hook 通过 plugin service 分发 |
 
 关闭顺序的关键是先让 Instance/Scope 失效，再释放 scoped service 与外部进程/连接。Bus 事件负责通知状态变化，但不应该承担资源释放本身。

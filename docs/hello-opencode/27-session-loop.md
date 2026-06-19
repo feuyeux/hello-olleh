@@ -4,7 +4,7 @@ title: "OpenCode A04：loop()"
 ---
 # OpenCode A04：`loop()`
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 > 核心代码：`packages/opencode/src/session/prompt.ts:242-756`
 
 `loop()` 负责在 durable history 上推进 session。它的输入来自 `MessageV2.stream()`，每一轮都通过回放历史判断当前分支，并安排 subtask、compaction、overflow 处理和普通推理轮次。

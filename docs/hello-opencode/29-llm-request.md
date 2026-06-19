@@ -4,9 +4,9 @@ title: "OpenCode A06：LLM.stream()"
 ---
 # OpenCode A06：`LLM.stream()`
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 
-A06 进入模型请求出站链路。在 `v1.3.2` 中，大模型请求会经过 system prompt 选择、环境注入、指令文件加载、tool set 包装、provider 参数合并、兼容补丁和 AI SDK middleware 多层处理。
+A06 进入模型请求出站链路。在 `v1.4.14` 中，大模型请求会经过 system prompt 选择、环境注入、指令文件加载、tool set 包装、provider 参数合并、兼容补丁和 AI SDK middleware 多层处理。
 
 ---
 
@@ -41,7 +41,7 @@ A06 进入模型请求出站链路。在 `v1.3.2` 中，大模型请求会经过
 
 ## 2. system prompt 由四层来源叠加组成
 
-在 `v1.3.2` 中，system prompt 分两段生成。
+在 `v1.4.14` 中，system prompt 分两段生成。
 
 ### 2.1 `prompt.ts` 先准备“运行时上下文层”
 
@@ -619,7 +619,7 @@ A06 讲的是请求怎样被拼出来、怎样发出去；A07 才讲返回流怎
 
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
-| `sources/opencode/packages/opencode/src/session/prompt.ts:2013` | `LLM.stream()` 调用点 | 对应 Claude API request / Codex model client |
+| `sources/opencode/packages/opencode/src/session/processor.ts:548` | `LLM.stream()` 调用点 | 对应 Claude API request / Codex model client |
 | `sources/opencode/packages/opencode/src/session/llm.ts:27` | `LLM` 命名空间 | 模型请求封装入口 |
 | `sources/opencode/packages/opencode/src/session/llm.ts:113` | OpenAI OAuth `instructions` 兼容 | 说明 provider 兼容影响 prompt 形态 |
 | `sources/opencode/packages/opencode/src/session/llm.ts:183` | `_noop` tool 兼容分支 | 对应 provider/tool capability workaround |

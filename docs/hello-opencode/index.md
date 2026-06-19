@@ -6,9 +6,9 @@ title: "OpenCode 源码分析"
 <section class="hero page-wrapper">
   <p class="hero-kicker">Source Code Analysis</p>
   <h1 class="hero-title">🟢 OpenCode</h1>
-  <p class="hero-subtitle">基于 OpenCode v1.3.2（Bun + Effect-ts）源码的分层阅读索引</p>
+  <p class="hero-subtitle">基于 OpenCode v1.4.14（Bun + Effect-ts）源码的分层阅读索引</p>
   <div class="hero-badges">
-    <span class="hero-badge"><span class="dot"></span>v1.3.2</span>
+    <span class="hero-badge"><span class="dot"></span>v1.4.14</span>
   </div>
 </section>
 

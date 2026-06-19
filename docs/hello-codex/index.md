@@ -6,9 +6,9 @@ title: "OpenAI Codex 源码分析"
 <section class="hero page-wrapper">
   <p class="hero-kicker">Source Code Analysis</p>
   <h1 class="hero-title">🔶 OpenAI Codex</h1>
-  <p class="hero-subtitle">基于 Codex（Rust + TypeScript）rust-v0.118.0 源码的结构化深读</p>
+  <p class="hero-subtitle">基于 Codex（Rust + TypeScript）rust-v0.141.0 源码的结构化深读</p>
   <div class="hero-badges">
-    <span class="hero-badge"><span class="dot"></span>rust-v0.118.0</span>
+    <span class="hero-badge"><span class="dot"></span>rust-v0.141.0</span>
   </div>
 </section>
 

@@ -4,7 +4,7 @@ title: "OpenCode A05：SessionProcessor.process()"
 ---
 # OpenCode A05：`SessionProcessor.process()`
 
-> 本文基于 `opencode` `v1.3.2`（tag `v1.3.2`，commit `0dcdf5f529dced23d8452c9aa5f166abb24d8f7c`）源码校对
+> 本文基于 `sources/opencode/packages/opencode/package.json` 中的 OpenCode `v1.4.14` 源码校对
 > 核心代码：`packages/opencode/src/session/processor.ts`
 
 如果说 `prompt()` 负责把外部输入编译进 history，`loop()` 负责决定“这轮该走哪条分支”，那 `processor` 干的就是第三件事：接住单轮 `LLM.stream()` 的事件流，并把 reasoning、text、tool、step、patch、finish、error 一类流式事件，一条条翻译成 durable writes。

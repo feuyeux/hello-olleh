@@ -79,7 +79,7 @@ export const ASYNC_AGENT_ALLOWED_TOOLS = new Set([
 
 #### Codex
 
-`sources/codex/codex-rs/protocol/src/prompts/permissions/approval_policy/` 的四种 approval policy 文件（`never.md`、`on_failure.md`、`on_request_rule_request_permission.md`、`unless_trusted.md`），加上 `execpolicy` 对 shell 命令的约束，构成两层正交约束：approval policy 管"何时需要人工批准"，exec policy 管"允许执行哪些命令"。两层不冗余，合在一起才覆盖完整的工具执行决策树。这是四个工程里架构依赖约束最系统化的实现。
+`sources/codex/codex-rs/prompts/templates/permissions/approval_policy/` 的四种 approval policy 文件（`never.md`、`on_failure.md`、`on_request_rule_request_permission.md`、`unless_trusted.md`），加上 `execpolicy` 对 shell 命令的约束，构成两层正交约束：approval policy 管"何时需要人工批准"，exec policy 管"允许执行哪些命令"。两层不冗余，合在一起才覆盖完整的工具执行决策树。这是四个工程里架构依赖约束最系统化的实现。
 
 #### Gemini CLI
 

@@ -5,14 +5,14 @@ title: "OpenCode 源码分析 README"
 
 # OpenCode 源码分析 README
 
-本目录记录 OpenCode `v1.3.2` 的源码分析。分析对象是 `sources/opencode/` 上游快照，技术栈是 Bun + TypeScript + Effect-ts，核心特征是 Hono Server、SQLite durable state、Bus/SSE 事件投影、Session loop 和 provider/tool/system 的晚绑定。
+本目录记录 OpenCode `v1.4.14` 的源码分析。分析对象是 `sources/opencode/` 上游快照，技术栈是 Bun + TypeScript + Effect-ts，核心特征是 Hono Server、SQLite durable state、Bus/SSE 事件投影、Session loop 和 provider/tool/system 的晚绑定。
 
 ## 阅读入口
 
 - 网页索引：[index.md](./index.md)
 - 总览版报告：[22-project-init-analysis.md](./22-project-init-analysis.md)
 - 主线索引：[36-mainline-index.md](./36-mainline-index.md)
-- 根项目说明：[../README.md](../README.md)
+- 根项目说明与当前源码快照版本：[../../README.md](../../README.md)
 
 ## 推荐阅读顺序
 

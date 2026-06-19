@@ -432,8 +432,8 @@ Codex 的输入队列复杂度高于其他项目，因为普通用户 prompt、s
 | 源码位置 | 说明 | 横向意义 |
 | --- | --- | --- |
 | `sources/codex/codex-rs/tui/src/lib.rs:664` | TUI `run_main()` 交互入口 | 对应 Gemini `interactiveCli.tsx` |
-| `sources/codex/codex-rs/tui/src/app.rs:1812` | `submit_thread_op()` 提交用户操作 | 输入进入 app/core 边界 |
+| `sources/codex/codex-rs/tui/src/app/thread_routing.rs:422` | `submit_thread_op()` 提交用户操作 | 输入进入 app/core 边界 |
 | `sources/codex/codex-rs/tui/src/app_server_session.rs:397` | `turn_start()` 包装 app-server 请求 | 对应 OpenCode server route |
 | `sources/codex/codex-rs/protocol/src/protocol.rs` | Submission/Event 协议类型 | Codex 输入队列的类型化边界 |
 | `sources/codex/codex-rs/protocol/src/parse_command.rs` | slash / command parsing | 对应 Claude slash parser、Gemini CommandService |
-| `sources/codex/codex-rs/core/src/codex.rs:697` | `submit_with_trace()` 生成 core submission | 连接 Agent loop |
+| `sources/codex/codex-rs/core/src/session/mod.rs:698` | `submit_with_trace()` 生成 core submission | 连接 Agent loop |
